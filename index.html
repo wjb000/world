@@ -1027,17 +1027,36 @@
                 GameState.walletAddress = response.publicKey.toString();
                 GameState.walletType = 'phantom';
 
-                // Get balance
-                const connection = new solanaWeb3.Connection(
-                    solanaWeb3.clusterApiUrl('mainnet-beta')
-                );
-                const balance = await connection.getBalance(response.publicKey);
-                GameState.balance = balance / solanaWeb3.LAMPORTS_PER_SOL;
+                // Get balance with fallback RPC endpoints
+                const rpcEndpoints = [
+                    'https://api.mainnet-beta.solana.com',
+                    'https://solana-api.projectserum.com',
+                    'https://rpc.ankr.com/solana'
+                ];
+
+                let balance = 0;
+                for (const endpoint of rpcEndpoints) {
+                    try {
+                        const connection = new solanaWeb3.Connection(endpoint);
+                        balance = await connection.getBalance(response.publicKey);
+                        GameState.balance = balance / solanaWeb3.LAMPORTS_PER_SOL;
+                        console.log('Balance fetched successfully from:', endpoint);
+                        break;
+                    } catch (balanceError) {
+                        console.warn(`Failed to fetch balance from ${endpoint}:`, balanceError);
+                        // Continue to next endpoint
+                        if (endpoint === rpcEndpoints[rpcEndpoints.length - 1]) {
+                            // Last endpoint failed, use 0 balance but still connect
+                            console.warn('All RPC endpoints failed, showing 0 balance');
+                            GameState.balance = 0;
+                        }
+                    }
+                }
 
                 onWalletConnected();
             } catch (error) {
                 console.error('Phantom connection failed:', error);
-                alert('Failed to connect Phantom wallet');
+                alert('Failed to connect Phantom wallet. Please try again.');
             }
         }
 
@@ -1058,14 +1077,20 @@
                 GameState.walletAddress = address;
                 GameState.walletType = 'metamask';
 
-                // Get balance
-                const balance = await provider.getBalance(address);
-                GameState.balance = parseFloat(ethers.utils.formatEther(balance));
+                // Get balance with error handling
+                try {
+                    const balance = await provider.getBalance(address);
+                    GameState.balance = parseFloat(ethers.utils.formatEther(balance));
+                    console.log('Balance fetched successfully');
+                } catch (balanceError) {
+                    console.warn('Failed to fetch balance:', balanceError);
+                    GameState.balance = 0;
+                }
 
                 onWalletConnected();
             } catch (error) {
                 console.error('MetaMask connection failed:', error);
-                alert('Failed to connect MetaMask');
+                alert('Failed to connect MetaMask. Please try again.');
             }
         }
 
