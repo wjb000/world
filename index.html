@@ -937,6 +937,16 @@
             serverRefreshInterval: null
         };
 
+        // Mobile Detection
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+
+        function getAppUrl() {
+            // Get the current page URL for deep linking
+            return window.location.href;
+        }
+
         // Auto-reconnect on page load
         window.addEventListener('DOMContentLoaded', async () => {
             const savedWalletType = localStorage.getItem('walletType');
@@ -973,6 +983,13 @@
 
         async function autoConnectPhantom() {
             const { solana } = window;
+
+            // On mobile, only auto-reconnect if in Phantom browser
+            if (isMobile() && !solana?.isPhantom) {
+                console.log('On mobile but not in Phantom browser, skipping auto-reconnect');
+                return;
+            }
+
             if (!solana?.isPhantom) return;
 
             try {
@@ -998,6 +1015,12 @@
         }
 
         async function autoConnectMetaMask() {
+            // On mobile, only auto-reconnect if in MetaMask browser
+            if (isMobile() && !window.ethereum) {
+                console.log('On mobile but not in MetaMask browser, skipping auto-reconnect');
+                return;
+            }
+
             if (!window.ethereum) return;
 
             try {
@@ -1073,16 +1096,32 @@
             try {
                 const { solana } = window;
 
-                if (!solana?.isPhantom) {
-                    alert('Please install Phantom wallet!\n\nVisit: https://phantom.app/');
-                    window.open('https://phantom.app/', '_blank');
-                    return;
+                // Check if on mobile
+                if (isMobile()) {
+                    // On mobile - check if in Phantom browser or need to redirect
+                    if (!solana?.isPhantom) {
+                        // Not in Phantom browser - need to open in Phantom app
+                        const currentUrl = encodeURIComponent(window.location.href);
+                        const deepLink = `https://phantom.app/ul/browse/${currentUrl}?ref=${window.location.hostname}`;
+
+                        alert('Opening in Phantom app...\n\nIf Phantom doesn\'t open automatically, please:\n1. Open Phantom app\n2. Tap Browser\n3. Enter your site URL');
+
+                        // Redirect to Phantom app
+                        window.location.href = deepLink;
+                        return;
+                    }
+                } else {
+                    // On desktop - check for extension
+                    if (!solana?.isPhantom) {
+                        alert('Please install Phantom wallet!\n\nVisit: https://phantom.app/');
+                        window.open('https://phantom.app/', '_blank');
+                        return;
+                    }
                 }
 
-                // Show connecting state
+                // Continue with normal connection flow
                 console.log('Connecting to Phantom...');
 
-                // Request connection
                 const response = await solana.connect();
 
                 if (!response?.publicKey) {
@@ -1163,10 +1202,27 @@
 
         async function connectMetaMask() {
             try {
-                if (!window.ethereum) {
-                    alert('Please install MetaMask!\n\nVisit: https://metamask.io/');
-                    window.open('https://metamask.io/', '_blank');
-                    return;
+                // Check if on mobile
+                if (isMobile()) {
+                    // On mobile - check if in MetaMask browser or need to redirect
+                    if (!window.ethereum) {
+                        // Not in MetaMask browser - need to open in MetaMask app
+                        const currentUrl = window.location.href;
+                        const deepLink = `https://metamask.app.link/dapp/${window.location.hostname}${window.location.pathname}`;
+
+                        alert('Opening in MetaMask app...\n\nIf MetaMask doesn\'t open automatically, please:\n1. Open MetaMask app\n2. Tap Browser\n3. Enter your site URL');
+
+                        // Redirect to MetaMask app
+                        window.location.href = deepLink;
+                        return;
+                    }
+                } else {
+                    // On desktop - check for extension
+                    if (!window.ethereum) {
+                        alert('Please install MetaMask!\n\nVisit: https://metamask.io/');
+                        window.open('https://metamask.io/', '_blank');
+                        return;
+                    }
                 }
 
                 console.log('Connecting to MetaMask...');
