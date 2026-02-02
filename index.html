@@ -1400,11 +1400,13 @@
         }
 
         function handlePeerData(peerId, data) {
+            let conn; // Declare once at function scope
+
             switch (data.type) {
                 case 'init':
                     createRemotePlayer(peerId, data.wallet, data.username, data.color, data.position, data.rotation);
                     // Send our state back
-                    const conn = GameState.connections.get(peerId);
+                    conn = GameState.connections.get(peerId);
                     if (conn && conn.open) {
                         conn.send({
                             type: 'init',
@@ -1440,7 +1442,7 @@
                     break;
                 case 'ping':
                     // Respond to ping
-                    const conn = GameState.connections.get(peerId);
+                    conn = GameState.connections.get(peerId);
                     if (conn && conn.open) {
                         conn.send({ type: 'pong', timestamp: data.timestamp });
                     }
