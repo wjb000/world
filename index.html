@@ -26,17 +26,6 @@
             color: #fff;
         }
 
-        /* Login Background Canvas */
-        #loginCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            z-index: 1;
-            display: block;
-        }
-
         /* Wallet Connect Screen */
         #walletScreen {
             position: fixed;
@@ -500,42 +489,6 @@
             color: #fff;
         }
 
-        /* Username Modal */
-        #usernameModal {
-            display: flex;
-        }
-
-        #usernameModal input {
-            margin-bottom: 10px;
-        }
-
-        /* Color Picker Modal */
-        #colorPickerModal .color-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        #colorPickerModal .color-option {
-            width: 60px;
-            height: 60px;
-            border-radius: 10px;
-            cursor: pointer;
-            border: 3px solid transparent;
-            transition: all 0.3s;
-        }
-
-        #colorPickerModal .color-option:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 20px currentColor;
-        }
-
-        #colorPickerModal .color-option.selected {
-            border-color: #fff;
-            box-shadow: 0 0 30px currentColor;
-        }
-
         /* Mobile Responsive */
         @media (max-width: 768px) {
             #chatContainer {
@@ -776,31 +729,6 @@
             background: var(--danger);
         }
 
-        /* Custom Color Input */
-        #colorPickerModal .custom-color-section {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(0, 255, 65, 0.3);
-        }
-
-        #colorPickerModal input[type="color"] {
-            width: 100%;
-            height: 50px;
-            margin: 10px 0;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-
-        /* Color Preview */
-        #colorPickerModal .color-preview {
-            width: 100px;
-            height: 100px;
-            margin: 20px auto;
-            border-radius: 50%;
-            border: 3px solid #fff;
-            box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
-        }
-
         .loading-text {
             color: var(--primary);
             font-size: 14px;
@@ -809,9 +737,6 @@
     </style>
 </head>
 <body>
-    <!-- Login Background Canvas -->
-    <canvas id="loginCanvas"></canvas>
-
     <!-- Wallet Connect Screen -->
     <div id="walletScreen">
         <div class="wallet-container">
@@ -945,52 +870,6 @@
         </div>
     </div>
 
-    <!-- Username Modal -->
-    <div class="modal" id="usernameModal">
-        <div class="modal-content">
-            <h2>Choose Your Username</h2>
-            <input type="text" id="usernameInput" placeholder="Enter username" maxlength="20">
-            <p style="font-size: 12px; color: #aaa;">Leave blank to use wallet address</p>
-            <div class="modal-actions">
-                <button class="confirm" id="confirmUsername">Continue</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Color Picker Modal -->
-    <div class="modal" id="colorPickerModal">
-        <div class="modal-content">
-            <h2>Choose Your Color</h2>
-            <div class="color-preview" id="colorPreview" style="background: #00ccff;"></div>
-            <div class="color-grid">
-                <div class="color-option" data-color="0x00ccff" data-name="Cyan" style="background: #00ccff;" title="Cyan"></div>
-                <div class="color-option" data-color="0x00ff41" data-name="Green" style="background: #00ff41;" title="Green"></div>
-                <div class="color-option" data-color="0x9370db" data-name="Purple" style="background: #9370db;" title="Purple"></div>
-                <div class="color-option" data-color="0xf97316" data-name="Orange" style="background: #f97316;" title="Orange"></div>
-                <div class="color-option" data-color="0xff6b9d" data-name="Pink" style="background: #ff6b9d;" title="Pink"></div>
-                <div class="color-option" data-color="0xff0040" data-name="Red" style="background: #ff0040;" title="Red"></div>
-                <div class="color-option" data-color="0xffff00" data-name="Yellow" style="background: #ffff00;" title="Yellow"></div>
-                <div class="color-option" data-color="0xffffff" data-name="White" style="background: #ffffff;" title="White"></div>
-                <div class="color-option" data-color="0x06b6d4" data-name="Sky" style="background: #06b6d4;" title="Sky"></div>
-                <div class="color-option" data-color="0x10b981" data-name="Emerald" style="background: #10b981;" title="Emerald"></div>
-                <div class="color-option" data-color="0xe91e63" data-name="Magenta" style="background: #e91e63;" title="Magenta"></div>
-                <div class="color-option" data-color="0xffd700" data-name="Gold" style="background: #ffd700;" title="Gold"></div>
-                <div class="color-option" data-color="0xff00ff" data-name="Violet" style="background: #ff00ff;" title="Violet"></div>
-                <div class="color-option" data-color="0x00ffff" data-name="Aqua" style="background: #00ffff;" title="Aqua"></div>
-                <div class="color-option" data-color="0xff6b35" data-name="Coral" style="background: #ff6b35;" title="Coral"></div>
-                <div class="color-option" data-color="0x8a2be2" data-name="Blue Violet" style="background: #8a2be2;" title="Blue Violet"></div>
-            </div>
-            <div class="custom-color-section">
-                <p style="font-size: 14px; margin-bottom: 10px;">Or choose a custom color:</p>
-                <input type="color" id="customColorPicker" value="#00ccff">
-            </div>
-            <div class="modal-actions">
-                <button class="confirm" id="confirmColor">Continue</button>
-                <button class="cancel" id="cancelColor">Skip</button>
-            </div>
-        </div>
-    </div>
-
     <div id="instructions">
         <strong>WASD</strong> to Move | <strong>SHIFT</strong> to Sprint
     </div>
@@ -1051,381 +930,6 @@
             isAutoReconnecting: false
         };
 
-        // Login Scene - Animated Background for Wallet Connect Screen
-        const LoginScene = {
-            scene: null,
-            camera: null,
-            renderer: null,
-            robots: [],
-            platform: null,
-            isRunning: false,
-            clock: null,
-            particles: null,
-            cameraAngle: 0,
-            lastFrameTime: 0,
-            targetFPS: 30,
-            frameInterval: 1000 / 30, // 30 FPS
-
-            init() {
-                console.log('Initializing LoginScene...');
-                const canvas = document.getElementById('loginCanvas');
-
-                // Debug logging for canvas visibility
-                console.log('LoginCanvas element found:', !!canvas);
-                if (canvas) {
-                    const styles = window.getComputedStyle(canvas);
-                    console.log('LoginCanvas display:', styles.display);
-                    console.log('LoginCanvas z-index:', styles.zIndex);
-                    console.log('LoginCanvas visibility:', styles.visibility);
-                }
-
-                // Scene setup
-                this.scene = new THREE.Scene();
-                this.scene.background = new THREE.Color(0x0a0e14);
-                this.scene.fog = new THREE.Fog(0x0a0e14, 10, 100);
-
-                // Camera setup - positioned above and angled down
-                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-                this.camera.position.set(0, 25, 35);
-                this.camera.lookAt(0, 0, 0);
-
-                // Renderer setup
-                this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
-                this.renderer.shadowMap.enabled = true;
-
-                // Clock for animations
-                this.clock = new THREE.Clock();
-
-                // Lights
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-                this.scene.add(ambientLight);
-
-                const sunLight = new THREE.DirectionalLight(0xffffff, 0.7);
-                sunLight.position.set(50, 100, 50);
-                sunLight.castShadow = true;
-                this.scene.add(sunLight);
-
-                // Create platform
-                this.createPlatform();
-
-                // Add particle system
-                this.createParticles();
-
-                // Spawn robots
-                this.spawnRobots();
-
-                // Handle window resize
-                window.addEventListener('resize', () => this.onWindowResize());
-
-                // Start animation
-                this.isRunning = true;
-                this.animate();
-
-                console.log('LoginScene initialized successfully');
-            },
-
-            createPlatform() {
-                const platformRadius = 40;
-
-                // Create canvas texture with circuit lines
-                const textureCanvas = document.createElement('canvas');
-                textureCanvas.width = 2048;
-                textureCanvas.height = 2048;
-                const texCtx = textureCanvas.getContext('2d');
-
-                // Dark blue background
-                texCtx.fillStyle = '#002244';
-                texCtx.fillRect(0, 0, 2048, 2048);
-
-                // Add glowing circuit node lights
-                for (let i = 0; i < 60; i++) {
-                    const x = Math.random() * 2048;
-                    const y = Math.random() * 2048;
-                    const color = '#00ccff';
-
-                    texCtx.fillStyle = color;
-                    texCtx.globalAlpha = 0.8;
-                    texCtx.shadowBlur = 20;
-                    texCtx.shadowColor = color;
-                    texCtx.beginPath();
-                    texCtx.arc(x, y, 6, 0, Math.PI * 2);
-                    texCtx.fill();
-                }
-
-                // Add circuit lines
-                texCtx.strokeStyle = '#00ccff';
-                texCtx.lineWidth = 2;
-                texCtx.globalAlpha = 0.4;
-                texCtx.shadowBlur = 8;
-                texCtx.shadowColor = '#00ccff';
-
-                for (let i = 0; i < 120; i++) {
-                    const x = Math.random() * 2048;
-                    const y = Math.random() * 2048;
-                    const length = Math.random() * 100 + 50;
-                    const angle = Math.random() * Math.PI * 2;
-
-                    texCtx.beginPath();
-                    texCtx.moveTo(x, y);
-                    texCtx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
-                    texCtx.stroke();
-                }
-
-                texCtx.shadowBlur = 0;
-
-                // Create platform
-                const texture = new THREE.CanvasTexture(textureCanvas);
-                const platformGeometry = new THREE.CircleGeometry(platformRadius, 64);
-                const platformMaterial = new THREE.MeshStandardMaterial({
-                    map: texture,
-                    metalness: 0.5,
-                    roughness: 0.3,
-                    emissive: new THREE.Color(0x00ccff),
-                    emissiveIntensity: 0.1
-                });
-
-                const platform = new THREE.Mesh(platformGeometry, platformMaterial);
-                platform.rotation.x = -Math.PI / 2;
-                platform.receiveShadow = true;
-                this.scene.add(platform);
-                this.platform = platform;
-
-                // Add glowing ring around platform
-                const ringGeometry = new THREE.RingGeometry(platformRadius - 2, platformRadius, 64);
-                const ringMaterial = new THREE.MeshBasicMaterial({
-                    color: 0x00ccff,
-                    side: THREE.DoubleSide,
-                    transparent: true,
-                    opacity: 0.6
-                });
-
-                const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-                ring.rotation.x = -Math.PI / 2;
-                ring.position.y = 0.1;
-                this.scene.add(ring);
-
-                // Add point lights around the ring
-                const ringLightCount = 12;
-                for (let i = 0; i < ringLightCount; i++) {
-                    const angle = (i / ringLightCount) * Math.PI * 2;
-                    const x = Math.cos(angle) * platformRadius;
-                    const z = Math.sin(angle) * platformRadius;
-
-                    const light = new THREE.PointLight(0x00ccff, 0.4, 10);
-                    light.position.set(x, 0.5, z);
-                    this.scene.add(light);
-                }
-            },
-
-            createParticles() {
-                const particleCount = 300;
-                const particleGeometry = new THREE.BufferGeometry();
-                const particlePositions = new Float32Array(particleCount * 3);
-
-                for (let i = 0; i < particleCount; i++) {
-                    particlePositions[i * 3] = (Math.random() - 0.5) * 80;
-                    particlePositions[i * 3 + 1] = Math.random() * 40;
-                    particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 80;
-                }
-
-                particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-
-                const particleMaterial = new THREE.PointsMaterial({
-                    color: 0xffffff,
-                    size: 0.1,
-                    transparent: true,
-                    opacity: 0.5,
-                    blending: THREE.AdditiveBlending
-                });
-
-                this.particles = new THREE.Points(particleGeometry, particleMaterial);
-                this.scene.add(this.particles);
-            },
-
-            spawnRobots() {
-                const colors = [
-                    { name: 'cyan', hex: 0x00ccff },
-                    { name: 'green', hex: 0x00ff41 },
-                    { name: 'purple', hex: 0xb829e8 },
-                    { name: 'orange', hex: 0xff6b35 },
-                    { name: 'pink', hex: 0xff006e }
-                ];
-
-                const loader = new THREE.GLTFLoader();
-                const robotCount = 5;
-
-                for (let i = 0; i < robotCount; i++) {
-                    const color = colors[i % colors.length];
-                    const angle = (i / robotCount) * Math.PI * 2;
-                    const radius = 15 + Math.random() * 10;
-                    const x = Math.cos(angle) * radius;
-                    const z = Math.sin(angle) * radius;
-
-                    loader.load(
-                        'https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb',
-                        (gltf) => {
-                            const model = gltf.scene;
-                            model.scale.set(0.4, 0.4, 0.4);
-
-                            // Apply color to robot
-                            model.traverse((node) => {
-                                if (node.isMesh) {
-                                    node.castShadow = true;
-                                    node.receiveShadow = true;
-
-                                    if (node.material) {
-                                        node.material = node.material.clone();
-
-                                        if (node.material.color) {
-                                            const currentColor = node.material.color;
-                                            // Change orange/red accent colors
-                                            if (currentColor.r > 0.5 && currentColor.g < 0.5) {
-                                                node.material.color = new THREE.Color(color.hex);
-                                                node.material.emissive = new THREE.Color(color.hex);
-                                                node.material.emissiveIntensity = 0.2;
-                                            }
-                                        }
-                                    }
-                                }
-                            });
-
-                            // Create robot group
-                            const robotGroup = new THREE.Group();
-                            robotGroup.add(model);
-                            robotGroup.position.set(x, 0, z);
-                            this.scene.add(robotGroup);
-
-                            // Setup animation
-                            const mixer = new THREE.AnimationMixer(model);
-                            const walkAnimation = gltf.animations.find(a => a.name === 'Walking');
-                            let action = null;
-
-                            if (walkAnimation) {
-                                action = mixer.clipAction(walkAnimation);
-                                action.play();
-                            }
-
-                            // Store robot data
-                            this.robots.push({
-                                group: robotGroup,
-                                mixer: mixer,
-                                action: action,
-                                velocity: new THREE.Vector3(),
-                                direction: Math.random() * Math.PI * 2,
-                                speed: 0.8 + Math.random() * 0.4,
-                                nextDirectionChange: 3 + Math.random() * 2,
-                                timer: 0
-                            });
-
-                            console.log(`Robot ${i + 1} loaded with color ${color.name}`);
-                        },
-                        undefined,
-                        (error) => {
-                            console.warn('Robot model load failed:', error);
-                        }
-                    );
-                }
-            },
-
-            updateRobots(delta) {
-                const platformRadius = 35; // Keep robots within bounds
-
-                this.robots.forEach(robot => {
-                    // Update animation
-                    if (robot.mixer) {
-                        robot.mixer.update(delta);
-                    }
-
-                    // Update direction timer
-                    robot.timer += delta;
-                    if (robot.timer >= robot.nextDirectionChange) {
-                        robot.timer = 0;
-                        robot.direction = Math.random() * Math.PI * 2;
-                        robot.nextDirectionChange = 3 + Math.random() * 2;
-                    }
-
-                    // Calculate velocity
-                    robot.velocity.x = Math.cos(robot.direction) * robot.speed * delta;
-                    robot.velocity.z = Math.sin(robot.direction) * robot.speed * delta;
-
-                    // Update position
-                    robot.group.position.x += robot.velocity.x;
-                    robot.group.position.z += robot.velocity.z;
-
-                    // Keep robot within platform bounds
-                    const distance = Math.sqrt(robot.group.position.x ** 2 + robot.group.position.z ** 2);
-                    if (distance > platformRadius) {
-                        // Bounce back - point towards center
-                        robot.direction = Math.atan2(-robot.group.position.z, -robot.group.position.x) + (Math.random() - 0.5) * 0.5;
-                        robot.timer = 0;
-                        robot.nextDirectionChange = 3 + Math.random() * 2;
-                    }
-
-                    // Rotate robot to face movement direction
-                    robot.group.rotation.y = robot.direction + Math.PI / 2;
-                });
-            },
-
-            animate() {
-                if (!this.isRunning) return;
-
-                requestAnimationFrame(() => this.animate());
-
-                // Limit to 30 FPS
-                const currentTime = performance.now();
-                const elapsed = currentTime - this.lastFrameTime;
-
-                if (elapsed < this.frameInterval) {
-                    return;
-                }
-
-                this.lastFrameTime = currentTime - (elapsed % this.frameInterval);
-
-                const delta = this.clock.getDelta();
-
-                // Rotate camera slowly around scene
-                this.cameraAngle += 0.0005;
-                const radius = 35;
-                this.camera.position.x = Math.cos(this.cameraAngle) * radius;
-                this.camera.position.z = Math.sin(this.cameraAngle) * radius;
-                this.camera.lookAt(0, 0, 0);
-
-                // Update robots
-                this.updateRobots(delta);
-
-                // Animate particles slightly
-                if (this.particles) {
-                    this.particles.rotation.y += 0.0001;
-                }
-
-                // Render
-                this.renderer.render(this.scene, this.camera);
-            },
-
-            pause() {
-                console.log('Pausing LoginScene');
-                this.isRunning = false;
-            },
-
-            resume() {
-                console.log('Resuming LoginScene');
-                if (!this.isRunning) {
-                    this.isRunning = true;
-                    this.clock = new THREE.Clock(); // Reset clock
-                    this.animate();
-                }
-            },
-
-            onWindowResize() {
-                if (this.camera && this.renderer) {
-                    this.camera.aspect = window.innerWidth / window.innerHeight;
-                    this.camera.updateProjectionMatrix();
-                    this.renderer.setSize(window.innerWidth, window.innerHeight);
-                }
-            }
-        };
-
         // Auto-reconnect on page load
         window.addEventListener('DOMContentLoaded', async () => {
             const savedWalletType = localStorage.getItem('walletType');
@@ -1454,10 +958,10 @@
                 }
             }
 
-            // Initialize LoginScene for wallet screen background
-            setTimeout(() => {
-                LoginScene.init();
-            }, 100); // Small delay to ensure canvas is ready
+            // Set up periodic server cleanup (every 60 seconds)
+            setInterval(() => {
+                cleanupEmptyServers();
+            }, 60000);
         });
 
         async function autoConnectPhantom() {
@@ -1469,8 +973,12 @@
                 GameState.wallet = solana;
                 GameState.walletAddress = response.publicKey.toString();
                 GameState.walletType = 'phantom';
-                GameState.username = localStorage.getItem('username') || `${GameState.walletAddress.slice(0, 4)}...${GameState.walletAddress.slice(-2)}`;
+                GameState.username = `${GameState.walletAddress.slice(0, 6)}...${GameState.walletAddress.slice(-4)}`;
                 GameState.playerColor = parseInt(localStorage.getItem('color')) || 0x00ccff;
+
+                // Save to localStorage
+                localStorage.setItem('username', GameState.username);
+                localStorage.setItem('color', GameState.playerColor.toString());
 
                 await fetchPhantomBalance(response.publicKey);
 
@@ -1495,8 +1003,12 @@
                 GameState.wallet = window.ethereum;
                 GameState.walletAddress = address;
                 GameState.walletType = 'metamask';
-                GameState.username = localStorage.getItem('username') || `${GameState.walletAddress.slice(0, 4)}...${GameState.walletAddress.slice(-2)}`;
+                GameState.username = `${GameState.walletAddress.slice(0, 6)}...${GameState.walletAddress.slice(-4)}`;
                 GameState.playerColor = parseInt(localStorage.getItem('color')) || 0x00ccff;
+
+                // Save to localStorage
+                localStorage.setItem('username', GameState.username);
+                localStorage.setItem('color', GameState.playerColor.toString());
 
                 try {
                     const balance = await provider.getBalance(address);
@@ -1516,27 +1028,15 @@
 
         // Skip all modals and go directly to server browser (used during auto-reconnect)
         function skipToServerBrowser() {
-            console.log('Skipping to server browser after auto-reconnect');
-
-            // Hide all screens/modals aggressively using both classes and direct styles
-            const walletScreen = document.getElementById('walletScreen');
-            const usernameModal = document.getElementById('usernameModal');
-            const colorPickerModal = document.getElementById('colorPickerModal');
-            const serverBrowser = document.getElementById('serverBrowser');
+            console.log('Going to server browser');
 
             // Hide wallet screen
+            const walletScreen = document.getElementById('walletScreen');
             walletScreen.classList.add('hidden');
             walletScreen.style.display = 'none';
 
-            // Hide username modal
-            usernameModal.classList.remove('visible');
-            usernameModal.style.display = 'none';
-
-            // Hide color picker modal
-            colorPickerModal.classList.remove('visible');
-            colorPickerModal.style.display = 'none';
-
             // Show server browser
+            const serverBrowser = document.getElementById('serverBrowser');
             serverBrowser.classList.add('visible');
             serverBrowser.style.display = 'block';
 
@@ -1544,15 +1044,12 @@
             document.getElementById('connectedWallet').textContent =
                 `Connected: ${GameState.username} (${GameState.walletType})`;
 
-            // Pause login scene
-            LoginScene.pause();
-
             // Initialize game systems
             updateHUD();
             initPeer();
             loadServers();
 
-            console.log('Successfully skipped to server browser');
+            console.log('Successfully navigated to server browser');
         }
 
         // Wallet Connection
@@ -1686,72 +1183,18 @@
                 return;
             }
 
-            // Pause login scene
-            LoginScene.pause();
+            // Auto-generate username from wallet address
+            GameState.username = `${GameState.walletAddress.slice(0, 6)}...${GameState.walletAddress.slice(-4)}`;
+            GameState.playerColor = 0x00ccff; // Default cyan color
+
+            // Save to localStorage
+            localStorage.setItem('username', GameState.username);
+            localStorage.setItem('color', GameState.playerColor.toString());
 
             document.getElementById('walletScreen').classList.add('hidden');
 
-            // Show username modal
-            showUsernameModal();
-        }
-
-        function showUsernameModal() {
-            // Skip showing modal during auto-reconnect
-            if (GameState.isAutoReconnecting) {
-                console.log('Skipping username modal during auto-reconnect');
-                return;
-            }
-
-            if (!GameState.walletAddress) {
-                console.error('showUsernameModal called but walletAddress is null - preventing modal from showing');
-                ensureCorrectUIState(); // Force correct UI state
-                return;
-            }
-            const modal = document.getElementById('usernameModal');
-            modal.classList.add('visible');
-            modal.style.display = 'flex';
-
-            // Set default username as shortened wallet address
-            const defaultUsername = `${GameState.walletAddress.slice(0, 4)}...${GameState.walletAddress.slice(-2)}`;
-            document.getElementById('usernameInput').placeholder = defaultUsername;
-        }
-
-        function confirmUsername() {
-            if (!GameState.walletAddress) {
-                console.error('confirmUsername called but walletAddress is null');
-                alert('Please connect your wallet first!');
-                // Aggressively reset UI to wallet screen
-                ensureCorrectUIState();
-                return;
-            }
-            const input = document.getElementById('usernameInput').value.trim();
-            GameState.username = input || `${GameState.walletAddress.slice(0, 4)}...${GameState.walletAddress.slice(-2)}`;
-
-            // Save username to localStorage
-            localStorage.setItem('username', GameState.username);
-
-            document.getElementById('usernameModal').classList.remove('visible');
-
-            // Show color picker modal
-            showColorPicker();
-        }
-
-        function showColorPicker() {
-            // Skip showing modal during auto-reconnect
-            if (GameState.isAutoReconnecting) {
-                console.log('Skipping color picker modal during auto-reconnect');
-                return;
-            }
-
-            document.getElementById('colorPickerModal').classList.add('visible');
-            // Load saved color if exists
-            const savedColor = localStorage.getItem('color');
-            if (savedColor) {
-                const colorHex = '#' + parseInt(savedColor).toString(16).padStart(6, '0');
-                document.getElementById('customColorPicker').value = colorHex;
-                document.getElementById('colorPreview').style.background = colorHex;
-                selectedColor = parseInt(savedColor);
-            }
+            // Skip directly to server browser
+            skipToServerBrowser();
         }
 
         function finishSetup() {
@@ -1972,7 +1415,29 @@
         }
 
         // Server Management
+        function cleanupEmptyServers() {
+            const servers = JSON.parse(localStorage.getItem('cryptoworld_servers') || '[]');
+            const now = Date.now();
+
+            // Remove servers with 0 players that are older than 5 minutes
+            const activeServers = servers.filter(server => {
+                if ((server.playerCount === 0 || server.players === 0)) {
+                    const age = now - (server.created || 0);
+                    return age < 300000; // Keep for 5 minutes even if empty
+                }
+                return true; // Keep servers with players
+            });
+
+            if (activeServers.length !== servers.length) {
+                console.log(`Cleaned up ${servers.length - activeServers.length} empty servers`);
+                localStorage.setItem('cryptoworld_servers', JSON.stringify(activeServers));
+            }
+        }
+
         function loadServers() {
+            // Clean up empty servers first
+            cleanupEmptyServers();
+
             // In production, this would fetch from a decentralized registry
             const servers = JSON.parse(localStorage.getItem('cryptoworld_servers') || '[]');
 
@@ -2011,6 +1476,7 @@
                 name: name,
                 owner: GameState.walletAddress,
                 players: 1,
+                playerCount: 1,
                 created: Date.now()
             };
 
@@ -2023,44 +1489,92 @@
         }
 
         function joinServer(server) {
+            console.log('Attempting to join server:', server);
+
+            // Validate server object
+            if (!server || !server.id) {
+                console.error('Invalid server object:', server);
+                alert('Cannot join server: Invalid server data');
+                return;
+            }
+
+            // Validate peer is initialized
+            if (!GameState.peer || !GameState.peer.id) {
+                console.error('Peer not initialized. Cannot join server.');
+                alert('Connection not ready. Please wait and try again.');
+                return;
+            }
+
+            console.log(`Joining server "${server.name}" (ID: ${server.id})`);
+            console.log('Your peer ID:', GameState.peer.id);
+
             GameState.currentServer = server;
             document.getElementById('serverBrowser').classList.remove('visible');
             document.getElementById('gameCanvas').classList.add('active');
 
-            // Hide login canvas when game starts
-            const loginCanvas = document.getElementById('loginCanvas');
-            if (loginCanvas) {
-                loginCanvas.style.display = 'none';
-            }
-
             // Connect to server host if not the host
             if (server.id !== GameState.peer.id) {
-                console.log('Connecting to server host:', server.id);
-                const conn = GameState.peer.connect(server.id, {
-                    reliable: true,
-                    serialization: 'json'
-                });
-                handlePeerConnection(conn);
+                console.log('You are a client. Connecting to server host:', server.id);
 
-                // Request peer list after connection
-                conn.on('open', () => {
-                    conn.send({ type: 'request_peers' });
-
-                    // Broadcast to existing connections that we joined
-                    GameState.connections.forEach(c => {
-                        if (c.open && c.peer !== conn.peer) {
-                            c.send({
-                                type: 'new_peer',
-                                peerId: GameState.peer.id
-                            });
-                        }
+                try {
+                    const conn = GameState.peer.connect(server.id, {
+                        reliable: true,
+                        serialization: 'json'
                     });
-                });
+
+                    if (!conn) {
+                        throw new Error('Failed to create connection');
+                    }
+
+                    // Handle connection errors
+                    conn.on('error', (err) => {
+                        console.error('Connection error:', err);
+                        alert(`Failed to connect to server: ${err.message || 'Unknown error'}`);
+                    });
+
+                    // Handle connection close
+                    conn.on('close', () => {
+                        console.warn('Connection to server closed');
+                    });
+
+                    handlePeerConnection(conn);
+
+                    // Request peer list after connection
+                    conn.on('open', () => {
+                        console.log('Successfully connected to server host');
+                        conn.send({ type: 'request_peers' });
+
+                        // Broadcast to existing connections that we joined
+                        GameState.connections.forEach(c => {
+                            if (c.open && c.peer !== conn.peer) {
+                                c.send({
+                                    type: 'new_peer',
+                                    peerId: GameState.peer.id
+                                });
+                            }
+                        });
+                    });
+                } catch (error) {
+                    console.error('Failed to connect to server:', error);
+                    alert('Failed to connect to server. Please try again.');
+                    // Return to server browser
+                    document.getElementById('gameCanvas').classList.remove('active');
+                    document.getElementById('serverBrowser').classList.add('visible');
+                    return;
+                }
             } else {
                 console.log('You are the server host');
             }
 
-            initGame();
+            try {
+                initGame();
+            } catch (error) {
+                console.error('Failed to initialize game:', error);
+                alert('Failed to start game. Please try again.');
+                // Return to server browser
+                document.getElementById('gameCanvas').classList.remove('active');
+                document.getElementById('serverBrowser').classList.add('visible');
+            }
         }
 
         // Game Init
@@ -2958,85 +2472,6 @@
         document.getElementById('connectPhantom').onclick = connectPhantom;
         document.getElementById('connectMetaMask').onclick = connectMetaMask;
 
-        // Username modal
-        document.getElementById('confirmUsername').onclick = confirmUsername;
-        document.getElementById('usernameInput').onkeypress = (e) => {
-            if (e.key === 'Enter') confirmUsername();
-        };
-
-        // Color picker modal
-        let selectedColor = 0x00ccff;
-        document.querySelectorAll('#colorPickerModal .color-option').forEach(option => {
-            option.onclick = () => {
-                document.querySelectorAll('#colorPickerModal .color-option').forEach(opt => {
-                    opt.classList.remove('selected');
-                });
-                option.classList.add('selected');
-                selectedColor = parseInt(option.dataset.color);
-                const colorHex = '#' + selectedColor.toString(16).padStart(6, '0');
-                document.getElementById('colorPreview').style.background = colorHex;
-                document.getElementById('customColorPicker').value = colorHex;
-            };
-        });
-
-        document.getElementById('customColorPicker').oninput = (e) => {
-            const hexColor = e.target.value;
-            selectedColor = parseInt(hexColor.replace('#', ''), 16);
-            document.getElementById('colorPreview').style.background = hexColor;
-            // Deselect all preset colors
-            document.querySelectorAll('#colorPickerModal .color-option').forEach(opt => {
-                opt.classList.remove('selected');
-            });
-        };
-
-        document.getElementById('confirmColor').onclick = () => {
-            GameState.playerColor = selectedColor;
-
-            // Save color to localStorage
-            localStorage.setItem('color', selectedColor.toString());
-
-            // Update player color if model is loaded
-            if (GameState.playerMesh) {
-                GameState.playerMesh.traverse((node) => {
-                    if (node.isMesh && node.material) {
-                        const currentColor = node.material.color;
-                        // Update accent colors
-                        if (currentColor.r > 0.5 && currentColor.g < 0.5 ||
-                            (currentColor.r === 0 && currentColor.g === 0.8 && currentColor.b === 1)) {
-                            node.material.color.setHex(GameState.playerColor);
-                            node.material.emissive.setHex(GameState.playerColor);
-                        }
-                    }
-                });
-            }
-
-            // Broadcast color change
-            GameState.connections.forEach(conn => {
-                if (conn.open) conn.send({ type: 'color', color: GameState.playerColor });
-            });
-
-            document.getElementById('colorPickerModal').classList.remove('visible');
-
-            // If first time setup, finish setup
-            if (!document.getElementById('serverBrowser').classList.contains('visible')) {
-                finishSetup();
-            }
-        };
-
-        document.getElementById('cancelColor').onclick = () => {
-            // Use default color if skipped
-            if (!localStorage.getItem('color')) {
-                GameState.playerColor = 0x00ccff;
-                localStorage.setItem('color', GameState.playerColor.toString());
-            }
-            document.getElementById('colorPickerModal').classList.remove('visible');
-
-            // If first time setup, finish setup
-            if (!document.getElementById('serverBrowser').classList.contains('visible')) {
-                finishSetup();
-            }
-        };
-
         document.getElementById('createServerBtn').onclick = () => {
             document.getElementById('createServerModal').classList.add('visible');
         };
@@ -3060,10 +2495,6 @@
         document.getElementById('confirmDropLink').onclick = dropLink;
         document.getElementById('cancelDropLink').onclick = () => {
             document.getElementById('dropLinkModal').classList.remove('visible');
-        };
-
-        document.getElementById('changeColorBtn').onclick = () => {
-            document.getElementById('colorPickerModal').classList.add('visible');
         };
 
         document.getElementById('leaveServerBtn').onclick = () => {
@@ -3202,13 +2633,10 @@
                 return;
             }
 
-            // If no wallet is connected, ensure wallet screen is showing and all modals are hidden
+            // If no wallet is connected, ensure wallet screen is showing
             if (!GameState.walletAddress) {
-                // Aggressively reset UI using both classes and direct styles
                 const walletScreen = document.getElementById('walletScreen');
                 const serverBrowser = document.getElementById('serverBrowser');
-                const usernameModal = document.getElementById('usernameModal');
-                const colorModal = document.getElementById('colorPickerModal');
 
                 walletScreen.classList.remove('hidden');
                 walletScreen.style.display = 'flex';
@@ -3216,13 +2644,7 @@
                 serverBrowser.classList.remove('visible');
                 serverBrowser.style.display = 'none';
 
-                usernameModal.classList.remove('visible');
-                usernameModal.style.display = 'none';
-
-                colorModal.classList.remove('visible');
-                colorModal.style.display = 'none';
-
-                console.log('UI reset: showing wallet screen, hiding all modals');
+                console.log('UI reset: showing wallet screen');
             }
         }
 
