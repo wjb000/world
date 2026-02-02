@@ -972,6 +972,52 @@
     <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.min.js"></script>
 
     <script>
+        // LocalStorage safety wrapper
+        const SafeStorage = {
+            isAvailable: (() => {
+                try {
+                    const test = '__storage_test__';
+                    localStorage.setItem(test, test);
+                    localStorage.removeItem(test);
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            })(),
+
+            getItem: (key) => {
+                try {
+                    return SafeStorage.isAvailable ? localStorage.getItem(key) : null;
+                } catch (e) {
+                    console.warn('localStorage.getItem failed:', e);
+                    return null;
+                }
+            },
+
+            setItem: (key, value) => {
+                try {
+                    if (SafeStorage.isAvailable) {
+                        localStorage.setItem(key, value);
+                        return true;
+                    }
+                    return false;
+                } catch (e) {
+                    console.warn('localStorage.setItem failed:', e);
+                    return false;
+                }
+            },
+
+            removeItem: (key) => {
+                try {
+                    if (SafeStorage.isAvailable) {
+                        localStorage.removeItem(key);
+                    }
+                } catch (e) {
+                    console.warn('localStorage.removeItem failed:', e);
+                }
+            }
+        };
+
         // Game State
         const GameState = {
             wallet: null,
@@ -1015,10 +1061,10 @@
 
         // Auto-reconnect on page load
         window.addEventListener('DOMContentLoaded', async () => {
-            const savedWalletType = localStorage.getItem('walletType');
-            const savedWalletAddress = localStorage.getItem('walletAddress');
-            const savedUsername = localStorage.getItem('username');
-            const savedColor = localStorage.getItem('color');
+            const savedWalletType = SafeStorage.getItem('walletType');
+            const savedWalletAddress = SafeStorage.getItem('walletAddress');
+            const savedUsername = SafeStorage.getItem('username');
+            const savedColor = SafeStorage.getItem('color');
 
             if (savedWalletType && savedWalletAddress) {
                 console.log('Found saved wallet, attempting auto-reconnect...');
@@ -1034,10 +1080,10 @@
                     console.warn('Auto-reconnect failed:', error);
                     GameState.isAutoReconnecting = false; // Reset flag after failed reconnect
                     // Clear saved data and show wallet screen
-                    localStorage.removeItem('walletType');
-                    localStorage.removeItem('walletAddress');
-                    localStorage.removeItem('username');
-                    localStorage.removeItem('color');
+                    SafeStorage.removeItem('walletType');
+                    SafeStorage.removeItem('walletAddress');
+                    SafeStorage.removeItem('username');
+                    SafeStorage.removeItem('color');
                 }
             }
 
@@ -1064,11 +1110,11 @@
                 GameState.walletAddress = response.publicKey.toString();
                 GameState.walletType = 'phantom';
                 GameState.username = `${GameState.walletAddress.slice(0, 6)}...${GameState.walletAddress.slice(-4)}`;
-                GameState.playerColor = parseInt(localStorage.getItem('color')) || 0x00ccff;
+                GameState.playerColor = parseInt(SafeStorage.getItem('color')) || 0x00ccff;
 
                 // Save to localStorage
-                localStorage.setItem('username', GameState.username);
-                localStorage.setItem('color', GameState.playerColor.toString());
+                SafeStorage.setItem('username', GameState.username);
+                SafeStorage.setItem('color', GameState.playerColor.toString());
 
                 await fetchPhantomBalance(response.publicKey);
 
@@ -1100,11 +1146,11 @@
                 GameState.walletAddress = address;
                 GameState.walletType = 'metamask';
                 GameState.username = `${GameState.walletAddress.slice(0, 6)}...${GameState.walletAddress.slice(-4)}`;
-                GameState.playerColor = parseInt(localStorage.getItem('color')) || 0x00ccff;
+                GameState.playerColor = parseInt(SafeStorage.getItem('color')) || 0x00ccff;
 
                 // Save to localStorage
-                localStorage.setItem('username', GameState.username);
-                localStorage.setItem('color', GameState.playerColor.toString());
+                SafeStorage.setItem('username', GameState.username);
+                SafeStorage.setItem('color', GameState.playerColor.toString());
 
                 try {
                     const balance = await provider.getBalance(address);
@@ -1216,10 +1262,10 @@
                 });
 
                 // Save to localStorage
-                localStorage.setItem('walletType', 'phantom');
-                localStorage.setItem('walletAddress', address);
-                localStorage.setItem('username', GameState.username);
-                localStorage.setItem('color', GameState.playerColor.toString());
+                SafeStorage.setItem('walletType', 'phantom');
+                SafeStorage.setItem('walletAddress', address);
+                SafeStorage.setItem('username', GameState.username);
+                SafeStorage.setItem('color', GameState.playerColor.toString());
 
                 // Continue to game
                 skipToServerBrowser();
@@ -1328,10 +1374,10 @@
                 });
 
                 // Save to localStorage
-                localStorage.setItem('walletType', 'metamask');
-                localStorage.setItem('walletAddress', address);
-                localStorage.setItem('username', GameState.username);
-                localStorage.setItem('color', GameState.playerColor.toString());
+                SafeStorage.setItem('walletType', 'metamask');
+                SafeStorage.setItem('walletAddress', address);
+                SafeStorage.setItem('username', GameState.username);
+                SafeStorage.setItem('color', GameState.playerColor.toString());
 
                 // Continue to game
                 skipToServerBrowser();
@@ -1355,10 +1401,10 @@
             if (btn) btn.textContent = 'Disconnecting...';
 
             // Clear all data
-            localStorage.removeItem('walletType');
-            localStorage.removeItem('walletAddress');
-            localStorage.removeItem('username');
-            localStorage.removeItem('color');
+            SafeStorage.removeItem('walletType');
+            SafeStorage.removeItem('walletAddress');
+            SafeStorage.removeItem('username');
+            SafeStorage.removeItem('color');
 
             // Clear game state
             GameState.wallet = null;
@@ -1387,8 +1433,8 @@
             GameState.playerColor = 0x00ccff; // Default cyan color
 
             // Save to localStorage
-            localStorage.setItem('username', GameState.username);
-            localStorage.setItem('color', GameState.playerColor.toString());
+            SafeStorage.setItem('username', GameState.username);
+            SafeStorage.setItem('color', GameState.playerColor.toString());
 
             document.getElementById('walletScreen').classList.add('hidden');
 
@@ -1615,7 +1661,7 @@
 
         // Server Management with Heartbeat System
         function cleanupEmptyServers() {
-            const servers = JSON.parse(localStorage.getItem('cryptoworld_servers') || '[]');
+            const servers = JSON.parse(SafeStorage.getItem('cryptoworld_servers') || '[]');
             const now = Date.now();
             const HEARTBEAT_TIMEOUT = 30000; // 30 seconds
 
@@ -1626,7 +1672,7 @@
             });
 
             if (activeServers.length !== servers.length) {
-                localStorage.setItem('cryptoworld_servers', JSON.stringify(activeServers));
+                SafeStorage.setItem('cryptoworld_servers', JSON.stringify(activeServers));
                 console.log(`Cleaned up stale servers. Active: ${activeServers.length}, Removed: ${servers.length - activeServers.length}`);
             }
         }
@@ -1635,13 +1681,13 @@
             // Clean up stale servers first
             cleanupEmptyServers();
 
-            const servers = JSON.parse(localStorage.getItem('cryptoworld_servers') || '[]');
+            const servers = JSON.parse(SafeStorage.getItem('cryptoworld_servers') || '[]');
 
             // Filter to show:
             // 1. Servers with recent heartbeat (active)
             // 2. Not the server we're currently in (if any)
             const activeServers = servers.filter(s => {
-                const notCurrentServer = !GameState.currentServer || s.id !== GameState.currentServer;
+                const notCurrentServer = !GameState.currentServer || s.id !== GameState.currentServer.id;
                 return notCurrentServer;
             });
 
@@ -1681,14 +1727,14 @@
             }
 
             GameState.heartbeatInterval = setInterval(() => {
-                if (GameState.currentServer && GameState.peer?.id === GameState.currentServer) {
+                if (GameState.currentServer && GameState.peer?.id === GameState.currentServer.id) {
                     // Update heartbeat timestamp for our server
-                    const servers = JSON.parse(localStorage.getItem('cryptoworld_servers') || '[]');
-                    const serverIndex = servers.findIndex(s => s.id === GameState.currentServer);
+                    const servers = JSON.parse(SafeStorage.getItem('cryptoworld_servers') || '[]');
+                    const serverIndex = servers.findIndex(s => s.id === GameState.currentServer.id);
 
                     if (serverIndex !== -1) {
                         servers[serverIndex].lastHeartbeat = Date.now();
-                        localStorage.setItem('cryptoworld_servers', JSON.stringify(servers));
+                        SafeStorage.setItem('cryptoworld_servers', JSON.stringify(servers));
                         console.log('Server heartbeat sent');
                     }
                 }
@@ -1704,16 +1750,16 @@
 
         // Clean up server when leaving
         function removeMyServer() {
-            if (GameState.currentServer && GameState.peer?.id === GameState.currentServer) {
-                const servers = JSON.parse(localStorage.getItem('cryptoworld_servers') || '[]');
-                const filteredServers = servers.filter(s => s.id !== GameState.currentServer);
-                localStorage.setItem('cryptoworld_servers', JSON.stringify(filteredServers));
+            if (GameState.currentServer && GameState.peer?.id === GameState.currentServer.id) {
+                const servers = JSON.parse(SafeStorage.getItem('cryptoworld_servers') || '[]');
+                const filteredServers = servers.filter(s => s.id !== GameState.currentServer.id);
+                SafeStorage.setItem('cryptoworld_servers', JSON.stringify(filteredServers));
                 console.log('Removed my server from list');
             }
         }
 
         function joinServerById(serverId) {
-            const servers = JSON.parse(localStorage.getItem('cryptoworld_servers')) || [];
+            const servers = JSON.parse(SafeStorage.getItem('cryptoworld_servers')) || [];
             const server = servers.find(s => s.id === serverId);
             if (server) {
                 joinServer(server);
@@ -1749,9 +1795,9 @@
             };
 
             // Save to localStorage
-            const servers = JSON.parse(localStorage.getItem('cryptoworld_servers') || '[]');
+            const servers = JSON.parse(SafeStorage.getItem('cryptoworld_servers') || '[]');
             servers.push(server);
-            localStorage.setItem('cryptoworld_servers', JSON.stringify(servers));
+            SafeStorage.setItem('cryptoworld_servers', JSON.stringify(servers));
 
             console.log('Server created:', server);
 
@@ -1799,7 +1845,7 @@
             loadingScreen.classList.remove('hidden');
 
             // Store server info
-            GameState.currentServer = server.id;
+            GameState.currentServer = server;
             console.log('Set currentServer to:', GameState.currentServer);
 
             // Hide server browser
@@ -2687,6 +2733,12 @@
         }
 
         // Chat
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
         function addChatMessage(sender, message, isSystem = false) {
             const messages = document.getElementById('chatMessages');
             const div = document.createElement('div');
@@ -2695,7 +2747,9 @@
             if (isSystem) {
                 div.textContent = message;
             } else {
-                div.innerHTML = `<span class="sender">${sender.slice(0, 8)}...:</span>${message}`;
+                const escapedSender = escapeHTML(sender.slice(0, 8));
+                const escapedMessage = escapeHTML(message);
+                div.innerHTML = `<span class="sender">${escapedSender}...:</span>${escapedMessage}`;
             }
 
             messages.appendChild(div);
@@ -3012,6 +3066,31 @@
             });
             GameState.players.clear();
 
+            // Clear dropped items
+            GameState.droppedItems.forEach(item => {
+                if (item.mesh && GameState.scene) {
+                    GameState.scene.remove(item.mesh);
+                }
+                if (item.light && GameState.scene) {
+                    GameState.scene.remove(item.light);
+                }
+            });
+            GameState.droppedItems = [];
+
+            // Clear portals
+            GameState.portals.forEach(portal => {
+                if (portal.group && GameState.scene) {
+                    GameState.scene.remove(portal.group);
+                }
+                if (portal.light && GameState.scene) {
+                    GameState.scene.remove(portal.light);
+                }
+                if (portal.particles && GameState.scene) {
+                    GameState.scene.remove(portal.particles);
+                }
+            });
+            GameState.portals = [];
+
             // Clear game state
             GameState.currentServer = null;
 
@@ -3061,7 +3140,7 @@
         // Create portal modal
         document.getElementById('createPortalBtn').onclick = () => {
             // Populate server list
-            const servers = JSON.parse(localStorage.getItem('cryptoworld_servers') || '[]');
+            const servers = JSON.parse(SafeStorage.getItem('cryptoworld_servers') || '[]');
             const select = document.getElementById('portalDestination');
             select.innerHTML = '<option value="">Select destination server...</option>';
 
@@ -3122,7 +3201,7 @@
             GameState.connections.clear();
 
             // Find server in list
-            const servers = JSON.parse(localStorage.getItem('cryptoworld_servers') || '[]');
+            const servers = JSON.parse(SafeStorage.getItem('cryptoworld_servers') || '[]');
             const server = servers.find(s => s.id === serverId);
 
             if (server) {
