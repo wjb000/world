@@ -487,6 +487,42 @@
             color: #fff;
         }
 
+        /* Username Modal */
+        #usernameModal {
+            display: flex;
+        }
+
+        #usernameModal input {
+            margin-bottom: 10px;
+        }
+
+        /* Color Picker Modal */
+        #colorPickerModal .color-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        #colorPickerModal .color-option {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        #colorPickerModal .color-option:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px currentColor;
+        }
+
+        #colorPickerModal .color-option.selected {
+            border-color: #fff;
+            box-shadow: 0 0 30px currentColor;
+        }
+
         /* Mobile Responsive */
         @media (max-width: 768px) {
             #chatContainer {
@@ -863,6 +899,7 @@
 
     <!-- Action Menu -->
     <div id="actionMenu" class="hud">
+        <button class="action-btn" id="changeColorBtn">🎨 Change Color</button>
         <button class="action-btn" id="dropLinkBtn">📎 Drop Link</button>
         <button class="action-btn" id="createPortalBtn">🌀 Create Portal</button>
         <button class="action-btn" id="sendPaymentBtn">💰 Send Payment</button>
@@ -919,6 +956,39 @@
             <div class="modal-actions">
                 <button class="confirm" id="confirmCreateServer">Create</button>
                 <button class="cancel" id="cancelCreateServer">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Username Modal -->
+    <div class="modal" id="usernameModal">
+        <div class="modal-content">
+            <h2>Choose Your Username</h2>
+            <input type="text" id="usernameInput" placeholder="Enter username" maxlength="20">
+            <p style="font-size: 12px; color: #aaa;">Leave blank to use wallet address</p>
+            <div class="modal-actions">
+                <button class="confirm" id="confirmUsername">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Color Picker Modal -->
+    <div class="modal" id="colorPickerModal">
+        <div class="modal-content">
+            <h2>Choose Your Color</h2>
+            <div class="color-grid">
+                <div class="color-option" data-color="0x00ccff" style="background: #00ccff;"></div>
+                <div class="color-option" data-color="0x00ff41" style="background: #00ff41;"></div>
+                <div class="color-option" data-color="0x9370db" style="background: #9370db;"></div>
+                <div class="color-option" data-color="0xf97316" style="background: #f97316;"></div>
+                <div class="color-option" data-color="0xff6b9d" style="background: #ff6b9d;"></div>
+                <div class="color-option" data-color="0xff0040" style="background: #ff0040;"></div>
+                <div class="color-option" data-color="0xffff00" style="background: #ffff00;"></div>
+                <div class="color-option" data-color="0xffffff" style="background: #ffffff;"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="confirm" id="confirmColor">Continue</button>
+                <button class="cancel" id="cancelColor">Skip</button>
             </div>
         </div>
     </div>
@@ -1009,7 +1079,10 @@
             lootItems: [],
             mixer: null,
             animations: {},
-            particles: null
+            particles: null,
+            username: null,
+            playerColor: 0x00ccff,
+            clock: null
         };
 
         // Wallet Connection
@@ -1096,9 +1169,30 @@
 
         function onWalletConnected() {
             document.getElementById('walletScreen').classList.add('hidden');
+
+            // Show username modal
+            showUsernameModal();
+        }
+
+        function showUsernameModal() {
+            const modal = document.getElementById('usernameModal');
+            modal.classList.add('visible');
+
+            // Set default username as shortened wallet address
+            const defaultUsername = `${GameState.walletAddress.slice(0, 4)}...${GameState.walletAddress.slice(-2)}`;
+            document.getElementById('usernameInput').placeholder = defaultUsername;
+        }
+
+        function confirmUsername() {
+            const input = document.getElementById('usernameInput').value.trim();
+            GameState.username = input || `${GameState.walletAddress.slice(0, 4)}...${GameState.walletAddress.slice(-2)}`;
+
+            document.getElementById('usernameModal').classList.remove('visible');
+
+            // Show server browser
             document.getElementById('serverBrowser').classList.add('visible');
             document.getElementById('connectedWallet').textContent =
-                `Connected: ${GameState.walletAddress.slice(0, 8)}...${GameState.walletAddress.slice(-6)} (${GameState.walletType})`;
+                `Connected: ${GameState.username} (${GameState.walletType})`;
 
             updateHUD();
             initPeer();
@@ -1129,15 +1223,18 @@
             conn.on('open', () => {
                 GameState.connections.set(conn.peer, conn);
 
-                // Send initial state
+                // Send initial state with username and color
                 conn.send({
                     type: 'init',
                     wallet: GameState.walletAddress,
+                    username: GameState.username,
+                    color: GameState.playerColor,
                     position: GameState.playerMesh ? {
                         x: GameState.playerMesh.position.x,
                         y: GameState.playerMesh.position.y,
                         z: GameState.playerMesh.position.z
-                    } : { x: 0, y: 0, z: 0 }
+                    } : { x: 0, y: 0, z: 0 },
+                    rotation: GameState.playerMesh ? GameState.playerMesh.rotation.y : 0
                 });
 
                 updatePlayerList();
@@ -1149,6 +1246,10 @@
 
             conn.on('close', () => {
                 GameState.connections.delete(conn.peer);
+                const player = GameState.players.get(conn.peer);
+                if (player && player.group) {
+                    GameState.scene.remove(player.group);
+                }
                 GameState.players.delete(conn.peer);
                 updatePlayerList();
             });
@@ -1157,10 +1258,16 @@
         function handlePeerData(peerId, data) {
             switch (data.type) {
                 case 'init':
-                    createRemotePlayer(peerId, data.wallet, data.position);
+                    createRemotePlayer(peerId, data.wallet, data.username, data.color, data.position, data.rotation);
                     break;
                 case 'position':
-                    updateRemotePlayer(peerId, data.position);
+                    updateRemotePlayer(peerId, data.position, data.rotation);
+                    break;
+                case 'username':
+                    updateRemotePlayerUsername(peerId, data.username);
+                    break;
+                case 'color':
+                    updateRemotePlayerColor(peerId, data.color);
                     break;
                 case 'chat':
                     addChatMessage(data.sender, data.message);
@@ -1245,6 +1352,9 @@
             GameState.scene = new THREE.Scene();
             GameState.scene.background = new THREE.Color(0x000510);
 
+            // Initialize clock for delta time
+            GameState.clock = new THREE.Clock();
+
             // Show instructions when game starts
             document.getElementById('instructions').classList.add('active');
 
@@ -1262,75 +1372,106 @@
             sunLight.castShadow = true;
             GameState.scene.add(sunLight);
 
-            // Cyberpunk Platform
+            // Cyberpunk Platform - EXACT COPY FROM PERSONAL SITE
             const platformRadius = 55;
 
-            // Create canvas texture with circuit lines
+            // Create canvas texture with circuit lines - exact implementation
             const textureCanvas = document.createElement('canvas');
             textureCanvas.width = 2048;
             textureCanvas.height = 2048;
             const texCtx = textureCanvas.getContext('2d');
 
-            // Dark background
-            texCtx.fillStyle = '#0a0a0a';
+            // Dark blue background
+            texCtx.fillStyle = '#002244';
             texCtx.fillRect(0, 0, 2048, 2048);
 
-            // Draw circuit lines
-            texCtx.strokeStyle = '#00ffff';
-            texCtx.lineWidth = 2;
-            texCtx.shadowBlur = 10;
-            texCtx.shadowColor = '#00ffff';
-
-            for (let i = 0; i < 100; i++) {
+            // Add glowing circuit node lights
+            for (let i = 0; i < 80; i++) {
                 const x = Math.random() * 2048;
                 const y = Math.random() * 2048;
-                const length = Math.random() * 200 + 50;
+                const color = '#00ccff';
+
+                texCtx.fillStyle = color;
+                texCtx.globalAlpha = 0.8;
+                texCtx.shadowBlur = 15;
+                texCtx.shadowColor = color;
+                texCtx.beginPath();
+                texCtx.arc(x, y, 4, 0, Math.PI * 2);
+                texCtx.fill();
+
+                // Small circle around each light
+                texCtx.strokeStyle = color;
+                texCtx.lineWidth = 1;
+                texCtx.globalAlpha = 0.5;
+                texCtx.beginPath();
+                texCtx.arc(x, y, 10, 0, Math.PI * 2);
+                texCtx.stroke();
+            }
+
+            // Add data stream lines
+            texCtx.strokeStyle = '#00ccff';
+            texCtx.lineWidth = 2;
+            for (let i = 0; i < 30; i++) {
+                const x = Math.random() * 2048;
+                const y = Math.random() * 2048;
+                const length = Math.random() * 100 + 50;
                 const angle = Math.random() * Math.PI * 2;
 
+                texCtx.globalAlpha = 0.4;
+                texCtx.shadowBlur = 8;
+                texCtx.shadowColor = '#00ccff';
                 texCtx.beginPath();
                 texCtx.moveTo(x, y);
                 texCtx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
                 texCtx.stroke();
             }
 
-            const floorTexture = new THREE.CanvasTexture(textureCanvas);
+            texCtx.shadowBlur = 0;
 
-            // Create circular platform
+            const floorTexture = new THREE.CanvasTexture(textureCanvas);
+            floorTexture.needsUpdate = true;
+
+            // Create flat circular platform with cyberpunk texture
             const platformGeometry = new THREE.CircleGeometry(platformRadius, 64);
             const platformMaterial = new THREE.MeshStandardMaterial({
                 map: floorTexture,
                 roughness: 0.3,
                 metalness: 0.7,
                 emissive: new THREE.Color(0x002244),
+                emissiveMap: floorTexture,
                 emissiveIntensity: 0.5
             });
 
             const platform = new THREE.Mesh(platformGeometry, platformMaterial);
             platform.rotation.x = -Math.PI / 2;
+            platform.position.y = 0;
             platform.receiveShadow = true;
             GameState.scene.add(platform);
 
-            // Blue glowing ring around edge
-            const ringGeometry = new THREE.RingGeometry(platformRadius - 1, platformRadius + 0.5, 64);
-            const ringMaterial = new THREE.MeshBasicMaterial({
-                color: 0x00ffff,
-                side: THREE.DoubleSide,
+            // Glowing blue ring around the edge - exact copy
+            const ringGeometry = new THREE.RingGeometry(platformRadius - 0.5, platformRadius + 0.5, 64);
+            const ringMaterial = new THREE.MeshStandardMaterial({
+                color: 0x00ccff,
+                emissive: 0x00ccff,
+                emissiveIntensity: 1.5,
                 transparent: true,
                 opacity: 0.8,
-                blending: THREE.AdditiveBlending
+                side: THREE.DoubleSide
             });
+
             const ring = new THREE.Mesh(ringGeometry, ringMaterial);
             ring.rotation.x = -Math.PI / 2;
             ring.position.y = 0.1;
             GameState.scene.add(ring);
 
-            // Point lights around the ring
-            const numLights = 12;
-            for (let i = 0; i < numLights; i++) {
-                const angle = (i / numLights) * Math.PI * 2;
+            // Add point lights around the ring for glow effect - exact count from personal site
+            const ringLightCount = 16;
+            for (let i = 0; i < ringLightCount; i++) {
+                const angle = (i / ringLightCount) * Math.PI * 2;
                 const x = Math.cos(angle) * platformRadius;
                 const z = Math.sin(angle) * platformRadius;
-                const light = new THREE.PointLight(0x00ffff, 1, 20);
+
+                const light = new THREE.PointLight(0x00ccff, 0.5, 10);
                 light.position.set(x, 0.5, z);
                 GameState.scene.add(light);
             }
@@ -1352,29 +1493,49 @@
                     const model = gltf.scene;
                     model.scale.set(0.5, 0.5, 0.5);
 
-                    // Apply cyan blue color
+                    // CRITICAL FIX: Only change red/orange accents to cyan, keep body colors
                     model.traverse((node) => {
                         if (node.isMesh) {
-                            node.material = node.material.clone();
-                            node.material.color.setHex(0x00ccff);
-                            node.material.emissive = new THREE.Color(0x00ccff);
-                            node.material.emissiveIntensity = 0.3;
                             node.castShadow = true;
+                            node.receiveShadow = true;
+
+                            if (node.material) {
+                                node.material = node.material.clone();
+
+                                // Only change orange/red accent colors to cyan
+                                if (node.material.color) {
+                                    const currentColor = node.material.color;
+                                    // If color has red/orange tones (high red, low blue), replace with cyan
+                                    if (currentColor.r > 0.5 && currentColor.g < 0.5) {
+                                        node.material.color = new THREE.Color(GameState.playerColor);
+                                        node.material.emissive = new THREE.Color(GameState.playerColor);
+                                        node.material.emissiveIntensity = 0.3;
+                                    }
+                                }
+                            }
                         }
                     });
 
                     GameState.playerMesh.add(model);
 
-                    // Setup animations
+                    // Setup animations with proper configuration
                     GameState.mixer = new THREE.AnimationMixer(model);
                     gltf.animations.forEach((clip) => {
-                        GameState.animations[clip.name] = GameState.mixer.clipAction(clip);
+                        const action = GameState.mixer.clipAction(clip);
+                        action.setLoop(THREE.LoopRepeat);
+                        action.clampWhenFinished = false;
+                        action.enable = true;
+                        GameState.animations[clip.name] = action;
                     });
 
                     // Play idle animation
                     if (GameState.animations['Idle']) {
+                        GameState.animations['Idle'].reset();
+                        GameState.animations['Idle'].setEffectiveWeight(1);
                         GameState.animations['Idle'].play();
                     }
+
+                    console.log('Robot loaded with animations:', Object.keys(GameState.animations));
                 },
                 undefined,
                 (error) => {
@@ -1382,8 +1543,8 @@
                     // Fallback capsule
                     const capsuleGeometry = new THREE.CapsuleGeometry(0.5, 1.5, 8, 16);
                     const capsuleMaterial = new THREE.MeshStandardMaterial({
-                        color: 0x00ccff,
-                        emissive: 0x00ccff,
+                        color: GameState.playerColor,
+                        emissive: GameState.playerColor,
                         emissiveIntensity: 0.3
                     });
                     const capsule = new THREE.Mesh(capsuleGeometry, capsuleMaterial);
@@ -1398,54 +1559,74 @@
             // Loot Items Array
             GameState.lootItems = [];
 
-            // Helper function to create loot item
-            function createLootItem(x, y, z, color, label, url, popupId) {
+            // Helper function to create loot item - EXACT COPY FROM PERSONAL SITE
+            function createLootItem(x, y, z, borderColor, glowColor, label, url, popupId) {
                 const group = new THREE.Group();
 
-                // Create thumbnail geometry
-                const thumbnailGeometry = new THREE.BoxGeometry(3, 0.1, 2);
-                const thumbnailMaterial = new THREE.MeshStandardMaterial({
-                    color: color,
-                    emissive: color,
-                    emissiveIntensity: 0.5
-                });
-                const thumbnail = new THREE.Mesh(thumbnailGeometry, thumbnailMaterial);
-                thumbnail.castShadow = true;
-                group.add(thumbnail);
-
-                // Glowing border
-                const borderGeometry = new THREE.PlaneGeometry(3.2, 2.2);
-                const borderMaterial = new THREE.MeshBasicMaterial({
-                    color: color,
-                    transparent: true,
-                    opacity: 0.6,
+                // Main texture plane (4x2.25 size, 16:9 ratio)
+                const thumbnailGeometry = new THREE.PlaneGeometry(4, 2.25);
+                const thumbnailMaterial = new THREE.MeshBasicMaterial({
+                    color: borderColor,
                     side: THREE.DoubleSide,
+                    transparent: false
+                });
+                const thumbnailMesh = new THREE.Mesh(thumbnailGeometry, thumbnailMaterial);
+                thumbnailMesh.rotation.x = -Math.PI / 2;
+                group.add(thumbnailMesh);
+
+                // Glowing border plane (4.4x2.65, 80% opacity)
+                const borderGeometry = new THREE.PlaneGeometry(4.4, 2.65);
+                const borderMaterial = new THREE.MeshBasicMaterial({
+                    color: borderColor,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.8,
                     blending: THREE.AdditiveBlending
                 });
-                const border = new THREE.Mesh(borderGeometry, borderMaterial);
-                border.rotation.x = -Math.PI / 2;
-                border.position.y = -0.05;
-                group.add(border);
+                const borderMesh = new THREE.Mesh(borderGeometry, borderMaterial);
+                borderMesh.rotation.x = -Math.PI / 2;
+                borderMesh.position.y = -0.05;
+                group.add(borderMesh);
 
-                // Label text
-                const canvas = document.createElement('canvas');
-                canvas.width = 512;
-                canvas.height = 256;
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-                ctx.fillRect(0, 0, 512, 256);
-                ctx.strokeStyle = '#' + color.toString(16).padStart(6, '0');
-                ctx.lineWidth = 8;
-                ctx.strokeRect(4, 4, 504, 248);
-                ctx.fillStyle = '#' + color.toString(16).padStart(6, '0');
-                ctx.font = 'bold 32px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = '#' + color.toString(16).padStart(6, '0');
-                ctx.fillText(label, 256, 128);
+                // Outer glow plane (5.5x3.5, 30% opacity, additive blending)
+                const outerGlowGeometry = new THREE.PlaneGeometry(5.5, 3.5);
+                const outerGlowMaterial = new THREE.MeshBasicMaterial({
+                    color: glowColor,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.3,
+                    blending: THREE.AdditiveBlending
+                });
+                const outerGlowMesh = new THREE.Mesh(outerGlowGeometry, outerGlowMaterial);
+                outerGlowMesh.rotation.x = -Math.PI / 2;
+                outerGlowMesh.position.y = -0.1;
+                group.add(outerGlowMesh);
 
-                const labelTexture = new THREE.CanvasTexture(canvas);
+                // Floating label above (4x2 size, positioned at y=3)
+                const labelCanvas = document.createElement('canvas');
+                labelCanvas.width = 512;
+                labelCanvas.height = 256;
+                const labelCtx = labelCanvas.getContext('2d');
+
+                // Background
+                labelCtx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                labelCtx.fillRect(0, 0, 512, 256);
+
+                // Glowing border
+                labelCtx.strokeStyle = '#' + borderColor.toString(16).padStart(6, '0');
+                labelCtx.lineWidth = 8;
+                labelCtx.strokeRect(4, 4, 504, 248);
+
+                // Text with glow
+                labelCtx.textAlign = 'center';
+                labelCtx.textBaseline = 'middle';
+                labelCtx.shadowBlur = 20;
+                labelCtx.shadowColor = '#' + borderColor.toString(16).padStart(6, '0');
+                labelCtx.fillStyle = '#' + borderColor.toString(16).padStart(6, '0');
+                labelCtx.font = 'bold 40px Arial';
+                labelCtx.fillText(label, 256, 128);
+
+                const labelTexture = new THREE.CanvasTexture(labelCanvas);
                 const labelMesh = new THREE.Mesh(
                     new THREE.PlaneGeometry(4, 2),
                     new THREE.MeshBasicMaterial({
@@ -1457,9 +1638,9 @@
                 labelMesh.position.y = 3;
                 group.add(labelMesh);
 
-                // Add point light
-                const light = new THREE.PointLight(color, 2, 10);
-                light.position.copy(new THREE.Vector3(x, y + 0.5, z));
+                // Point light below (intensity 2, distance 10)
+                const light = new THREE.PointLight(borderColor, 2, 10);
+                light.position.set(x, y + 1, z);
                 GameState.scene.add(light);
 
                 group.position.set(x, y, z);
@@ -1471,18 +1652,19 @@
                     radius: 4,
                     url: url,
                     popupId: popupId,
-                    group: group
+                    group: group,
+                    light: light
                 });
             }
 
-            // Create all 7 loot items
-            createLootItem(0, 0.5, -28, 0xffd700, 'IPHONE 8', 'https://www.youtube.com/watch?v=xfU4AUFF61k', 'lootPopup');
-            createLootItem(-24, 0.5, -18, 0x9370db, 'APPLE WATCH', 'https://www.youtube.com/watch?v=maRxFHxgG7c', 'lootPopup2');
-            createLootItem(24, 0.5, -18, 0x10b981, 'RESUME', 'resume2026.pdf', 'lootPopup3');
-            createLootItem(28, 0.5, -8, 0xf97316, 'GITHUB', 'https://github.com/wjb000', 'lootPopup4');
-            createLootItem(-12, 0.5, -23, 0x06b6d4, 'BOB ROBOT', 'robot-project.html', 'lootPopupBobProject');
-            createLootItem(12, 0.5, -23, 0xff6b35, 'AGV', 'agv-control.html', 'agvPopup');
-            createLootItem(-30, 0.5, -12, 0xe91e63, 'COVER LETTER', 'Cover Letter.pdf', 'coverLetterPopup');
+            // Create all 7 loot items with exact colors from personal site
+            createLootItem(0, 0.5, -28, 0xffd700, 0xffaa00, 'IPHONE 8', 'https://www.youtube.com/watch?v=xfU4AUFF61k', 'lootPopup');
+            createLootItem(-24, 0.5, -18, 0x9370db, 0x8a2be2, 'APPLE WATCH', 'https://www.youtube.com/watch?v=maRxFHxgG7c', 'lootPopup2');
+            createLootItem(24, 0.5, -18, 0x10b981, 0x059669, 'RESUME', 'resume2026.pdf', 'lootPopup3');
+            createLootItem(28, 0.5, -8, 0xf97316, 0xea580c, 'GITHUB', 'https://github.com/wjb000', 'lootPopup4');
+            createLootItem(-12, 0.5, -23, 0x06b6d4, 0x0891b2, 'BOB ROBOT', 'robot-project.html', 'lootPopupBobProject');
+            createLootItem(12, 0.5, -23, 0xff6b35, 0xff4500, 'AGV', 'agv-control.html', 'agvPopup');
+            createLootItem(-30, 0.5, -12, 0xe91e63, 0xc2185b, 'COVER LETTER', 'Cover Letter.pdf', 'coverLetterPopup');
 
             // Setup loot popup event handlers
             document.getElementById('openButton').onclick = () => window.open('https://www.youtube.com/watch?v=xfU4AUFF61k', '_blank');
@@ -1493,21 +1675,21 @@
             document.getElementById('agvOpenBtn').onclick = () => window.open('agv-control.html', '_blank');
             document.getElementById('openButtonCoverLetter').onclick = () => window.open('Cover Letter.pdf', '_blank');
 
-            // Particle system
+            // Particle system - EXACT COPY FROM PERSONAL SITE
             const particleCount = 500;
             const particleGeometry = new THREE.BufferGeometry();
             const particlePositions = new Float32Array(particleCount * 3);
 
             for (let i = 0; i < particleCount; i++) {
-                particlePositions[i * 3] = (Math.random() - 0.5) * 100;
+                particlePositions[i * 3] = (Math.random() - 0.5) * 80;
                 particlePositions[i * 3 + 1] = Math.random() * 50;
-                particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+                particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 80;
             }
 
             particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
 
             const particleMaterial = new THREE.PointsMaterial({
-                color: 0x00ffff,
+                color: 0xffffff,
                 size: 0.1,
                 transparent: true,
                 opacity: 0.6,
@@ -1574,15 +1756,16 @@
             addChatMessage('System', 'Welcome to the server!', true);
         }
 
-        function createRemotePlayer(peerId, wallet, position) {
+        function createRemotePlayer(peerId, wallet, username, color, position, rotation) {
             const playerGroup = new THREE.Group();
             playerGroup.position.set(position.x, position.y, position.z);
+            playerGroup.rotation.y = rotation || 0;
 
             const mesh = new THREE.Mesh(
                 new THREE.BoxGeometry(1, 2, 1),
                 new THREE.MeshStandardMaterial({
-                    color: 0x06b6d4,
-                    emissive: 0x06b6d4,
+                    color: color || 0x06b6d4,
+                    emissive: color || 0x06b6d4,
                     emissiveIntensity: 0.3
                 })
             );
@@ -1590,17 +1773,17 @@
             mesh.castShadow = true;
             playerGroup.add(mesh);
 
-            // Name tag
+            // Name tag with username
             const canvas = document.createElement('canvas');
             canvas.width = 256;
             canvas.height = 64;
             const ctx = canvas.getContext('2d');
             ctx.fillStyle = 'rgba(0,0,0,0.7)';
             ctx.fillRect(0, 0, 256, 64);
-            ctx.fillStyle = '#06b6d4';
+            ctx.fillStyle = '#' + (color || 0x06b6d4).toString(16).padStart(6, '0');
             ctx.font = 'bold 20px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(wallet.slice(0, 8) + '...', 128, 40);
+            ctx.fillText(username || wallet.slice(0, 8) + '...', 128, 40);
 
             const texture = new THREE.CanvasTexture(canvas);
             const label = new THREE.Mesh(
@@ -1611,17 +1794,58 @@
             playerGroup.add(label);
 
             GameState.scene.add(playerGroup);
-            GameState.players.set(peerId, { group: playerGroup, wallet: wallet });
+            GameState.players.set(peerId, {
+                group: playerGroup,
+                mesh: mesh,
+                label: label,
+                wallet: wallet,
+                username: username,
+                color: color
+            });
             updatePlayerList();
         }
 
-        function updateRemotePlayer(peerId, position) {
+        function updateRemotePlayer(peerId, position, rotation) {
             const player = GameState.players.get(peerId);
             if (player) {
                 player.group.position.lerp(
                     new THREE.Vector3(position.x, position.y, position.z),
                     0.3
                 );
+                if (rotation !== undefined) {
+                    player.group.rotation.y = rotation;
+                }
+            }
+        }
+
+        function updateRemotePlayerUsername(peerId, username) {
+            const player = GameState.players.get(peerId);
+            if (player) {
+                player.username = username;
+                // Update label
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 64;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                ctx.fillRect(0, 0, 256, 64);
+                ctx.fillStyle = '#' + (player.color || 0x06b6d4).toString(16).padStart(6, '0');
+                ctx.font = 'bold 20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(username, 128, 40);
+                player.label.material.map = new THREE.CanvasTexture(canvas);
+                player.label.material.needsUpdate = true;
+                updatePlayerList();
+            }
+        }
+
+        function updateRemotePlayerColor(peerId, color) {
+            const player = GameState.players.get(peerId);
+            if (player) {
+                player.color = color;
+                player.mesh.material.color.setHex(color);
+                player.mesh.material.emissive.setHex(color);
+                updatePlayerList();
             }
         }
 
@@ -1633,7 +1857,7 @@
                 const item = document.createElement('div');
                 item.className = 'player-item';
                 item.innerHTML = `
-                    <span>${player.wallet.slice(0, 8)}...</span>
+                    <span>${player.username || player.wallet.slice(0, 8) + '...'}</span>
                     <div class="player-status"></div>
                 `;
                 content.appendChild(item);
@@ -1660,42 +1884,70 @@
 
             if (!GameState.scene) return;
 
-            // Update animation mixer
-            if (GameState.mixer) {
-                GameState.mixer.update(0.016);
+            // CRITICAL FIX: Update animation mixer with proper delta time
+            if (GameState.mixer && GameState.clock) {
+                const delta = GameState.clock.getDelta();
+                GameState.mixer.update(Math.min(delta, 0.1));
             }
 
             // Movement
-            const moveSpeed = 0.1;
+            const moveSpeed = 0.15;
+            let dx = 0;
+            let dz = 0;
             let isMoving = false;
 
             if (keys['w'] || keys['arrowup']) {
-                GameState.playerMesh.position.z -= moveSpeed;
+                dz -= moveSpeed;
                 isMoving = true;
             }
             if (keys['s'] || keys['arrowdown']) {
-                GameState.playerMesh.position.z += moveSpeed;
+                dz += moveSpeed;
                 isMoving = true;
             }
             if (keys['a'] || keys['arrowleft']) {
-                GameState.playerMesh.position.x -= moveSpeed;
+                dx -= moveSpeed;
                 isMoving = true;
             }
             if (keys['d'] || keys['arrowright']) {
-                GameState.playerMesh.position.x += moveSpeed;
+                dx += moveSpeed;
                 isMoving = true;
             }
 
-            // Switch animations based on movement
+            // Apply movement
+            if (isMoving) {
+                GameState.playerMesh.position.x += dx;
+                GameState.playerMesh.position.z += dz;
+
+                // CRITICAL FIX: Rotate character to face movement direction
+                const targetAngle = Math.atan2(dx, dz);
+                let angleDiff = targetAngle - GameState.playerMesh.rotation.y;
+
+                // Normalize angle difference
+                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+                GameState.playerMesh.rotation.y += angleDiff * 0.15;
+            }
+
+            // CRITICAL FIX: Switch animations based on movement
             if (GameState.animations) {
-                if (isMoving && GameState.animations['Walking']) {
-                    if (!GameState.animations['Walking'].isRunning()) {
-                        if (GameState.animations['Idle']) GameState.animations['Idle'].stop();
-                        GameState.animations['Walking'].play();
+                if (isMoving) {
+                    const walkAction = GameState.animations['Walking'] || GameState.animations['Run'];
+                    if (walkAction && !walkAction.isRunning()) {
+                        if (GameState.animations['Idle']) {
+                            GameState.animations['Idle'].stop();
+                        }
+                        walkAction.reset();
+                        walkAction.setLoop(THREE.LoopRepeat);
+                        walkAction.setEffectiveWeight(1);
+                        walkAction.play();
                     }
-                } else if (!isMoving && GameState.animations['Idle']) {
-                    if (!GameState.animations['Idle'].isRunning()) {
+                } else {
+                    if (GameState.animations['Idle'] && !GameState.animations['Idle'].isRunning()) {
                         if (GameState.animations['Walking']) GameState.animations['Walking'].stop();
+                        if (GameState.animations['Run']) GameState.animations['Run'].stop();
+                        GameState.animations['Idle'].reset();
+                        GameState.animations['Idle'].setEffectiveWeight(1);
                         GameState.animations['Idle'].play();
                     }
                 }
@@ -1703,7 +1955,13 @@
 
             // Loot collision detection
             if (GameState.lootItems) {
+                const time = Date.now() * 0.001;
+
                 GameState.lootItems.forEach((loot) => {
+                    // Animate loot items: hover/float up and down + rotate
+                    loot.group.rotation.y += 0.01;
+                    loot.group.position.y = loot.position.y + Math.sin(time * 2) * 0.1;
+
                     const distance = Math.sqrt(
                         Math.pow(GameState.playerMesh.position.x - loot.position.x, 2) +
                         Math.pow(GameState.playerMesh.position.z - loot.position.z, 2)
@@ -1731,7 +1989,7 @@
             GameState.camera.position.lerp(cameraPosition, 0.1);
             GameState.camera.lookAt(GameState.playerMesh.position);
 
-            // Broadcast position
+            // Broadcast position and rotation
             if (GameState.connections.size > 0) {
                 const posData = {
                     type: 'position',
@@ -1739,7 +1997,8 @@
                         x: GameState.playerMesh.position.x,
                         y: GameState.playerMesh.position.y,
                         z: GameState.playerMesh.position.z
-                    }
+                    },
+                    rotation: GameState.playerMesh.rotation.y
                 };
                 GameState.connections.forEach(conn => {
                     if (conn.open) conn.send(posData);
@@ -1836,6 +2095,54 @@
         document.getElementById('connectPhantom').onclick = connectPhantom;
         document.getElementById('connectMetaMask').onclick = connectMetaMask;
 
+        // Username modal
+        document.getElementById('confirmUsername').onclick = confirmUsername;
+        document.getElementById('usernameInput').onkeypress = (e) => {
+            if (e.key === 'Enter') confirmUsername();
+        };
+
+        // Color picker modal
+        let selectedColor = 0x00ccff;
+        document.querySelectorAll('#colorPickerModal .color-option').forEach(option => {
+            option.onclick = () => {
+                document.querySelectorAll('#colorPickerModal .color-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                option.classList.add('selected');
+                selectedColor = parseInt(option.dataset.color);
+            };
+        });
+
+        document.getElementById('confirmColor').onclick = () => {
+            GameState.playerColor = selectedColor;
+
+            // Update player color if model is loaded
+            if (GameState.playerMesh) {
+                GameState.playerMesh.traverse((node) => {
+                    if (node.isMesh && node.material) {
+                        const currentColor = node.material.color;
+                        // Update accent colors
+                        if (currentColor.r > 0.5 && currentColor.g < 0.5 ||
+                            (currentColor.r === 0 && currentColor.g === 0.8 && currentColor.b === 1)) {
+                            node.material.color.setHex(GameState.playerColor);
+                            node.material.emissive.setHex(GameState.playerColor);
+                        }
+                    }
+                });
+            }
+
+            // Broadcast color change
+            GameState.connections.forEach(conn => {
+                if (conn.open) conn.send({ type: 'color', color: GameState.playerColor });
+            });
+
+            document.getElementById('colorPickerModal').classList.remove('visible');
+        };
+
+        document.getElementById('cancelColor').onclick = () => {
+            document.getElementById('colorPickerModal').classList.remove('visible');
+        };
+
         document.getElementById('createServerBtn').onclick = () => {
             document.getElementById('createServerModal').classList.add('visible');
         };
@@ -1859,6 +2166,10 @@
         document.getElementById('confirmDropLink').onclick = dropLink;
         document.getElementById('cancelDropLink').onclick = () => {
             document.getElementById('dropLinkModal').classList.remove('visible');
+        };
+
+        document.getElementById('changeColorBtn').onclick = () => {
+            document.getElementById('colorPickerModal').classList.add('visible');
         };
 
         document.getElementById('leaveServerBtn').onclick = () => {
