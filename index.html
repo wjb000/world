@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiplayer World</title>
+    <title>Crypto World - P2P Multiplayer</title>
     <style>
         * {
             margin: 0;
@@ -11,681 +11,1199 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --primary: #00ff41;
+            --secondary: #06b6d4;
+            --danger: #ff0040;
+            --bg-dark: #0a0e14;
+            --bg-card: #1a2332;
+        }
+
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
-            background: #000;
+            background: var(--bg-dark);
+            color: #fff;
         }
 
-        #gameCanvas {
-            display: block;
-            width: 100%;
-            height: 100vh;
-        }
-
-        /* Loading Screen */
-        #loadingScreen {
+        /* Wallet Connect Screen */
+        #walletScreen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: #000;
+            background: linear-gradient(135deg, #0a0e14, #1a2332);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 10000;
-            color: #fff;
         }
 
-        #loadingScreen.hidden {
+        #walletScreen.hidden {
             display: none;
         }
 
-        .loading-text {
-            font-size: 24px;
+        .wallet-container {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid rgba(0, 255, 65, 0.3);
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 0 50px rgba(0, 255, 65, 0.2);
+        }
+
+        .wallet-container h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .wallet-container p {
+            margin-bottom: 30px;
+            color: #aaa;
+        }
+
+        .wallet-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
             margin-bottom: 20px;
         }
 
-        .loading-bar {
-            width: 300px;
-            height: 20px;
-            background: #333;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .loading-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #00ff41, #06b6d4);
-            width: 0%;
-            transition: width 0.3s;
-        }
-
-        /* Multiplayer UI - Hidden until 2+ players */
-        #playerCount {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 10px 20px;
-            border-radius: 8px;
+        .wallet-btn {
+            background: rgba(0, 255, 65, 0.1);
+            border: 2px solid var(--primary);
             color: #fff;
-            font-size: 16px;
-            z-index: 1000;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            display: none;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        #playerCount.visible {
-            display: block;
-            opacity: 1;
-        }
-
-        #colorPicker {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.9);
             padding: 20px;
             border-radius: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            z-index: 1000;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .wallet-btn:hover {
+            background: rgba(0, 255, 65, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0, 255, 65, 0.4);
+        }
+
+        .wallet-btn img {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 10px;
+        }
+
+        /* Server Browser */
+        #serverBrowser {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0e14, #1a2332);
+            z-index: 9999;
+            overflow-y: auto;
+            padding: 40px 20px;
             display: none;
-            opacity: 0;
-            transition: opacity 0.3s;
         }
 
-        #colorPicker.visible {
+        #serverBrowser.visible {
             display: block;
-            opacity: 1;
         }
 
-        #colorPicker h3 {
-            color: #fff;
-            margin-bottom: 15px;
-            font-size: 18px;
+        .server-header {
+            max-width: 1200px;
+            margin: 0 auto 40px;
             text-align: center;
         }
 
-        .color-options {
-            display: grid;
-            grid-template-columns: repeat(4, 50px);
-            gap: 10px;
+        .server-header h1 {
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 20px;
         }
 
-        .color-option {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
+        .server-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: #000;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
             cursor: pointer;
-            border: 3px solid transparent;
             transition: all 0.3s;
         }
 
-        .color-option:hover {
-            transform: scale(1.1);
-            border-color: #fff;
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 65, 0.5);
         }
 
-        .color-option.selected {
-            border-color: #fff;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        .btn.secondary {
+            background: var(--secondary);
         }
 
-        /* Controls Info */
-        #controls {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            padding: 15px 30px;
-            border-radius: 8px;
-            color: #fff;
+        .server-list {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .server-card {
+            background: var(--bg-card);
+            border: 2px solid rgba(0, 255, 65, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .server-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 65, 0.3);
+        }
+
+        .server-card h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .server-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
             font-size: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            text-align: center;
+            color: #aaa;
         }
 
-        /* Share Link Button */
-        #shareLink {
+        .player-count {
+            color: var(--secondary);
+            font-weight: bold;
+        }
+
+        /* Game Canvas */
+        #gameCanvas {
+            display: none;
+            width: 100%;
+            height: 100vh;
+        }
+
+        #gameCanvas.active {
+            display: block;
+        }
+
+        /* HUD */
+        .hud {
             position: fixed;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 255, 65, 0.2);
-            border: 2px solid #00ff41;
-            color: #00ff41;
+            pointer-events: none;
+        }
+
+        .hud * {
+            pointer-events: all;
+        }
+
+        #walletInfo {
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 20px;
+            border-radius: 10px;
+            border: 1px solid var(--primary);
+            font-size: 14px;
+        }
+
+        .wallet-address {
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .balance {
+            margin-top: 5px;
+            color: var(--secondary);
+        }
+
+        #playerList {
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--primary);
+            max-height: 300px;
+            overflow-y: auto;
+            min-width: 200px;
+        }
+
+        #playerList h4 {
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .player-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .player-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+
+        /* Chat System */
+        #chatContainer {
+            bottom: 20px;
+            left: 20px;
+            width: 400px;
+            max-height: 500px;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 10px;
+            border: 1px solid var(--primary);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.3);
+        }
+
+        .chat-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .chat-tab.active {
+            color: var(--primary);
+            background: rgba(0, 255, 65, 0.1);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            max-height: 300px;
+            min-height: 200px;
+        }
+
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            font-size: 13px;
+        }
+
+        .chat-message .sender {
+            color: var(--secondary);
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .chat-message.system {
+            background: rgba(0, 255, 65, 0.1);
+            color: var(--primary);
+        }
+
+        .chat-input-container {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid rgba(0, 255, 65, 0.3);
+        }
+
+        .chat-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+
+        .chat-send {
+            margin-left: 10px;
             padding: 10px 20px;
-            border-radius: 8px;
+            background: var(--primary);
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Voice Chat Controls */
+        #voiceControls {
+            bottom: 540px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--primary);
+        }
+
+        .voice-btn {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(0, 255, 65, 0.2);
+            border: 1px solid var(--primary);
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .voice-btn.active {
+            background: var(--primary);
+            color: #000;
+        }
+
+        /* Action Menu */
+        #actionMenu {
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--primary);
+        }
+
+        .action-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 5px 0;
+            background: rgba(0, 255, 65, 0.2);
+            border: 1px solid var(--primary);
+            color: #fff;
+            border-radius: 5px;
             cursor: pointer;
             font-size: 14px;
             font-weight: bold;
-            display: none;
-            opacity: 0;
-            transition: opacity 0.3s;
         }
 
-        #shareLink.visible {
-            display: block;
-            opacity: 1;
+        .action-btn:hover {
+            background: var(--primary);
+            color: #000;
         }
 
-        #shareLink:hover {
-            background: rgba(0, 255, 65, 0.3);
-        }
-
-        /* Mobile Joystick */
-        .mobile-controls {
-            display: none;
+        /* Drop Item Modal */
+        .modal {
             position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 11000;
         }
 
+        .modal.visible {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid var(--primary);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        .modal-content input,
+        .modal-content select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            color: #fff;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal-actions .confirm {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .modal-actions .cancel {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        /* Mobile Responsive */
         @media (max-width: 768px) {
-            .mobile-controls {
-                display: block;
+            #chatContainer {
+                width: calc(100% - 40px);
             }
 
-            #controls {
-                display: none;
+            .server-list {
+                grid-template-columns: 1fr;
+            }
+
+            #walletInfo, #playerList, #actionMenu {
+                font-size: 12px;
+                padding: 10px;
             }
         }
 
-        .touch-joystick {
-            width: 120px;
-            height: 120px;
-            background: rgba(0, 255, 65, 0.1);
-            border: 3px solid rgba(0, 255, 65, 0.3);
-            border-radius: 50%;
-            position: relative;
-            touch-action: none;
-        }
-
-        .joystick-knob {
-            width: 50px;
-            height: 50px;
-            background: rgba(0, 255, 65, 0.8);
-            border: 2px solid #00ff41;
-            border-radius: 50%;
-            position: absolute;
+        /* Loading */
+        .loading {
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 20px #00ff41;
-            transition: all 0.1s;
+            text-align: center;
+            z-index: 12000;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 255, 65, 0.1);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
+</head>
+<body>
+    <!-- Wallet Connect Screen -->
+    <div id="walletScreen">
+        <div class="wallet-container">
+            <h1>🌍 Crypto World</h1>
+            <p>Connect your wallet to enter the metaverse</p>
+            <div class="wallet-options">
+                <button class="wallet-btn" id="connectPhantom">
+                    <div>👻</div>
+                    <div>Phantom</div>
+                    <div style="font-size: 11px; color: #aaa;">Solana</div>
+                </button>
+                <button class="wallet-btn" id="connectMetaMask">
+                    <div>🦊</div>
+                    <div>MetaMask</div>
+                    <div style="font-size: 11px; color: #aaa;">Base/ETH</div>
+                </button>
+            </div>
+            <p style="font-size: 12px; color: #666;">Your wallet is your identity in the metaverse</p>
+        </div>
+    </div>
+
+    <!-- Server Browser -->
+    <div id="serverBrowser">
+        <div class="server-header">
+            <h1>🌍 Server Browser</h1>
+            <div id="connectedWallet" style="margin-bottom: 20px; color: var(--secondary);"></div>
+            <div class="server-actions">
+                <button class="btn" id="createServerBtn">Create Server</button>
+                <button class="btn secondary" id="refreshServersBtn">Refresh</button>
+            </div>
+        </div>
+        <div class="server-list" id="serverList">
+            <!-- Servers will be populated here -->
+        </div>
+    </div>
+
+    <!-- Game -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- HUD -->
+    <div id="walletInfo" class="hud">
+        <div class="wallet-address" id="hudWallet">Not Connected</div>
+        <div class="balance" id="hudBalance">Balance: 0</div>
+    </div>
+
+    <div id="playerList" class="hud">
+        <h4>Players (<span id="playerCount">0</span>)</h4>
+        <div id="playerListContent"></div>
+    </div>
+
+    <!-- Chat -->
+    <div id="chatContainer" class="hud">
+        <div class="chat-tabs">
+            <button class="chat-tab active" data-tab="global">Global</button>
+            <button class="chat-tab" data-tab="dm">DMs</button>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-container">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Type a message...">
+            <button class="chat-send" id="chatSend">Send</button>
+        </div>
+    </div>
+
+    <!-- Voice Controls -->
+    <div id="voiceControls" class="hud">
+        <button class="voice-btn" id="toggleVoice">🎤 Voice: OFF</button>
+        <button class="voice-btn" id="toggleMute">🔊 Audio: ON</button>
+    </div>
+
+    <!-- Action Menu -->
+    <div id="actionMenu" class="hud">
+        <button class="action-btn" id="dropLinkBtn">📎 Drop Link</button>
+        <button class="action-btn" id="createPortalBtn">🌀 Create Portal</button>
+        <button class="action-btn" id="sendPaymentBtn">💰 Send Payment</button>
+        <button class="action-btn" id="leaveServerBtn">🚪 Leave Server</button>
+    </div>
+
+    <!-- Drop Link Modal -->
+    <div class="modal" id="dropLinkModal">
+        <div class="modal-content">
+            <h2>📎 Drop a Link</h2>
+            <input type="url" id="linkUrl" placeholder="Enter URL">
+            <input type="text" id="linkName" placeholder="Link name (optional)">
+            <div class="modal-actions">
+                <button class="confirm" id="confirmDropLink">Drop</button>
+                <button class="cancel" id="cancelDropLink">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Portal Modal -->
+    <div class="modal" id="createPortalModal">
+        <div class="modal-content">
+            <h2>🌀 Create Portal</h2>
+            <select id="portalDestination">
+                <option value="">Select destination server...</option>
+            </select>
+            <div class="modal-actions">
+                <button class="confirm" id="confirmCreatePortal">Create</button>
+                <button class="cancel" id="cancelCreatePortal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Send Payment Modal -->
+    <div class="modal" id="sendPaymentModal">
+        <div class="modal-content">
+            <h2>💰 Send Payment</h2>
+            <select id="paymentRecipient">
+                <option value="">Select player...</option>
+            </select>
+            <input type="number" id="paymentAmount" placeholder="Amount" step="0.001">
+            <div class="modal-actions">
+                <button class="confirm" id="confirmSendPayment">Send</button>
+                <button class="cancel" id="cancelSendPayment">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Server Modal -->
+    <div class="modal" id="createServerModal">
+        <div class="modal-content">
+            <h2>Create New Server</h2>
+            <input type="text" id="serverName" placeholder="Server name">
+            <div class="modal-actions">
+                <button class="confirm" id="confirmCreateServer">Create</button>
+                <button class="cancel" id="cancelCreateServer">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-</head>
-<body>
-    <div id="loadingScreen">
-        <div class="loading-text">Loading World...</div>
-        <div class="loading-bar">
-            <div class="loading-fill" id="loadingFill"></div>
-        </div>
-    </div>
-
-    <canvas id="gameCanvas"></canvas>
-
-    <div id="playerCount">Players: 1</div>
-
-    <div id="colorPicker">
-        <h3>Choose Your Color</h3>
-        <div class="color-options">
-            <div class="color-option" data-color="#00ff41" style="background: #00ff41;"></div>
-            <div class="color-option" data-color="#ff0040" style="background: #ff0040;"></div>
-            <div class="color-option" data-color="#06b6d4" style="background: #06b6d4;"></div>
-            <div class="color-option" data-color="#9370db" style="background: #9370db;"></div>
-            <div class="color-option" data-color="#ffd700" style="background: #ffd700;"></div>
-            <div class="color-option" data-color="#ff6b35" style="background: #ff6b35;"></div>
-            <div class="color-option" data-color="#e91e63" style="background: #e91e63;"></div>
-            <div class="color-option" data-color="#10b981" style="background: #10b981;"></div>
-            <div class="color-option" data-color="#f97316" style="background: #f97316;"></div>
-            <div class="color-option" data-color="#8b5cf6" style="background: #8b5cf6;"></div>
-            <div class="color-option" data-color="#ec4899" style="background: #ec4899;"></div>
-            <div class="color-option" data-color="#14b8a6" style="background: #14b8a6;"></div>
-        </div>
-    </div>
-
-    <button id="shareLink">📋 Copy Invite Link</button>
-
-    <div id="controls">
-        Use WASD or Arrow Keys to move • Share link to play with friends
-    </div>
-
-    <div class="mobile-controls">
-        <div class="touch-joystick" id="touchJoystick">
-            <div class="joystick-knob" id="joystickKnob"></div>
-        </div>
-    </div>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.min.js"></script>
 
     <script>
-        // Scene setup
-        const canvas = document.getElementById('gameCanvas');
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB);
-        scene.fog = new THREE.Fog(0x87CEEB, 10, 100);
+        // Game State
+        const GameState = {
+            wallet: null,
+            walletAddress: null,
+            walletType: null,
+            balance: 0,
+            currentServer: null,
+            peer: null,
+            connections: new Map(),
+            players: new Map(),
+            voiceEnabled: false,
+            audioEnabled: true,
+            scene: null,
+            camera: null,
+            renderer: null,
+            playerMesh: null,
+            droppedItems: [],
+            portals: []
+        };
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({
-            canvas,
-            antialias: true,
-            powerPreference: 'high-performance'
-        });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        // Wallet Connection
+        async function connectPhantom() {
+            try {
+                const { solana } = window;
+                if (!solana?.isPhantom) {
+                    alert('Please install Phantom wallet!');
+                    window.open('https://phantom.app/', '_blank');
+                    return;
+                }
 
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambientLight);
+                const response = await solana.connect();
+                GameState.wallet = solana;
+                GameState.walletAddress = response.publicKey.toString();
+                GameState.walletType = 'phantom';
 
-        const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        sunLight.position.set(50, 100, 50);
-        sunLight.castShadow = true;
-        sunLight.shadow.camera.left = -50;
-        sunLight.shadow.camera.right = 50;
-        sunLight.shadow.camera.top = 50;
-        sunLight.shadow.camera.bottom = -50;
-        sunLight.shadow.mapSize.width = 2048;
-        sunLight.shadow.mapSize.height = 2048;
-        scene.add(sunLight);
+                // Get balance
+                const connection = new solanaWeb3.Connection(
+                    solanaWeb3.clusterApiUrl('mainnet-beta')
+                );
+                const balance = await connection.getBalance(response.publicKey);
+                GameState.balance = balance / solanaWeb3.LAMPORTS_PER_SOL;
 
-        // Ground
-        const groundGeometry = new THREE.PlaneGeometry(200, 200);
-        const groundMaterial = new THREE.MeshStandardMaterial({
-            color: 0x2d5016,
-            roughness: 0.8
-        });
-        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-        ground.rotation.x = -Math.PI / 2;
-        ground.receiveShadow = true;
-        scene.add(ground);
-
-        // Add some trees/obstacles
-        for (let i = 0; i < 20; i++) {
-            const treeGeometry = new THREE.CylinderGeometry(0, 2, 5, 8);
-            const treeMaterial = new THREE.MeshStandardMaterial({ color: 0x0d4d0d });
-            const tree = new THREE.Mesh(treeGeometry, treeMaterial);
-            tree.position.set(
-                Math.random() * 180 - 90,
-                2.5,
-                Math.random() * 180 - 90
-            );
-            tree.castShadow = true;
-            tree.receiveShadow = true;
-            scene.add(tree);
-        }
-
-        // Player setup
-        const playerGroup = new THREE.Group();
-        const playerGeometry = new THREE.BoxGeometry(1, 2, 1);
-        const playerMaterial = new THREE.MeshStandardMaterial({
-            color: 0x00ff41,
-            emissive: 0x00ff41,
-            emissiveIntensity: 0.3
-        });
-        const playerMesh = new THREE.Mesh(playerGeometry, playerMaterial);
-        playerMesh.position.y = 1;
-        playerMesh.castShadow = true;
-        playerGroup.add(playerMesh);
-        scene.add(playerGroup);
-
-        // Camera follow
-        camera.position.set(0, 5, 10);
-        camera.lookAt(playerGroup.position);
-
-        // Movement
-        const keys = {};
-        const moveSpeed = 0.1;
-        const rotateSpeed = 0.05;
-
-        window.addEventListener('keydown', (e) => {
-            keys[e.key.toLowerCase()] = true;
-        });
-
-        window.addEventListener('keyup', (e) => {
-            keys[e.key.toLowerCase()] = false;
-        });
-
-        // Mobile touch controls
-        const touchJoystick = document.getElementById('touchJoystick');
-        const joystickKnob = document.getElementById('joystickKnob');
-        let touchActive = false;
-        let touchDelta = { x: 0, y: 0 };
-
-        if (touchJoystick) {
-            let startX, startY;
-
-            touchJoystick.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                touchActive = true;
-                const rect = touchJoystick.getBoundingClientRect();
-                startX = rect.left + rect.width / 2;
-                startY = rect.top + rect.height / 2;
-            });
-
-            touchJoystick.addEventListener('touchmove', (e) => {
-                if (!touchActive) return;
-                e.preventDefault();
-
-                const touch = e.touches[0];
-                const deltaX = touch.clientX - startX;
-                const deltaY = touch.clientY - startY;
-                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                const maxDistance = 35;
-                const clampedDistance = Math.min(distance, maxDistance);
-                const angle = Math.atan2(deltaY, deltaX);
-                const knobX = Math.cos(angle) * clampedDistance;
-                const knobY = Math.sin(angle) * clampedDistance;
-
-                joystickKnob.style.transform = `translate(calc(-50% + ${knobX}px), calc(-50% + ${knobY}px))`;
-
-                touchDelta.x = deltaX / maxDistance;
-                touchDelta.y = deltaY / maxDistance;
-            });
-
-            touchJoystick.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                touchActive = false;
-                joystickKnob.style.transform = 'translate(-50%, -50%)';
-                touchDelta.x = 0;
-                touchDelta.y = 0;
-            });
-        }
-
-        // Multiplayer
-        const otherPlayers = new Map();
-        let myPeerId = null;
-        let myColor = '#00ff41';
-        const connections = new Map();
-
-        const peer = new Peer();
-
-        peer.on('open', (id) => {
-            myPeerId = id;
-            console.log('My peer ID:', id);
-
-            // Check for connection parameter
-            const urlParams = new URLSearchParams(window.location.search);
-            const connectTo = urlParams.get('connect');
-
-            if (connectTo) {
-                connectToPlayer(connectTo);
+                onWalletConnected();
+            } catch (error) {
+                console.error('Phantom connection failed:', error);
+                alert('Failed to connect Phantom wallet');
             }
-
-            // Show share button
-            const shareBtn = document.getElementById('shareLink');
-            shareBtn.classList.add('visible');
-            shareBtn.addEventListener('click', () => {
-                const url = window.location.origin + window.location.pathname + '?connect=' + id;
-                navigator.clipboard.writeText(url).then(() => {
-                    shareBtn.textContent = '✓ Link Copied!';
-                    setTimeout(() => {
-                        shareBtn.textContent = '📋 Copy Invite Link';
-                    }, 2000);
-                });
-            });
-        });
-
-        peer.on('connection', (conn) => {
-            handleConnection(conn);
-        });
-
-        function connectToPlayer(peerId) {
-            if (peerId === myPeerId) return;
-            const conn = peer.connect(peerId, { reliable: true });
-            handleConnection(conn);
         }
 
-        function handleConnection(conn) {
-            connections.set(conn.peer, conn);
+        async function connectMetaMask() {
+            try {
+                if (!window.ethereum) {
+                    alert('Please install MetaMask!');
+                    window.open('https://metamask.io/', '_blank');
+                    return;
+                }
 
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send('eth_requestAccounts', []);
+                const signer = provider.getSigner();
+                const address = await signer.getAddress();
+
+                GameState.wallet = window.ethereum;
+                GameState.walletAddress = address;
+                GameState.walletType = 'metamask';
+
+                // Get balance
+                const balance = await provider.getBalance(address);
+                GameState.balance = parseFloat(ethers.utils.formatEther(balance));
+
+                onWalletConnected();
+            } catch (error) {
+                console.error('MetaMask connection failed:', error);
+                alert('Failed to connect MetaMask');
+            }
+        }
+
+        function onWalletConnected() {
+            document.getElementById('walletScreen').classList.add('hidden');
+            document.getElementById('serverBrowser').classList.add('visible');
+            document.getElementById('connectedWallet').textContent =
+                `Connected: ${GameState.walletAddress.slice(0, 8)}...${GameState.walletAddress.slice(-6)} (${GameState.walletType})`;
+
+            updateHUD();
+            initPeer();
+            loadServers();
+        }
+
+        function updateHUD() {
+            document.getElementById('hudWallet').textContent =
+                `${GameState.walletAddress.slice(0, 8)}...${GameState.walletAddress.slice(-6)}`;
+            document.getElementById('hudBalance').textContent =
+                `Balance: ${GameState.balance.toFixed(4)} ${GameState.walletType === 'phantom' ? 'SOL' : 'ETH'}`;
+        }
+
+        // P2P Networking
+        function initPeer() {
+            GameState.peer = new Peer();
+
+            GameState.peer.on('open', (id) => {
+                console.log('Peer ID:', id);
+            });
+
+            GameState.peer.on('connection', (conn) => {
+                handlePeerConnection(conn);
+            });
+        }
+
+        function handlePeerConnection(conn) {
             conn.on('open', () => {
+                GameState.connections.set(conn.peer, conn);
+
+                // Send initial state
                 conn.send({
                     type: 'init',
-                    color: myColor,
-                    position: {
-                        x: playerGroup.position.x,
-                        y: playerGroup.position.y,
-                        z: playerGroup.position.z
-                    },
-                    rotation: playerGroup.rotation.y
+                    wallet: GameState.walletAddress,
+                    position: GameState.playerMesh ? {
+                        x: GameState.playerMesh.position.x,
+                        y: GameState.playerMesh.position.y,
+                        z: GameState.playerMesh.position.z
+                    } : { x: 0, y: 0, z: 0 }
                 });
 
-                updatePlayerCount();
-
-                if (connections.size >= 1) {
-                    document.getElementById('colorPicker').classList.add('visible');
-                    document.getElementById('playerCount').classList.add('visible');
-                }
+                updatePlayerList();
             });
 
             conn.on('data', (data) => {
-                if (data.type === 'init') {
-                    createOtherPlayer(conn.peer, data.color, data.position, data.rotation);
-                } else if (data.type === 'update') {
-                    updateOtherPlayer(conn.peer, data.position, data.rotation);
-                } else if (data.type === 'color') {
-                    updateOtherPlayerColor(conn.peer, data.color);
-                }
+                handlePeerData(conn.peer, data);
             });
 
             conn.on('close', () => {
-                removeOtherPlayer(conn.peer);
-                connections.delete(conn.peer);
-                updatePlayerCount();
-
-                if (connections.size === 0) {
-                    document.getElementById('colorPicker').classList.remove('visible');
-                    document.getElementById('playerCount').classList.remove('visible');
-                }
+                GameState.connections.delete(conn.peer);
+                GameState.players.delete(conn.peer);
+                updatePlayerList();
             });
         }
 
-        function createOtherPlayer(peerId, color, position, rotation) {
-            if (otherPlayers.has(peerId)) return;
+        function handlePeerData(peerId, data) {
+            switch (data.type) {
+                case 'init':
+                    createRemotePlayer(peerId, data.wallet, data.position);
+                    break;
+                case 'position':
+                    updateRemotePlayer(peerId, data.position);
+                    break;
+                case 'chat':
+                    addChatMessage(data.sender, data.message);
+                    break;
+                case 'item':
+                    createDroppedItem(data.item);
+                    break;
+                case 'portal':
+                    createPortal(data.portal);
+                    break;
+            }
+        }
 
-            const otherPlayer = new THREE.Group();
-            otherPlayer.position.set(position.x, position.y, position.z);
-            otherPlayer.rotation.y = rotation;
+        // Server Management
+        function loadServers() {
+            // In production, this would fetch from a decentralized registry
+            const servers = JSON.parse(localStorage.getItem('cryptoworld_servers') || '[]');
 
-            const geometry = new THREE.BoxGeometry(1, 2, 1);
-            const material = new THREE.MeshStandardMaterial({
-                color: color,
-                emissive: color,
+            const serverList = document.getElementById('serverList');
+            serverList.innerHTML = '';
+
+            if (servers.length === 0) {
+                serverList.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No servers available. Create one!</div>';
+                return;
+            }
+
+            servers.forEach(server => {
+                const card = document.createElement('div');
+                card.className = 'server-card';
+                card.innerHTML = `
+                    <h3>${server.name}</h3>
+                    <div class="server-info">
+                        <span class="player-count">👥 ${server.players || 0} players</span>
+                        <span>🌍 ${server.id.slice(0, 8)}...</span>
+                    </div>
+                `;
+                card.onclick = () => joinServer(server);
+                serverList.appendChild(card);
+            });
+        }
+
+        function createServer() {
+            const name = document.getElementById('serverName').value;
+            if (!name) {
+                alert('Please enter a server name');
+                return;
+            }
+
+            const server = {
+                id: GameState.peer.id,
+                name: name,
+                owner: GameState.walletAddress,
+                players: 1,
+                created: Date.now()
+            };
+
+            const servers = JSON.parse(localStorage.getItem('cryptoworld_servers') || '[]');
+            servers.push(server);
+            localStorage.setItem('cryptoworld_servers', JSON.stringify(servers));
+
+            document.getElementById('createServerModal').classList.remove('visible');
+            joinServer(server);
+        }
+
+        function joinServer(server) {
+            GameState.currentServer = server;
+            document.getElementById('serverBrowser').classList.remove('visible');
+            document.getElementById('gameCanvas').classList.add('active');
+
+            // Connect to server host if not the host
+            if (server.id !== GameState.peer.id) {
+                const conn = GameState.peer.connect(server.id);
+                handlePeerConnection(conn);
+            }
+
+            initGame();
+        }
+
+        // Game Init
+        function initGame() {
+            const canvas = document.getElementById('gameCanvas');
+            GameState.scene = new THREE.Scene();
+            GameState.scene.background = new THREE.Color(0x87CEEB);
+            GameState.scene.fog = new THREE.Fog(0x87CEEB, 10, 100);
+
+            GameState.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            GameState.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            GameState.renderer.setSize(window.innerWidth, window.innerHeight);
+            GameState.renderer.shadowMap.enabled = true;
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            GameState.scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            sunLight.position.set(50, 100, 50);
+            sunLight.castShadow = true;
+            GameState.scene.add(sunLight);
+
+            // Ground
+            const ground = new THREE.Mesh(
+                new THREE.PlaneGeometry(200, 200),
+                new THREE.MeshStandardMaterial({ color: 0x2d5016 })
+            );
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            GameState.scene.add(ground);
+
+            // Player
+            GameState.playerMesh = new THREE.Group();
+            const playerGeometry = new THREE.BoxGeometry(1, 2, 1);
+            const playerMaterial = new THREE.MeshStandardMaterial({
+                color: 0x00ff41,
+                emissive: 0x00ff41,
                 emissiveIntensity: 0.3
             });
-            const mesh = new THREE.Mesh(geometry, material);
+            const mesh = new THREE.Mesh(playerGeometry, playerMaterial);
             mesh.position.y = 1;
             mesh.castShadow = true;
-            otherPlayer.add(mesh);
+            GameState.playerMesh.add(mesh);
+            GameState.scene.add(GameState.playerMesh);
 
+            GameState.camera.position.set(0, 5, 10);
+
+            // Controls
+            setupControls();
+
+            // Start animation
+            animate();
+
+            addChatMessage('System', 'Welcome to the server!', true);
+        }
+
+        function createRemotePlayer(peerId, wallet, position) {
+            const playerGroup = new THREE.Group();
+            playerGroup.position.set(position.x, position.y, position.z);
+
+            const mesh = new THREE.Mesh(
+                new THREE.BoxGeometry(1, 2, 1),
+                new THREE.MeshStandardMaterial({
+                    color: 0x06b6d4,
+                    emissive: 0x06b6d4,
+                    emissiveIntensity: 0.3
+                })
+            );
+            mesh.position.y = 1;
+            mesh.castShadow = true;
+            playerGroup.add(mesh);
+
+            // Name tag
             const canvas = document.createElement('canvas');
             canvas.width = 256;
             canvas.height = 64;
             const ctx = canvas.getContext('2d');
             ctx.fillStyle = 'rgba(0,0,0,0.7)';
             ctx.fillRect(0, 0, 256, 64);
-            ctx.fillStyle = color;
-            ctx.font = 'bold 24px Arial';
+            ctx.fillStyle = '#06b6d4';
+            ctx.font = 'bold 20px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('Player', 128, 40);
+            ctx.fillText(wallet.slice(0, 8) + '...', 128, 40);
 
             const texture = new THREE.CanvasTexture(canvas);
-            const labelMaterial = new THREE.MeshBasicMaterial({
-                map: texture,
-                transparent: true
-            });
-            const label = new THREE.Mesh(new THREE.PlaneGeometry(2, 0.5), labelMaterial);
+            const label = new THREE.Mesh(
+                new THREE.PlaneGeometry(2, 0.5),
+                new THREE.MeshBasicMaterial({ map: texture, transparent: true })
+            );
             label.position.y = 3;
-            otherPlayer.add(label);
+            playerGroup.add(label);
 
-            scene.add(otherPlayer);
-            otherPlayers.set(peerId, { group: otherPlayer, mesh: mesh, label: label, color: color });
-
-            updatePlayerCount();
+            GameState.scene.add(playerGroup);
+            GameState.players.set(peerId, { group: playerGroup, wallet: wallet });
+            updatePlayerList();
         }
 
-        function updateOtherPlayer(peerId, position, rotation) {
-            const player = otherPlayers.get(peerId);
+        function updateRemotePlayer(peerId, position) {
+            const player = GameState.players.get(peerId);
             if (player) {
-                player.group.position.lerp(new THREE.Vector3(position.x, position.y, position.z), 0.3);
-                player.group.rotation.y = rotation;
+                player.group.position.lerp(
+                    new THREE.Vector3(position.x, position.y, position.z),
+                    0.3
+                );
             }
         }
 
-        function updateOtherPlayerColor(peerId, color) {
-            const player = otherPlayers.get(peerId);
-            if (player) {
-                player.mesh.material.color.setStyle(color);
-                player.mesh.material.emissive.setStyle(color);
-                player.color = color;
+        function updatePlayerList() {
+            const content = document.getElementById('playerListContent');
+            content.innerHTML = '';
 
-                // Update label
-                const canvas = document.createElement('canvas');
-                canvas.width = 256;
-                canvas.height = 64;
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = 'rgba(0,0,0,0.7)';
-                ctx.fillRect(0, 0, 256, 64);
-                ctx.fillStyle = color;
-                ctx.font = 'bold 24px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('Player', 128, 40);
-                player.label.material.map = new THREE.CanvasTexture(canvas);
-                player.label.material.needsUpdate = true;
-            }
+            GameState.players.forEach((player, peerId) => {
+                const item = document.createElement('div');
+                item.className = 'player-item';
+                item.innerHTML = `
+                    <span>${player.wallet.slice(0, 8)}...</span>
+                    <div class="player-status"></div>
+                `;
+                content.appendChild(item);
+            });
+
+            document.getElementById('playerCount').textContent = GameState.players.size;
         }
 
-        function removeOtherPlayer(peerId) {
-            const player = otherPlayers.get(peerId);
-            if (player) {
-                scene.remove(player.group);
-                otherPlayers.delete(peerId);
-            }
-            updatePlayerCount();
-        }
+        // Controls
+        const keys = {};
+        function setupControls() {
+            window.addEventListener('keydown', (e) => {
+                keys[e.key.toLowerCase()] = true;
+            });
 
-        function updatePlayerCount() {
-            const count = connections.size + 1;
-            document.getElementById('playerCount').textContent = `Players: ${count}`;
-        }
-
-        function broadcastPosition() {
-            const data = {
-                type: 'update',
-                position: {
-                    x: playerGroup.position.x,
-                    y: playerGroup.position.y,
-                    z: playerGroup.position.z
-                },
-                rotation: playerGroup.rotation.y
-            };
-
-            connections.forEach(conn => {
-                if (conn.open) {
-                    conn.send(data);
-                }
+            window.addEventListener('keyup', (e) => {
+                keys[e.key.toLowerCase()] = false;
             });
         }
 
-        // Color picker
-        document.querySelectorAll('.color-option').forEach(option => {
-            option.addEventListener('click', () => {
-                const color = option.dataset.color;
-                myColor = color;
-
-                document.querySelectorAll('.color-option').forEach(opt => {
-                    opt.classList.remove('selected');
-                });
-                option.classList.add('selected');
-
-                playerMesh.material.color.setStyle(color);
-                playerMesh.material.emissive.setStyle(color);
-
-                const colorData = { type: 'color', color: color };
-                connections.forEach(conn => {
-                    if (conn.open) {
-                        conn.send(colorData);
-                    }
-                });
-            });
-        });
-
-        // Broadcast position
-        setInterval(() => {
-            if (connections.size > 0) {
-                broadcastPosition();
-            }
-        }, 50);
-
-        // Animation loop
+        // Animation Loop
         function animate() {
             requestAnimationFrame(animate);
 
-            // Movement
-            if (keys['w'] || keys['arrowup'] || touchDelta.y < -0.2) {
-                playerGroup.position.x -= Math.sin(playerGroup.rotation.y) * moveSpeed;
-                playerGroup.position.z -= Math.cos(playerGroup.rotation.y) * moveSpeed;
-            }
-            if (keys['s'] || keys['arrowdown'] || touchDelta.y > 0.2) {
-                playerGroup.position.x += Math.sin(playerGroup.rotation.y) * moveSpeed;
-                playerGroup.position.z += Math.cos(playerGroup.rotation.y) * moveSpeed;
-            }
-            if (keys['a'] || keys['arrowleft'] || touchDelta.x < -0.2) {
-                playerGroup.rotation.y += rotateSpeed;
-            }
-            if (keys['d'] || keys['arrowright'] || touchDelta.x > 0.2) {
-                playerGroup.rotation.y -= rotateSpeed;
-            }
+            if (!GameState.scene) return;
 
-            // Keep player on ground
-            playerGroup.position.x = Math.max(-95, Math.min(95, playerGroup.position.x));
-            playerGroup.position.z = Math.max(-95, Math.min(95, playerGroup.position.z));
+            // Movement
+            const moveSpeed = 0.1;
+            if (keys['w'] || keys['arrowup']) {
+                GameState.playerMesh.position.z -= moveSpeed;
+            }
+            if (keys['s'] || keys['arrowdown']) {
+                GameState.playerMesh.position.z += moveSpeed;
+            }
+            if (keys['a'] || keys['arrowleft']) {
+                GameState.playerMesh.position.x -= moveSpeed;
+            }
+            if (keys['d'] || keys['arrowright']) {
+                GameState.playerMesh.position.x += moveSpeed;
+            }
 
             // Camera follow
             const cameraOffset = new THREE.Vector3(0, 5, 10);
-            const cameraPosition = new THREE.Vector3();
-            cameraPosition.copy(playerGroup.position);
-            cameraPosition.add(cameraOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), playerGroup.rotation.y));
-            camera.position.lerp(cameraPosition, 0.1);
-            camera.lookAt(playerGroup.position);
+            const cameraPosition = GameState.playerMesh.position.clone().add(cameraOffset);
+            GameState.camera.position.lerp(cameraPosition, 0.1);
+            GameState.camera.lookAt(GameState.playerMesh.position);
 
-            // Make labels face camera
-            otherPlayers.forEach(player => {
-                player.label.lookAt(camera.position);
+            // Broadcast position
+            if (GameState.connections.size > 0) {
+                const posData = {
+                    type: 'position',
+                    position: {
+                        x: GameState.playerMesh.position.x,
+                        y: GameState.playerMesh.position.y,
+                        z: GameState.playerMesh.position.z
+                    }
+                };
+                GameState.connections.forEach(conn => {
+                    if (conn.open) conn.send(posData);
+                });
+            }
+
+            GameState.renderer.render(GameState.scene, GameState.camera);
+        }
+
+        // Chat
+        function addChatMessage(sender, message, isSystem = false) {
+            const messages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'chat-message' + (isSystem ? ' system' : '');
+
+            if (isSystem) {
+                div.textContent = message;
+            } else {
+                div.innerHTML = `<span class="sender">${sender.slice(0, 8)}...:</span>${message}`;
+            }
+
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            addChatMessage(GameState.walletAddress, message);
+
+            const chatData = {
+                type: 'chat',
+                sender: GameState.walletAddress,
+                message: message
+            };
+
+            GameState.connections.forEach(conn => {
+                if (conn.open) conn.send(chatData);
             });
 
-            renderer.render(scene, camera);
+            input.value = '';
         }
+
+        // Actions
+        function dropLink() {
+            const url = document.getElementById('linkUrl').value;
+            const name = document.getElementById('linkName').value || 'Link';
+
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+
+            const item = {
+                type: 'link',
+                url: url,
+                name: name,
+                position: {
+                    x: GameState.playerMesh.position.x,
+                    y: 0,
+                    z: GameState.playerMesh.position.z
+                },
+                owner: GameState.walletAddress
+            };
+
+            createDroppedItem(item);
+
+            GameState.connections.forEach(conn => {
+                if (conn.open) conn.send({ type: 'item', item: item });
+            });
+
+            document.getElementById('dropLinkModal').classList.remove('visible');
+            document.getElementById('linkUrl').value = '';
+            document.getElementById('linkName').value = '';
+        }
+
+        function createDroppedItem(item) {
+            const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            const material = new THREE.MeshStandardMaterial({
+                color: 0xffd700,
+                emissive: 0xffd700,
+                emissiveIntensity: 0.5
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(item.position.x, 0.5, item.position.z);
+            mesh.userData = item;
+            GameState.scene.add(mesh);
+            GameState.droppedItems.push(mesh);
+        }
+
+        // Event Listeners
+        document.getElementById('connectPhantom').onclick = connectPhantom;
+        document.getElementById('connectMetaMask').onclick = connectMetaMask;
+
+        document.getElementById('createServerBtn').onclick = () => {
+            document.getElementById('createServerModal').classList.add('visible');
+        };
+
+        document.getElementById('confirmCreateServer').onclick = createServer;
+        document.getElementById('cancelCreateServer').onclick = () => {
+            document.getElementById('createServerModal').classList.remove('visible');
+        };
+
+        document.getElementById('refreshServersBtn').onclick = loadServers;
+
+        document.getElementById('chatSend').onclick = sendChatMessage;
+        document.getElementById('chatInput').onkeypress = (e) => {
+            if (e.key === 'Enter') sendChatMessage();
+        };
+
+        document.getElementById('dropLinkBtn').onclick = () => {
+            document.getElementById('dropLinkModal').classList.add('visible');
+        };
+
+        document.getElementById('confirmDropLink').onclick = dropLink;
+        document.getElementById('cancelDropLink').onclick = () => {
+            document.getElementById('dropLinkModal').classList.remove('visible');
+        };
+
+        document.getElementById('leaveServerBtn').onclick = () => {
+            location.reload();
+        };
+
+        document.getElementById('toggleVoice').onclick = () => {
+            GameState.voiceEnabled = !GameState.voiceEnabled;
+            document.getElementById('toggleVoice').textContent =
+                `🎤 Voice: ${GameState.voiceEnabled ? 'ON' : 'OFF'}`;
+            document.getElementById('toggleVoice').classList.toggle('active');
+        };
 
         // Window resize
         window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            if (GameState.camera && GameState.renderer) {
+                GameState.camera.aspect = window.innerWidth / window.innerHeight;
+                GameState.camera.updateProjectionMatrix();
+                GameState.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
         });
 
-        // Hide loading screen and start
-        setTimeout(() => {
-            document.getElementById('loadingFill').style.width = '100%';
-            setTimeout(() => {
-                document.getElementById('loadingScreen').classList.add('hidden');
-                animate();
-            }, 500);
-        }, 1000);
+        console.log('Crypto World initialized');
     </script>
 </body>
 </html>
