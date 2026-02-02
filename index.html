@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer World</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100vh;
+        }
+
+        /* Loading Screen */
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            color: #fff;
+        }
+
+        #loadingScreen.hidden {
+            display: none;
+        }
+
+        .loading-text {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .loading-bar {
+            width: 300px;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .loading-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff41, #06b6d4);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Multiplayer UI - Hidden until 2+ players */
+        #playerCount {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            z-index: 1000;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #playerCount.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        #colorPicker {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            z-index: 1000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #colorPicker.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        #colorPicker h3 {
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .color-options {
+            display: grid;
+            grid-template-columns: repeat(4, 50px);
+            gap: 10px;
+        }
+
+        .color-option {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+            border-color: #fff;
+        }
+
+        .color-option.selected {
+            border-color: #fff;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        }
+
+        /* Controls Info */
+        #controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 30px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            text-align: center;
+        }
+
+        /* Share Link Button */
+        #shareLink {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 255, 65, 0.2);
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #shareLink.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        #shareLink:hover {
+            background: rgba(0, 255, 65, 0.3);
+        }
+
+        /* Mobile Joystick */
+        .mobile-controls {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-controls {
+                display: block;
+            }
+
+            #controls {
+                display: none;
+            }
+        }
+
+        .touch-joystick {
+            width: 120px;
+            height: 120px;
+            background: rgba(0, 255, 65, 0.1);
+            border: 3px solid rgba(0, 255, 65, 0.3);
+            border-radius: 50%;
+            position: relative;
+            touch-action: none;
+        }
+
+        .joystick-knob {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 255, 65, 0.8);
+            border: 2px solid #00ff41;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px #00ff41;
+            transition: all 0.1s;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+</head>
+<body>
+    <div id="loadingScreen">
+        <div class="loading-text">Loading World...</div>
+        <div class="loading-bar">
+            <div class="loading-fill" id="loadingFill"></div>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="playerCount">Players: 1</div>
+
+    <div id="colorPicker">
+        <h3>Choose Your Color</h3>
+        <div class="color-options">
+            <div class="color-option" data-color="#00ff41" style="background: #00ff41;"></div>
+            <div class="color-option" data-color="#ff0040" style="background: #ff0040;"></div>
+            <div class="color-option" data-color="#06b6d4" style="background: #06b6d4;"></div>
+            <div class="color-option" data-color="#9370db" style="background: #9370db;"></div>
+            <div class="color-option" data-color="#ffd700" style="background: #ffd700;"></div>
+            <div class="color-option" data-color="#ff6b35" style="background: #ff6b35;"></div>
+            <div class="color-option" data-color="#e91e63" style="background: #e91e63;"></div>
+            <div class="color-option" data-color="#10b981" style="background: #10b981;"></div>
+            <div class="color-option" data-color="#f97316" style="background: #f97316;"></div>
+            <div class="color-option" data-color="#8b5cf6" style="background: #8b5cf6;"></div>
+            <div class="color-option" data-color="#ec4899" style="background: #ec4899;"></div>
+            <div class="color-option" data-color="#14b8a6" style="background: #14b8a6;"></div>
+        </div>
+    </div>
+
+    <button id="shareLink">📋 Copy Invite Link</button>
+
+    <div id="controls">
+        Use WASD or Arrow Keys to move • Share link to play with friends
+    </div>
+
+    <div class="mobile-controls">
+        <div class="touch-joystick" id="touchJoystick">
+            <div class="joystick-knob" id="joystickKnob"></div>
+        </div>
+    </div>
+
+    <script>
+        // Scene setup
+        const canvas = document.getElementById('gameCanvas');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB);
+        scene.fog = new THREE.Fog(0x87CEEB, 10, 100);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({
+            canvas,
+            antialias: true,
+            powerPreference: 'high-performance'
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        sunLight.position.set(50, 100, 50);
+        sunLight.castShadow = true;
+        sunLight.shadow.camera.left = -50;
+        sunLight.shadow.camera.right = 50;
+        sunLight.shadow.camera.top = 50;
+        sunLight.shadow.camera.bottom = -50;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        scene.add(sunLight);
+
+        // Ground
+        const groundGeometry = new THREE.PlaneGeometry(200, 200);
+        const groundMaterial = new THREE.MeshStandardMaterial({
+            color: 0x2d5016,
+            roughness: 0.8
+        });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // Add some trees/obstacles
+        for (let i = 0; i < 20; i++) {
+            const treeGeometry = new THREE.CylinderGeometry(0, 2, 5, 8);
+            const treeMaterial = new THREE.MeshStandardMaterial({ color: 0x0d4d0d });
+            const tree = new THREE.Mesh(treeGeometry, treeMaterial);
+            tree.position.set(
+                Math.random() * 180 - 90,
+                2.5,
+                Math.random() * 180 - 90
+            );
+            tree.castShadow = true;
+            tree.receiveShadow = true;
+            scene.add(tree);
+        }
+
+        // Player setup
+        const playerGroup = new THREE.Group();
+        const playerGeometry = new THREE.BoxGeometry(1, 2, 1);
+        const playerMaterial = new THREE.MeshStandardMaterial({
+            color: 0x00ff41,
+            emissive: 0x00ff41,
+            emissiveIntensity: 0.3
+        });
+        const playerMesh = new THREE.Mesh(playerGeometry, playerMaterial);
+        playerMesh.position.y = 1;
+        playerMesh.castShadow = true;
+        playerGroup.add(playerMesh);
+        scene.add(playerGroup);
+
+        // Camera follow
+        camera.position.set(0, 5, 10);
+        camera.lookAt(playerGroup.position);
+
+        // Movement
+        const keys = {};
+        const moveSpeed = 0.1;
+        const rotateSpeed = 0.05;
+
+        window.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        // Mobile touch controls
+        const touchJoystick = document.getElementById('touchJoystick');
+        const joystickKnob = document.getElementById('joystickKnob');
+        let touchActive = false;
+        let touchDelta = { x: 0, y: 0 };
+
+        if (touchJoystick) {
+            let startX, startY;
+
+            touchJoystick.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                touchActive = true;
+                const rect = touchJoystick.getBoundingClientRect();
+                startX = rect.left + rect.width / 2;
+                startY = rect.top + rect.height / 2;
+            });
+
+            touchJoystick.addEventListener('touchmove', (e) => {
+                if (!touchActive) return;
+                e.preventDefault();
+
+                const touch = e.touches[0];
+                const deltaX = touch.clientX - startX;
+                const deltaY = touch.clientY - startY;
+                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                const maxDistance = 35;
+                const clampedDistance = Math.min(distance, maxDistance);
+                const angle = Math.atan2(deltaY, deltaX);
+                const knobX = Math.cos(angle) * clampedDistance;
+                const knobY = Math.sin(angle) * clampedDistance;
+
+                joystickKnob.style.transform = `translate(calc(-50% + ${knobX}px), calc(-50% + ${knobY}px))`;
+
+                touchDelta.x = deltaX / maxDistance;
+                touchDelta.y = deltaY / maxDistance;
+            });
+
+            touchJoystick.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                touchActive = false;
+                joystickKnob.style.transform = 'translate(-50%, -50%)';
+                touchDelta.x = 0;
+                touchDelta.y = 0;
+            });
+        }
+
+        // Multiplayer
+        const otherPlayers = new Map();
+        let myPeerId = null;
+        let myColor = '#00ff41';
+        const connections = new Map();
+
+        const peer = new Peer();
+
+        peer.on('open', (id) => {
+            myPeerId = id;
+            console.log('My peer ID:', id);
+
+            // Check for connection parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const connectTo = urlParams.get('connect');
+
+            if (connectTo) {
+                connectToPlayer(connectTo);
+            }
+
+            // Show share button
+            const shareBtn = document.getElementById('shareLink');
+            shareBtn.classList.add('visible');
+            shareBtn.addEventListener('click', () => {
+                const url = window.location.origin + window.location.pathname + '?connect=' + id;
+                navigator.clipboard.writeText(url).then(() => {
+                    shareBtn.textContent = '✓ Link Copied!';
+                    setTimeout(() => {
+                        shareBtn.textContent = '📋 Copy Invite Link';
+                    }, 2000);
+                });
+            });
+        });
+
+        peer.on('connection', (conn) => {
+            handleConnection(conn);
+        });
+
+        function connectToPlayer(peerId) {
+            if (peerId === myPeerId) return;
+            const conn = peer.connect(peerId, { reliable: true });
+            handleConnection(conn);
+        }
+
+        function handleConnection(conn) {
+            connections.set(conn.peer, conn);
+
+            conn.on('open', () => {
+                conn.send({
+                    type: 'init',
+                    color: myColor,
+                    position: {
+                        x: playerGroup.position.x,
+                        y: playerGroup.position.y,
+                        z: playerGroup.position.z
+                    },
+                    rotation: playerGroup.rotation.y
+                });
+
+                updatePlayerCount();
+
+                if (connections.size >= 1) {
+                    document.getElementById('colorPicker').classList.add('visible');
+                    document.getElementById('playerCount').classList.add('visible');
+                }
+            });
+
+            conn.on('data', (data) => {
+                if (data.type === 'init') {
+                    createOtherPlayer(conn.peer, data.color, data.position, data.rotation);
+                } else if (data.type === 'update') {
+                    updateOtherPlayer(conn.peer, data.position, data.rotation);
+                } else if (data.type === 'color') {
+                    updateOtherPlayerColor(conn.peer, data.color);
+                }
+            });
+
+            conn.on('close', () => {
+                removeOtherPlayer(conn.peer);
+                connections.delete(conn.peer);
+                updatePlayerCount();
+
+                if (connections.size === 0) {
+                    document.getElementById('colorPicker').classList.remove('visible');
+                    document.getElementById('playerCount').classList.remove('visible');
+                }
+            });
+        }
+
+        function createOtherPlayer(peerId, color, position, rotation) {
+            if (otherPlayers.has(peerId)) return;
+
+            const otherPlayer = new THREE.Group();
+            otherPlayer.position.set(position.x, position.y, position.z);
+            otherPlayer.rotation.y = rotation;
+
+            const geometry = new THREE.BoxGeometry(1, 2, 1);
+            const material = new THREE.MeshStandardMaterial({
+                color: color,
+                emissive: color,
+                emissiveIntensity: 0.3
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.y = 1;
+            mesh.castShadow = true;
+            otherPlayer.add(mesh);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(0, 0, 256, 64);
+            ctx.fillStyle = color;
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Player', 128, 40);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const labelMaterial = new THREE.MeshBasicMaterial({
+                map: texture,
+                transparent: true
+            });
+            const label = new THREE.Mesh(new THREE.PlaneGeometry(2, 0.5), labelMaterial);
+            label.position.y = 3;
+            otherPlayer.add(label);
+
+            scene.add(otherPlayer);
+            otherPlayers.set(peerId, { group: otherPlayer, mesh: mesh, label: label, color: color });
+
+            updatePlayerCount();
+        }
+
+        function updateOtherPlayer(peerId, position, rotation) {
+            const player = otherPlayers.get(peerId);
+            if (player) {
+                player.group.position.lerp(new THREE.Vector3(position.x, position.y, position.z), 0.3);
+                player.group.rotation.y = rotation;
+            }
+        }
+
+        function updateOtherPlayerColor(peerId, color) {
+            const player = otherPlayers.get(peerId);
+            if (player) {
+                player.mesh.material.color.setStyle(color);
+                player.mesh.material.emissive.setStyle(color);
+                player.color = color;
+
+                // Update label
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 64;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                ctx.fillRect(0, 0, 256, 64);
+                ctx.fillStyle = color;
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Player', 128, 40);
+                player.label.material.map = new THREE.CanvasTexture(canvas);
+                player.label.material.needsUpdate = true;
+            }
+        }
+
+        function removeOtherPlayer(peerId) {
+            const player = otherPlayers.get(peerId);
+            if (player) {
+                scene.remove(player.group);
+                otherPlayers.delete(peerId);
+            }
+            updatePlayerCount();
+        }
+
+        function updatePlayerCount() {
+            const count = connections.size + 1;
+            document.getElementById('playerCount').textContent = `Players: ${count}`;
+        }
+
+        function broadcastPosition() {
+            const data = {
+                type: 'update',
+                position: {
+                    x: playerGroup.position.x,
+                    y: playerGroup.position.y,
+                    z: playerGroup.position.z
+                },
+                rotation: playerGroup.rotation.y
+            };
+
+            connections.forEach(conn => {
+                if (conn.open) {
+                    conn.send(data);
+                }
+            });
+        }
+
+        // Color picker
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const color = option.dataset.color;
+                myColor = color;
+
+                document.querySelectorAll('.color-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                option.classList.add('selected');
+
+                playerMesh.material.color.setStyle(color);
+                playerMesh.material.emissive.setStyle(color);
+
+                const colorData = { type: 'color', color: color };
+                connections.forEach(conn => {
+                    if (conn.open) {
+                        conn.send(colorData);
+                    }
+                });
+            });
+        });
+
+        // Broadcast position
+        setInterval(() => {
+            if (connections.size > 0) {
+                broadcastPosition();
+            }
+        }, 50);
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Movement
+            if (keys['w'] || keys['arrowup'] || touchDelta.y < -0.2) {
+                playerGroup.position.x -= Math.sin(playerGroup.rotation.y) * moveSpeed;
+                playerGroup.position.z -= Math.cos(playerGroup.rotation.y) * moveSpeed;
+            }
+            if (keys['s'] || keys['arrowdown'] || touchDelta.y > 0.2) {
+                playerGroup.position.x += Math.sin(playerGroup.rotation.y) * moveSpeed;
+                playerGroup.position.z += Math.cos(playerGroup.rotation.y) * moveSpeed;
+            }
+            if (keys['a'] || keys['arrowleft'] || touchDelta.x < -0.2) {
+                playerGroup.rotation.y += rotateSpeed;
+            }
+            if (keys['d'] || keys['arrowright'] || touchDelta.x > 0.2) {
+                playerGroup.rotation.y -= rotateSpeed;
+            }
+
+            // Keep player on ground
+            playerGroup.position.x = Math.max(-95, Math.min(95, playerGroup.position.x));
+            playerGroup.position.z = Math.max(-95, Math.min(95, playerGroup.position.z));
+
+            // Camera follow
+            const cameraOffset = new THREE.Vector3(0, 5, 10);
+            const cameraPosition = new THREE.Vector3();
+            cameraPosition.copy(playerGroup.position);
+            cameraPosition.add(cameraOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), playerGroup.rotation.y));
+            camera.position.lerp(cameraPosition, 0.1);
+            camera.lookAt(playerGroup.position);
+
+            // Make labels face camera
+            otherPlayers.forEach(player => {
+                player.label.lookAt(camera.position);
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        // Window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Hide loading screen and start
+        setTimeout(() => {
+            document.getElementById('loadingFill').style.width = '100%';
+            setTimeout(() => {
+                document.getElementById('loadingScreen').classList.add('hidden');
+                animate();
+            }, 500);
+        }, 1000);
+    </script>
+</body>
+</html>
