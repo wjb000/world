@@ -197,6 +197,59 @@
 
         .player-count {
             color: var(--secondary);
+        }
+
+        /* Loading Screen */
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10001;
+            transition: opacity 0.5s;
+        }
+
+        #loadingScreen.visible {
+            display: flex;
+        }
+
+        #loadingScreen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: white;
+            margin-top: 20px;
+            font-size: 18px;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .loading-text {
+                font-size: 14px;
+            }
+        }
             font-weight: bold;
         }
 
@@ -764,6 +817,12 @@
         </div>
     </div>
 
+    <!-- Loading Screen -->
+    <div id="loadingScreen">
+        <div class="loader"></div>
+        <div class="loading-text">LOADING WORLD...</div>
+    </div>
+
     <!-- Server Browser -->
     <div id="serverBrowser">
         <div class="server-header">
@@ -935,6 +994,7 @@
             clock: null,
             isAutoReconnecting: false,
             serverRefreshInterval: null,
+            heartbeatInterval: null,
             animating: false
         };
 
@@ -1542,33 +1602,36 @@
             }
         }
 
-        // Server Management
+        // Server Management with Heartbeat System
         function cleanupEmptyServers() {
             const servers = JSON.parse(localStorage.getItem('cryptoworld_servers') || '[]');
+            const now = Date.now();
+            const HEARTBEAT_TIMEOUT = 30000; // 30 seconds
 
-            // Remove any server with 0 players immediately
-            const activeServers = servers.filter(server => (server.playerCount || 0) > 0);
+            // Remove servers that haven't sent heartbeat in 30 seconds
+            const activeServers = servers.filter(server => {
+                const timeSinceHeartbeat = now - (server.lastHeartbeat || server.created || 0);
+                return timeSinceHeartbeat < HEARTBEAT_TIMEOUT;
+            });
 
             if (activeServers.length !== servers.length) {
                 localStorage.setItem('cryptoworld_servers', JSON.stringify(activeServers));
-                console.log(`Cleaned up servers. Active: ${activeServers.length}, Removed: ${servers.length - activeServers.length}`);
+                console.log(`Cleaned up stale servers. Active: ${activeServers.length}, Removed: ${servers.length - activeServers.length}`);
             }
         }
 
         function loadServers() {
-            // Clean up empty servers first
+            // Clean up stale servers first
             cleanupEmptyServers();
 
-            // In production, this would fetch from a decentralized registry
             const servers = JSON.parse(localStorage.getItem('cryptoworld_servers') || '[]');
 
             // Filter to show:
-            // 1. Servers with 1+ players
+            // 1. Servers with recent heartbeat (active)
             // 2. Not the server we're currently in (if any)
             const activeServers = servers.filter(s => {
-                const hasPlayers = (s.playerCount || 0) > 0;
                 const notCurrentServer = !GameState.currentServer || s.id !== GameState.currentServer;
-                return hasPlayers && notCurrentServer;
+                return notCurrentServer;
             });
 
             const serverList = document.getElementById('serverList');
@@ -1580,18 +1643,62 @@
             }
 
             activeServers.forEach(server => {
+                const timeSinceCreated = Date.now() - (server.created || 0);
+                const ageText = timeSinceCreated < 60000 ? 'Just now' : `${Math.floor(timeSinceCreated / 60000)}m ago`;
+
                 const card = document.createElement('div');
                 card.className = 'server-card';
                 card.innerHTML = `
                     <h3>${server.name}</h3>
                     <div class="server-info">
-                        <span class="player-count">${server.playerCount || 0} player(s)</span>
-                        <span>by ${server.owner ? server.owner.slice(0, 6) + '...' + server.owner.slice(-4) : 'Unknown'}</span>
+                        <span class="player-count">🟢 Active</span>
+                        <span>${ageText}</span>
+                    </div>
+                    <div class="server-info">
+                        <span style="font-size: 12px;">by ${server.owner ? server.owner.slice(0, 6) + '...' + server.owner.slice(-4) : 'Unknown'}</span>
                     </div>
                     <button class="btn" onclick="joinServerById('${server.id}')">Join Server</button>
                 `;
                 serverList.appendChild(card);
             });
+        }
+
+        // Server heartbeat - updates every 10 seconds when you're hosting
+        function startServerHeartbeat() {
+            if (GameState.heartbeatInterval) {
+                clearInterval(GameState.heartbeatInterval);
+            }
+
+            GameState.heartbeatInterval = setInterval(() => {
+                if (GameState.currentServer && GameState.peer?.id === GameState.currentServer) {
+                    // Update heartbeat timestamp for our server
+                    const servers = JSON.parse(localStorage.getItem('cryptoworld_servers') || '[]');
+                    const serverIndex = servers.findIndex(s => s.id === GameState.currentServer);
+
+                    if (serverIndex !== -1) {
+                        servers[serverIndex].lastHeartbeat = Date.now();
+                        localStorage.setItem('cryptoworld_servers', JSON.stringify(servers));
+                        console.log('Server heartbeat sent');
+                    }
+                }
+            }, 10000); // Every 10 seconds
+        }
+
+        function stopServerHeartbeat() {
+            if (GameState.heartbeatInterval) {
+                clearInterval(GameState.heartbeatInterval);
+                GameState.heartbeatInterval = null;
+            }
+        }
+
+        // Clean up server when leaving
+        function removeMyServer() {
+            if (GameState.currentServer && GameState.peer?.id === GameState.currentServer) {
+                const servers = JSON.parse(localStorage.getItem('cryptoworld_servers') || '[]');
+                const filteredServers = servers.filter(s => s.id !== GameState.currentServer);
+                localStorage.setItem('cryptoworld_servers', JSON.stringify(filteredServers));
+                console.log('Removed my server from list');
+            }
         }
 
         function joinServerById(serverId) {
@@ -1626,7 +1733,8 @@
                 creatorWallet: GameState.walletAddress,
                 players: 1,
                 playerCount: 1,
-                created: Date.now()
+                created: Date.now(),
+                lastHeartbeat: Date.now() // Initialize heartbeat
             };
 
             // Save to localStorage
@@ -1635,6 +1743,9 @@
             localStorage.setItem('cryptoworld_servers', JSON.stringify(servers));
 
             console.log('Server created:', server);
+
+            // Start heartbeat for this server
+            startServerHeartbeat();
 
             // Close modal
             document.getElementById('createServerModal').classList.remove('visible');
@@ -1671,6 +1782,11 @@
 
             console.log('All validations passed');
 
+            // Show loading screen
+            const loadingScreen = document.getElementById('loadingScreen');
+            loadingScreen.classList.add('visible');
+            loadingScreen.classList.remove('hidden');
+
             // Store server info
             GameState.currentServer = server.id;
             console.log('Set currentServer to:', GameState.currentServer);
@@ -1694,25 +1810,21 @@
                 } catch (error) {
                     console.error('Failed to initialize game:', error);
                     alert('Failed to start game. Please refresh and try again.');
+                    loadingScreen.classList.remove('visible');
                     return;
                 }
             } else {
                 console.log('Game scene already exists');
+                // Hide loading screen after a short delay since scene exists
+                setTimeout(() => {
+                    loadingScreen.classList.add('hidden');
+                    setTimeout(() => loadingScreen.classList.remove('visible'), 500);
+                }, 500);
             }
 
             // If joining someone else's server (not the host)
             if (server.id !== GameState.peer.id) {
                 console.log('Joining another player\'s server');
-
-                // Update player count
-                const servers = JSON.parse(localStorage.getItem('cryptoworld_servers')) || [];
-                const serverIndex = servers.findIndex(s => s.id === server.id);
-
-                if (serverIndex !== -1) {
-                    servers[serverIndex].playerCount = (servers[serverIndex].playerCount || 0) + 1;
-                    localStorage.setItem('cryptoworld_servers', JSON.stringify(servers));
-                    console.log('Updated player count to:', servers[serverIndex].playerCount);
-                }
 
                 // Connect to server host
                 console.log('Attempting to connect to host:', server.id);
@@ -1737,7 +1849,9 @@
 
                     conn.on('error', (error) => {
                         console.error('Connection error:', error);
-                        addChatMessage('System', 'Connection error. Please try again.', true);
+                        addChatMessage('System', 'Connection error. The server may be offline.', true);
+                        alert('Could not connect to server. The host may have left.');
+                        leaveServer();
                     });
 
                     conn.on('close', () => {
@@ -1751,7 +1865,7 @@
 
                 } catch (error) {
                     console.error('Failed to connect to server:', error);
-                    alert('Failed to join server. Please try again.\n\nError: ' + error.message);
+                    alert('Failed to join server. The server may be offline.\n\nError: ' + error.message);
                     leaveServer();
                     return;
                 }
@@ -2126,6 +2240,15 @@
             }
 
             addChatMessage('System', 'Welcome to the server!', true);
+
+            // Hide loading screen after world is loaded
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('loadingScreen');
+                loadingScreen.classList.add('hidden');
+                setTimeout(() => {
+                    loadingScreen.classList.remove('visible');
+                }, 500);
+            }, 1000);
 
             console.log('=== INIT GAME COMPLETE ===');
 
@@ -2842,23 +2965,13 @@
         document.getElementById('leaveServerBtn').onclick = leaveServer;
 
         function leaveServer() {
-            // Update server player count
-            if (GameState.currentServer) {
-                const servers = JSON.parse(localStorage.getItem('cryptoworld_servers')) || [];
-                const serverIndex = servers.findIndex(s => s.id === GameState.currentServer);
+            console.log('Leaving server...');
 
-                if (serverIndex !== -1) {
-                    servers[serverIndex].playerCount = (servers[serverIndex].playerCount || 1) - 1;
+            // Stop heartbeat if we're the host
+            stopServerHeartbeat();
 
-                    // Remove server if no players left
-                    if (servers[serverIndex].playerCount <= 0) {
-                        servers.splice(serverIndex, 1);
-                        console.log('Server removed - no players remaining');
-                    }
-
-                    localStorage.setItem('cryptoworld_servers', JSON.stringify(servers));
-                }
-            }
+            // Remove our server from the list if we're the host
+            removeMyServer();
 
             // Disconnect all peers
             GameState.connections.forEach((conn, peerId) => {
@@ -2867,6 +2980,14 @@
                 }
             });
             GameState.connections.clear();
+
+            // Clear remote players
+            GameState.players.forEach((player, peerId) => {
+                if (player.group && GameState.scene) {
+                    GameState.scene.remove(player.group);
+                }
+            });
+            GameState.players.clear();
 
             // Clear game state
             GameState.currentServer = null;
@@ -2999,6 +3120,13 @@
                 GameState.camera.updateProjectionMatrix();
                 GameState.renderer.setSize(window.innerWidth, window.innerHeight);
             }
+        });
+
+        // Clean up server when user closes tab/browser
+        window.addEventListener('beforeunload', () => {
+            console.log('Page unloading - cleaning up server');
+            stopServerHeartbeat();
+            removeMyServer();
         });
 
         console.log('Crypto World initialized');
