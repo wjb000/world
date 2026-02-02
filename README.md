@@ -146,7 +146,7 @@ const CONFIG = {
 
 ### Supabase Backend Setup
 
-The game uses Supabase for centralized server management, replacing localStorage for better scalability and real-time updates.
+**SINGLE WORLD ARCHITECTURE**: The game uses Supabase for real-time multiplayer in ONE massive shared world. All players exist in the same universe with proximity-based streaming.
 
 #### Setting Up Your Supabase Database:
 
@@ -155,68 +155,100 @@ The game uses Supabase for centralized server management, replacing localStorage
    - Sign up for free account
    - Create a new project
 
-2. **Create the `servers` Table**
+2. **Create the `players` Table**
 
    Run this SQL in the Supabase SQL Editor:
 
    ```sql
-   CREATE TABLE servers (
-       id TEXT PRIMARY KEY,
-       name TEXT NOT NULL,
-       owner TEXT NOT NULL,
-       creator TEXT,
-       creator_wallet TEXT,
-       players INTEGER DEFAULT 1,
-       player_count INTEGER DEFAULT 1,
-       created_at TIMESTAMPTZ DEFAULT NOW(),
-       last_heartbeat TIMESTAMPTZ DEFAULT NOW()
+   -- Main players table for real-time position streaming
+   CREATE TABLE players (
+       id TEXT PRIMARY KEY,          -- Player unique ID (wallet address or generated)
+       username TEXT NOT NULL,        -- Display name
+       wallet_address TEXT,           -- Crypto wallet address
+       wallet_type TEXT,              -- 'phantom' or 'metamask'
+
+       -- Position and movement
+       pos_x REAL NOT NULL DEFAULT 0,
+       pos_y REAL NOT NULL DEFAULT 1.6,
+       pos_z REAL NOT NULL DEFAULT 0,
+
+       -- Rotation
+       rot_y REAL NOT NULL DEFAULT 0,
+
+       -- Animation state
+       animation TEXT DEFAULT 'Idle',
+
+       -- Appearance
+       color TEXT DEFAULT '0x00ccff',
+
+       -- Timestamp
+       last_seen TIMESTAMPTZ DEFAULT NOW(),
+       joined_at TIMESTAMPTZ DEFAULT NOW()
    );
 
-   -- Add index for faster queries
-   CREATE INDEX idx_servers_heartbeat ON servers(last_heartbeat DESC);
-   CREATE INDEX idx_servers_created ON servers(created_at DESC);
+   -- Spatial index for proximity queries (CRITICAL for performance)
+   CREATE INDEX idx_players_position ON players(pos_x, pos_z);
+   CREATE INDEX idx_players_last_seen ON players(last_seen DESC);
+
+   -- Enable real-time subscriptions
+   ALTER PUBLICATION supabase_realtime ADD TABLE players;
    ```
 
 3. **Enable Row Level Security (RLS)**
 
    ```sql
-   ALTER TABLE servers ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE players ENABLE ROW LEVEL SECURITY;
 
-   -- Allow anyone to read servers
-   CREATE POLICY "Enable read access for all users" ON servers
+   -- Allow anyone to read all players (for multiplayer visibility)
+   CREATE POLICY "Enable read access for all users" ON players
        FOR SELECT USING (true);
 
-   -- Allow anyone to insert servers
-   CREATE POLICY "Enable insert for all users" ON servers
+   -- Allow anyone to insert (join world)
+   CREATE POLICY "Enable insert for all users" ON players
        FOR INSERT WITH CHECK (true);
 
-   -- Allow anyone to update servers (for heartbeat)
-   CREATE POLICY "Enable update for all users" ON servers
+   -- Allow anyone to update their own player
+   CREATE POLICY "Enable update for all users" ON players
        FOR UPDATE USING (true);
 
-   -- Allow anyone to delete servers
-   CREATE POLICY "Enable delete for all users" ON servers
+   -- Allow anyone to delete (leave world)
+   CREATE POLICY "Enable delete for all users" ON players
        FOR DELETE USING (true);
    ```
 
-4. **Update Configuration**
+4. **Enable Realtime** (CRITICAL)
 
-   In `index.html` (around line 1034), update:
+   In your Supabase Dashboard:
+   - Go to Database > Replication
+   - Enable replication for the `players` table
+   - Or run:
+   ```sql
+   ALTER TABLE players REPLICA IDENTITY FULL;
+   ```
+
+5. **Set Up Automatic Cleanup** (Optional)
+
+   Clean up offline players after 10 seconds:
+   ```sql
+   -- Create cleanup function
+   CREATE OR REPLACE FUNCTION cleanup_offline_players()
+   RETURNS void AS $$
+   BEGIN
+       DELETE FROM players
+       WHERE last_seen < NOW() - INTERVAL '10 seconds';
+   END;
+   $$ LANGUAGE plpgsql;
+
+   -- Schedule cleanup every minute (requires Supabase Pro for cron)
+   -- Or call this function from your app periodically
+   ```
+
+6. **Update Configuration**
+
+   In `index.html` (around line 1036), update:
    ```javascript
    SUPABASE_URL: 'YOUR_PROJECT_URL',
    SUPABASE_ANON_KEY: 'YOUR_ANON_KEY'
-   ```
-
-5. **Optional: Set Up Automatic Cleanup**
-
-   Create a Supabase Edge Function to automatically clean up stale servers:
-   ```sql
-   -- Or use a cron job (requires Supabase Pro)
-   SELECT cron.schedule(
-       'cleanup-stale-servers',
-       '*/5 * * * *',  -- Every 5 minutes
-       $$ DELETE FROM servers WHERE last_heartbeat < NOW() - INTERVAL '30 seconds' $$
-   );
    ```
 
 ### Wallet Networks

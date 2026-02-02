@@ -828,19 +828,14 @@
         <div class="loading-text">LOADING WORLD...</div>
     </div>
 
-    <!-- Server Browser -->
-    <div id="serverBrowser">
-        <div class="server-header">
-            <h1>🌍 Server Browser</h1>
+    <!-- World Entry (replaces Server Browser) -->
+    <div id="worldEntry" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;">
+        <div style="text-align: center;">
+            <h1 style="font-size: 3em; margin-bottom: 20px; text-shadow: 0 0 20px var(--primary);">🌍 Crypto World</h1>
+            <p style="font-size: 1.2em; color: var(--secondary); margin-bottom: 30px;">Entering the Metaverse...</p>
             <div id="connectedWallet" style="margin-bottom: 20px; color: var(--secondary);"></div>
-            <div class="server-actions">
-                <button class="btn" id="createServerBtn">Create Server</button>
-                <button class="btn secondary" id="refreshServersBtn">Refresh</button>
-                <button class="btn danger" id="disconnectWalletBtn">Disconnect Wallet</button>
-            </div>
-        </div>
-        <div class="server-list" id="serverList">
-            <!-- Servers will be populated here -->
+            <div class="loading-spinner" style="width: 50px; height: 50px; border: 4px solid rgba(0,255,255,0.2); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto;"></div>
+            <button class="btn danger" id="disconnectWalletBtn" style="margin-top: 30px;">Disconnect Wallet</button>
         </div>
     </div>
 
@@ -924,18 +919,6 @@
             <div class="modal-actions">
                 <button class="confirm" id="confirmSendPayment">Send</button>
                 <button class="cancel" id="cancelSendPayment">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Create Server Modal -->
-    <div class="modal" id="createServerModal">
-        <div class="modal-content">
-            <h2>Create New Server</h2>
-            <input type="text" id="serverName" placeholder="Server name">
-            <div class="modal-actions">
-                <button class="confirm" id="confirmCreateServer">Create</button>
-                <button class="cancel" id="cancelCreateServer">Cancel</button>
             </div>
         </div>
     </div>
@@ -1035,7 +1018,13 @@
             // Supabase Backend Configuration
             SUPABASE_URL: 'https://qrbayufbmcxqjesbmpad.supabase.co',
             SUPABASE_ANON_KEY: 'sb_publishable_we4uqlRpjzLHsvAx802Nkg_-oeQzNTe',
-            SERVER_TIMEOUT_MS: 30000 // 30 seconds
+
+            // Single World Configuration
+            PROXIMITY_RANGE: 150, // Only load players within 150 units
+            POSITION_UPDATE_INTERVAL: 100, // Update position every 100ms
+            PLAYER_TIMEOUT_MS: 10000, // Consider player offline after 10 seconds
+            WORLD_GRID_SIZE: 500, // Initial world grid size (expands dynamically)
+            MAX_VISIBLE_PLAYERS: 50 // Maximum players to render at once
         };
 
         // Initialize Supabase Client
@@ -1143,7 +1132,7 @@
                 await fetchPhantomBalance(response.publicKey);
 
                 // Skip all modals and go directly to server browser
-                skipToServerBrowser();
+                enterWorld();
             } catch (error) {
                 console.warn('Auto-connect phantom failed:', error);
                 throw error;
@@ -1185,32 +1174,31 @@
                 }
 
                 // Skip all modals and go directly to server browser
-                skipToServerBrowser();
+                enterWorld();
             } catch (error) {
                 console.warn('Auto-connect MetaMask failed:', error);
                 throw error;
             }
         }
 
-        // Skip all modals and go directly to server browser (used during auto-reconnect)
-        function skipToServerBrowser() {
-            // CRITICAL: Don't navigate away if already in a game!
-            if (GameState.currentServer) {
-                console.log('Already in a game - NOT navigating to server browser');
+        // Enter the single shared world (replaces server browser)
+        async function enterWorld() {
+            // CRITICAL: Don't rejoin if already in the world
+            if (GameState.inWorld) {
+                console.log('Already in world - skipping re-entry');
                 return;
             }
 
-            console.log('Going to server browser');
+            console.log('Entering shared world...');
 
             // Hide wallet screen
             const walletScreen = document.getElementById('walletScreen');
             walletScreen.classList.add('hidden');
             walletScreen.style.display = 'none';
 
-            // Show server browser
-            const serverBrowser = document.getElementById('serverBrowser');
-            serverBrowser.classList.add('visible');
-            serverBrowser.style.display = 'block';
+            // Show world entry loading
+            const worldEntry = document.getElementById('worldEntry');
+            worldEntry.style.display = 'flex';
 
             // Update UI
             document.getElementById('connectedWallet').textContent =
@@ -1218,19 +1206,24 @@
 
             // Initialize game systems
             updateHUD();
-            initPeer();
-            loadServers();
 
-            // Set up periodic refresh for server list (every 5 seconds)
-            if (!GameState.serverRefreshInterval) {
-                GameState.serverRefreshInterval = setInterval(() => {
-                    if (document.getElementById('serverBrowser').classList.contains('visible')) {
-                        loadServers();
-                    }
-                }, 5000);
+            // Initialize game world
+            if (!GameState.scene) {
+                console.log('Initializing game world...');
+                initGame();
             }
 
-            console.log('Successfully navigated to server browser');
+            // Join the shared world
+            await joinSharedWorld();
+
+            // Hide loading screen
+            worldEntry.style.display = 'none';
+
+            // Show game canvas
+            document.getElementById('gameCanvas').classList.add('active');
+            document.getElementById('gameCanvas').style.display = 'block';
+
+            console.log('Successfully entered shared world');
         }
 
         // Wallet Connection
@@ -1292,7 +1285,7 @@
                 SafeStorage.setItem('color', GameState.playerColor.toString());
 
                 // Continue to game
-                skipToServerBrowser();
+                enterWorld();
 
             } catch (error) {
                 console.error('Phantom connection failed:', error);
@@ -1402,7 +1395,7 @@
                 SafeStorage.setItem('color', GameState.playerColor.toString());
 
                 // Continue to game
-                skipToServerBrowser();
+                enterWorld();
 
             } catch (error) {
                 console.error('MetaMask connection failed:', error);
@@ -1461,7 +1454,7 @@
             document.getElementById('walletScreen').classList.add('hidden');
 
             // Skip directly to server browser
-            skipToServerBrowser();
+            enterWorld();
         }
 
         function finishSetup() {
