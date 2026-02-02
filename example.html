@@ -582,6 +582,78 @@
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <style>
+        /* Wallet Screen Styles */
+        #walletScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 0.3s;
+        }
+
+        #walletScreen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .wallet-container {
+            text-align: center;
+            color: white;
+            max-width: 500px;
+            padding: 40px;
+        }
+
+        .wallet-container h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #00ff41;
+        }
+
+        .wallet-container p {
+            font-size: 18px;
+            color: #aaa;
+            margin-bottom: 40px;
+        }
+
+        .wallet-options {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .wallet-btn {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid #00ff41;
+            padding: 30px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            font-size: 20px;
+            min-width: 180px;
+        }
+
+        .wallet-btn:hover {
+            background: rgba(0,255,65,0.1);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,255,65,0.3);
+        }
+
+        .wallet-btn div:first-child {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 
 <body>
@@ -607,15 +679,32 @@
         </div>
     </div>
 
-    <!-- Password Screen -->
-    <div id="passwordScreen">
-        <div class="password-container">
-            <h2>🔒 Access Required</h2>
-            <p>Enter password to continue</p>
-            <input type="password" id="passwordInput" placeholder="Enter password" autofocus>
-            <button id="submitPassword">Enter</button>
-            <div class="password-error" id="passwordError">Incorrect password. Try again.</div>
+    <!-- Wallet Connection Screen -->
+    <div id="walletScreen">
+        <div class="wallet-container">
+            <h1>🌍 Crypto World</h1>
+            <p>Connect your wallet to enter the metaverse</p>
+            <div class="wallet-options">
+                <button class="wallet-btn" id="connectPhantom">
+                    <div>👻</div>
+                    <div>Phantom</div>
+                    <div style="font-size: 11px; color: #aaa;">Solana</div>
+                </button>
+                <button class="wallet-btn" id="connectMetaMask">
+                    <div>🦊</div>
+                    <div>MetaMask</div>
+                    <div style="font-size: 11px; color: #aaa;">Base/ETH</div>
+                </button>
+            </div>
+            <p style="font-size: 12px; color: #666;">Your wallet is your identity in the metaverse</p>
         </div>
+    </div>
+
+    <!-- HUD Overlay -->
+    <div id="hud" style="display: none; position: fixed; top: 20px; left: 20px; color: white; font-family: monospace; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 10px; z-index: 100;">
+        <div id="hudWallet" style="margin-bottom: 5px;">Wallet: Loading...</div>
+        <div id="hudBalance" style="margin-bottom: 5px;">Balance: Loading...</div>
+        <button id="disconnectBtn" style="margin-top: 10px; padding: 5px 10px; background: #ff4444; color: white; border: none; border-radius: 5px; cursor: pointer;">Disconnect</button>
     </div>
     <div id="loading">
         <div class="loader"></div>
@@ -634,6 +723,20 @@
 
     <div id="joystick">
         <div id="joystick-knob"></div>
+    </div>
+
+    <!-- Proximity Chat UI -->
+    <div id="chatContainer" style="display: none; position: fixed; bottom: 20px; left: 20px; width: 350px; max-width: 90vw; background: rgba(0,0,0,0.8); border-radius: 15px; padding: 15px; z-index: 100; backdrop-filter: blur(10px);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="color: #00ff41; margin: 0; font-size: 16px;">💬 Proximity Chat</h3>
+            <span id="nearbyCount" style="color: #aaa; font-size: 12px;">0 nearby</span>
+        </div>
+        <div id="chatMessages" style="height: 200px; overflow-y: auto; margin-bottom: 10px; padding: 10px; background: rgba(0,0,0,0.5); border-radius: 10px; color: white; font-size: 13px;"></div>
+        <div style="display: flex; gap: 5px;">
+            <input type="text" id="chatInput" placeholder="Type a message..." style="flex: 1; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid #00ff41; border-radius: 8px; color: white; outline: none;" maxlength="200">
+            <button id="sendBtn" style="padding: 10px 20px; background: #00ff41; color: black; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Send</button>
+        </div>
+        <div style="margin-top: 5px; color: #aaa; font-size: 11px;">Only players within 50 units can see your messages</div>
     </div>
 
     <!-- Loot item popup for iPhone 8 -->
@@ -2323,13 +2426,33 @@
         let fps = 60;
         const clock = new THREE.Clock();
 
-        // Supabase Configuration
-        const SUPABASE_URL = 'https://qrbayufbmcxqjesbmpad.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_we4uqlRpjzLHsvAx802Nkg_-oeQzNTe';
+        // Configuration
+        const CONFIG = {
+            // Supabase Backend
+            SUPABASE_URL: 'https://qrbayufbmcxqjesbmpad.supabase.co',
+            SUPABASE_ANON_KEY: 'sb_publishable_we4uqlRpjzLHsvAx802Nkg_-oeQzNTe',
+
+            // Solana RPC Configuration (for Phantom wallet balance fetching)
+            // Get free RPC from: Helius.dev, QuickNode.com, or Alchemy.com
+            SOLANA_RPC_PRIMARY: 'https://api.mainnet-beta.solana.com',
+            SOLANA_RPC_FALLBACK: 'https://rpc.ankr.com/solana',
+
+            // Proximity Settings
+            PROXIMITY_RANGE: 50,
+            POSITION_UPDATE_INTERVAL: 50,
+            HEARTBEAT_INTERVAL: 5000,
+            CHAT_UPDATE_INTERVAL: 3000
+        };
 
         // Initialize Supabase Client
         const { createClient } = supabase;
-        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabaseClient = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+
+        // Wallet State
+        let walletConnected = false;
+        let walletAddress = null;
+        let walletType = null;
+        let walletBalance = 0;
 
         // Multiplayer System
         const otherPlayers = new Map();
@@ -2337,22 +2460,163 @@
         let myColor = '#00ff41'; // Default color
         let updateInterval = null;
         let heartbeatInterval = null;
+        let chatUpdateInterval = null;
 
-        // Generate unique player ID
-        myPlayerId = 'player_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
-        console.log('My player ID:', myPlayerId);
+        // Wallet Connection Functions
+        async function connectPhantom() {
+            try {
+                const { solana } = window;
+
+                if (!solana?.isPhantom) {
+                    alert('Please install Phantom wallet!\n\nVisit: https://phantom.app/');
+                    window.open('https://phantom.app/', '_blank');
+                    return;
+                }
+
+                const response = await solana.connect();
+                if (!response?.publicKey) {
+                    throw new Error('Failed to get public key from Phantom');
+                }
+
+                walletAddress = response.publicKey.toString();
+                walletType = 'phantom';
+                walletConnected = true;
+
+                console.log('Phantom connected:', walletAddress);
+
+                // Try to fetch balance with fallback RPC
+                let balance = 0;
+                const rpcEndpoints = [CONFIG.SOLANA_RPC_PRIMARY, CONFIG.SOLANA_RPC_FALLBACK];
+
+                for (const endpoint of rpcEndpoints) {
+                    try {
+                        console.log(`Fetching balance from: ${endpoint}`);
+                        const connection = new solanaWeb3.Connection(endpoint, 'confirmed');
+                        balance = await connection.getBalance(response.publicKey);
+                        walletBalance = (balance / solanaWeb3.LAMPORTS_PER_SOL).toFixed(4);
+                        console.log(`Balance fetched successfully: ${walletBalance} SOL`);
+                        break;
+                    } catch (err) {
+                        console.warn(`RPC ${endpoint} failed:`, err);
+                        if (endpoint === rpcEndpoints[rpcEndpoints.length - 1]) {
+                            walletBalance = 0;
+                        }
+                    }
+                }
+
+                onWalletConnected();
+
+            } catch (error) {
+                console.error('Phantom connection failed:', error);
+                alert('Failed to connect Phantom wallet. Please try again.');
+            }
+        }
+
+        async function connectMetaMask() {
+            try {
+                if (!window.ethereum) {
+                    alert('Please install MetaMask!\n\nVisit: https://metamask.io/');
+                    window.open('https://metamask.io/', '_blank');
+                    return;
+                }
+
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const accounts = await provider.send('eth_requestAccounts', []);
+
+                if (accounts.length === 0) {
+                    throw new Error('No accounts found');
+                }
+
+                walletAddress = accounts[0];
+                walletType = 'metamask';
+                walletConnected = true;
+
+                console.log('MetaMask connected:', walletAddress);
+
+                // Try to fetch balance
+                try {
+                    const balance = await provider.getBalance(walletAddress);
+                    walletBalance = ethers.utils.formatEther(balance).slice(0, 8);
+                } catch (err) {
+                    console.warn('Balance fetch failed:', err);
+                    walletBalance = 0;
+                }
+
+                onWalletConnected();
+
+            } catch (error) {
+                console.error('MetaMask connection failed:', error);
+                alert('Failed to connect MetaMask. Please try again.');
+            }
+        }
+
+        function onWalletConnected() {
+            // Hide wallet screen
+            document.getElementById('walletScreen').classList.add('hidden');
+            setTimeout(() => {
+                document.getElementById('walletScreen').style.display = 'none';
+            }, 300);
+
+            // Update HUD
+            document.getElementById('hud').style.display = 'block';
+            document.getElementById('hudWallet').textContent = `Wallet: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+            document.getElementById('hudBalance').textContent = `Balance: ${walletBalance} ${walletType === 'phantom' ? 'SOL' : 'ETH'}`;
+
+            // Show chat
+            document.getElementById('chatContainer').style.display = 'block';
+
+            // Generate player ID from wallet
+            myPlayerId = walletAddress;
+            console.log('Player ID set to wallet:', myPlayerId);
+
+            // Initialize player after wallet connection
+            setTimeout(() => {
+                initializePlayer();
+            }, 1000);
+        }
+
+        function disconnectWallet() {
+            walletConnected = false;
+            walletAddress = null;
+            walletType = null;
+            walletBalance = 0;
+
+            // Clean up player from database
+            if (myPlayerId) {
+                supabaseClient
+                    .from('players')
+                    .delete()
+                    .eq('id', myPlayerId)
+                    .then(() => console.log('Player cleaned up'))
+                    .catch(err => console.error('Cleanup error:', err));
+            }
+
+            // Clear intervals
+            if (updateInterval) clearInterval(updateInterval);
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            if (chatUpdateInterval) clearInterval(chatUpdateInterval);
+
+            // Reload page
+            window.location.reload();
+        }
+
+        // Set up wallet button listeners
+        document.getElementById('connectPhantom').addEventListener('click', connectPhantom);
+        document.getElementById('connectMetaMask').addEventListener('click', connectMetaMask);
+        document.getElementById('disconnectBtn').addEventListener('click', disconnectWallet);
 
         // Initialize player in Supabase
         async function initializePlayer() {
             try {
                 // Insert player into database
+                const username = walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : 'Player';
                 const { data, error } = await supabaseClient
                     .from('players')
                     .insert([{
                         id: myPlayerId,
-                        username: 'Player',
-                        wallet_address: null,
-                        wallet_type: null,
+                        username: username,
+                        wallet_address: walletAddress,
+                        wallet_type: walletType,
                         pos_x: playerGroup.position.x,
                         pos_y: playerGroup.position.y,
                         pos_z: playerGroup.position.z,
@@ -2385,6 +2649,15 @@
 
                 // Load existing players
                 loadExistingPlayers();
+
+                // Initialize chat system
+                subscribeToMessages();
+                loadProximityMessages();
+
+                // Update chat periodically
+                chatUpdateInterval = setInterval(() => {
+                    loadProximityMessages();
+                }, CONFIG.CHAT_UPDATE_INTERVAL);
 
             } catch (error) {
                 console.error('Error in initializePlayer:', error);
@@ -2489,7 +2762,7 @@
                 } catch (error) {
                     console.error('Error updating position:', error);
                 }
-            }, 50); // Update every 50ms
+            }, CONFIG.POSITION_UPDATE_INTERVAL);
         }
 
         // Start heartbeat interval
@@ -2505,7 +2778,7 @@
                 } catch (error) {
                     console.error('Error sending heartbeat:', error);
                 }
-            }, 5000); // Heartbeat every 5 seconds
+            }, CONFIG.HEARTBEAT_INTERVAL);
         }
 
         // Clean up on page unload
@@ -2525,10 +2798,7 @@
             if (heartbeatInterval) clearInterval(heartbeatInterval);
         });
 
-        // Initialize player after scene is ready
-        setTimeout(() => {
-            initializePlayer();
-        }, 1000);
+        // Player initialization now happens after wallet connection in onWalletConnected()
 
         function createOtherPlayer(peerId, color, position, rotation) {
             if (otherPlayers.has(peerId)) return;
@@ -2600,6 +2870,124 @@
             }
             updatePlayerCount();
         }
+
+        // Proximity Chat System
+        async function sendMessage(text) {
+            if (!text || !text.trim()) return;
+            if (!walletConnected) return;
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('messages')
+                    .insert([{
+                        player_id: myPlayerId,
+                        username: walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4),
+                        message: text.trim(),
+                        pos_x: playerGroup.position.x,
+                        pos_y: playerGroup.position.y,
+                        pos_z: playerGroup.position.z,
+                        created_at: new Date().toISOString()
+                    }]);
+
+                if (error) {
+                    console.error('Error sending message:', error);
+                    return;
+                }
+
+                console.log('Message sent:', text);
+                document.getElementById('chatInput').value = '';
+
+            } catch (error) {
+                console.error('Error in sendMessage:', error);
+            }
+        }
+
+        async function loadProximityMessages() {
+            if (!walletConnected || !playerGroup) return;
+
+            try {
+                // Get messages from last 5 minutes within proximity range
+                const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+
+                const { data: messages, error } = await supabaseClient
+                    .from('messages')
+                    .select('*')
+                    .gte('created_at', fiveMinutesAgo)
+                    .order('created_at', { ascending: true });
+
+                if (error) {
+                    console.error('Error loading messages:', error);
+                    return;
+                }
+
+                // Filter by proximity
+                const proximityMessages = messages.filter(msg => {
+                    const dx = msg.pos_x - playerGroup.position.x;
+                    const dz = msg.pos_z - playerGroup.position.z;
+                    const distance = Math.sqrt(dx * dx + dz * dz);
+                    return distance <= CONFIG.PROXIMITY_RANGE;
+                });
+
+                // Update chat display
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.innerHTML = '';
+
+                proximityMessages.forEach(msg => {
+                    const msgDiv = document.createElement('div');
+                    msgDiv.style.marginBottom = '8px';
+                    msgDiv.style.padding = '5px';
+                    msgDiv.style.background = 'rgba(0,255,65,0.1)';
+                    msgDiv.style.borderRadius = '5px';
+                    msgDiv.innerHTML = `<strong style="color: #00ff41;">${msg.username}:</strong> <span style="color: #fff;">${msg.message}</span>`;
+                    chatMessages.appendChild(msgDiv);
+                });
+
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                // Update nearby count
+                const nearbyPlayers = Array.from(otherPlayers.values()).filter(player => {
+                    const dx = player.group.position.x - playerGroup.position.x;
+                    const dz = player.group.position.z - playerGroup.position.z;
+                    const distance = Math.sqrt(dx * dx + dz * dz);
+                    return distance <= CONFIG.PROXIMITY_RANGE;
+                });
+
+                document.getElementById('nearbyCount').textContent = `${nearbyPlayers.length} nearby`;
+
+            } catch (error) {
+                console.error('Error in loadProximityMessages:', error);
+            }
+        }
+
+        // Subscribe to real-time messages
+        function subscribeToMessages() {
+            supabaseClient
+                .channel('messages-channel')
+                .on('postgres_changes', {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'messages'
+                }, (payload) => {
+                    console.log('New message:', payload.new);
+                    // Refresh messages
+                    loadProximityMessages();
+                })
+                .subscribe();
+        }
+
+        // Set up chat UI listeners
+        document.getElementById('sendBtn').addEventListener('click', () => {
+            const text = document.getElementById('chatInput').value;
+            sendMessage(text);
+        });
+
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const text = document.getElementById('chatInput').value;
+                sendMessage(text);
+            }
+        });
 
         async function updatePlayerCount() {
             try {

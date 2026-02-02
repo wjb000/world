@@ -1,6 +1,21 @@
-# 🌍 Crypto World - P2P Multiplayer Metaverse
+# 🌍 Crypto World - Multiplayer Metaverse
 
-Production-ready crypto-integrated P2P multiplayer game with wallet authentication, in-game payments, and decentralized networking.
+Production-ready crypto-integrated multiplayer game with wallet authentication, Supabase real-time backend, and proximity-based social features.
+
+## ⚡ Quick Start
+
+1. **Clone or download** this repository
+2. **Set up Supabase** (see [Supabase Setup](#supabase-backend-setup) below)
+3. **Update credentials** in `index.html` (your Supabase URL and API key)
+4. **Deploy** to Vercel, Netlify, or any static host
+5. **Visit your site** → Connect wallet → Start playing!
+
+**What works out of the box:**
+- ✅ Wallet connection (Phantom + MetaMask)
+- ✅ Real-time multiplayer (see other players move)
+- ✅ Proximity chat (talk to nearby players)
+- ✅ Portfolio showcase (interactive 3D world)
+- ✅ Balance display (SOL/ETH)
 
 ## 🚀 Features
 
@@ -10,20 +25,20 @@ Production-ready crypto-integrated P2P multiplayer game with wallet authenticati
 - Wallet-based authentication and identity
 - Real-time balance tracking
 
-### 🌐 P2P Networking
-- WebRTC-based peer-to-peer connections
-- No central server required
-- Decentralized server/room system
-- Supports multiple players per server
-- Real-time position synchronization (50ms updates)
-- Automatic peer discovery and connection management
+### 🌐 Multiplayer Networking
+- **Supabase Real-Time** - Centralized backend for reliable synchronization
+- **Single World Architecture** - All players in one massive shared universe
+- **Real-time Position Sync** - Player movements update every 50ms
+- **Proximity Streaming** - Only load nearby players for performance
+- **Automatic Cleanup** - Offline players removed automatically
+- **Scalable** - Supports hundreds of concurrent players
 
-### 💬 Communication System
-- **Global Chat** - Server-wide messaging
-- **Direct Messages** - Private 1-on-1 chat
-- **Voice Chat** - WebRTC voice communication (toggle on/off)
-- **Audio Controls** - Mute/unmute capabilities
-- Real-time message broadcasting
+### 💬 Proximity Chat System
+- **Location-Based Chat** - Only see messages from nearby players (50 unit range)
+- **Real-Time Messaging** - Instant message delivery via Supabase subscriptions
+- **Player Discovery** - See how many players are nearby
+- **Persistent History** - Messages stored for 10 minutes
+- **Spam Protection** - 200 character message limit
 
 ### 🎮 Game Features
 - **3D Environment** - Three.js powered world
@@ -41,19 +56,20 @@ Production-ready crypto-integrated P2P multiplayer game with wallet authenticati
 - Transaction handling for both Solana and Ethereum networks
 
 ### 🎯 Social Features
-- Player list with online status
-- Player name tags (wallet addresses)
-- Proximity-based interactions
-- Server browser with player counts
-- Create and manage servers
+- **Wallet-Based Identity** - Your wallet address is your unique ID
+- **Player Name Tags** - See wallet addresses above players (first 6 + last 4 chars)
+- **Proximity Chat** - Talk to nearby players
+- **Real-Time Player Count** - See total players online
+- **Color Customization** - Choose from 12 vibrant colors
+- **Interactive World** - Collectible loot items and portfolio showcase
 
 ## 🛠 Technology Stack
 
-- **Frontend**: Three.js, WebRTC, PeerJS
+- **Frontend**: Three.js (3D rendering), JavaScript ES6+
+- **Backend**: Supabase (PostgreSQL + Real-Time subscriptions)
 - **Blockchain**: Solana Web3.js, Ethers.js
-- **Wallets**: Phantom, MetaMask
-- **Networking**: WebRTC P2P mesh network
-- **Hosting**: Vercel (static deployment)
+- **Wallets**: Phantom (Solana), MetaMask (Ethereum/Base)
+- **Hosting**: Vercel (static deployment) or any static host
 
 ## 📦 Deployment
 
@@ -155,82 +171,88 @@ const CONFIG = {
    - Sign up for free account
    - Create a new project
 
-2. **Create the `players` Table**
+2. **Run the Complete Setup SQL**
 
-   Run this SQL in the Supabase SQL Editor:
+   Copy and paste this **ENTIRE SQL SCRIPT** into your Supabase SQL Editor (run it all at once):
 
    ```sql
-   -- Main players table for real-time position streaming
-   CREATE TABLE players (
-       id TEXT PRIMARY KEY,          -- Player unique ID (wallet address or generated)
-       username TEXT NOT NULL,        -- Display name
-       wallet_address TEXT,           -- Crypto wallet address
-       wallet_type TEXT,              -- 'phantom' or 'metamask'
+   -- =====================================================
+   -- CRYPTO WORLD - COMPLETE DATABASE SETUP
+   -- =====================================================
 
-       -- Position and movement
+   -- 1. CREATE PLAYERS TABLE
+   CREATE TABLE IF NOT EXISTS players (
+       id TEXT PRIMARY KEY,
+       username TEXT NOT NULL,
+       wallet_address TEXT,
+       wallet_type TEXT,
        pos_x REAL NOT NULL DEFAULT 0,
        pos_y REAL NOT NULL DEFAULT 1.6,
        pos_z REAL NOT NULL DEFAULT 0,
-
-       -- Rotation
        rot_y REAL NOT NULL DEFAULT 0,
-
-       -- Animation state
        animation TEXT DEFAULT 'Idle',
-
-       -- Appearance
        color TEXT DEFAULT '0x00ccff',
-
-       -- Timestamp
        last_seen TIMESTAMPTZ DEFAULT NOW(),
        joined_at TIMESTAMPTZ DEFAULT NOW()
    );
 
-   -- Spatial index for proximity queries (CRITICAL for performance)
-   CREATE INDEX idx_players_position ON players(pos_x, pos_z);
-   CREATE INDEX idx_players_last_seen ON players(last_seen DESC);
+   -- 2. CREATE MESSAGES TABLE
+   CREATE TABLE IF NOT EXISTS messages (
+       id BIGSERIAL PRIMARY KEY,
+       player_id TEXT NOT NULL,
+       username TEXT NOT NULL,
+       message TEXT NOT NULL,
+       pos_x REAL NOT NULL,
+       pos_y REAL NOT NULL,
+       pos_z REAL NOT NULL,
+       created_at TIMESTAMPTZ DEFAULT NOW()
+   );
 
-   -- Enable real-time subscriptions
-   ALTER PUBLICATION supabase_realtime ADD TABLE players;
-   ```
+   -- 3. CREATE INDEXES
+   CREATE INDEX IF NOT EXISTS idx_players_position ON players(pos_x, pos_z);
+   CREATE INDEX IF NOT EXISTS idx_players_last_seen ON players(last_seen DESC);
+   CREATE INDEX IF NOT EXISTS idx_messages_position ON messages(pos_x, pos_z);
+   CREATE INDEX IF NOT EXISTS idx_messages_created ON messages(created_at DESC);
 
-3. **Enable Row Level Security (RLS)**
-
-   ```sql
+   -- 4. ENABLE ROW LEVEL SECURITY
    ALTER TABLE players ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 
-   -- Allow anyone to read all players (for multiplayer visibility)
+   -- 5. CREATE RLS POLICIES FOR PLAYERS
+   DROP POLICY IF EXISTS "Enable read access for all users" ON players;
    CREATE POLICY "Enable read access for all users" ON players
        FOR SELECT USING (true);
 
-   -- Allow anyone to insert (join world)
+   DROP POLICY IF EXISTS "Enable insert for all users" ON players;
    CREATE POLICY "Enable insert for all users" ON players
        FOR INSERT WITH CHECK (true);
 
-   -- Allow anyone to update their own player
+   DROP POLICY IF EXISTS "Enable update for all users" ON players;
    CREATE POLICY "Enable update for all users" ON players
        FOR UPDATE USING (true);
 
-   -- Allow anyone to delete (leave world)
+   DROP POLICY IF EXISTS "Enable delete for all users" ON players;
    CREATE POLICY "Enable delete for all users" ON players
        FOR DELETE USING (true);
-   ```
 
-4. **Enable Realtime** (CRITICAL)
+   -- 6. CREATE RLS POLICIES FOR MESSAGES
+   DROP POLICY IF EXISTS "Enable read access for all users" ON messages;
+   CREATE POLICY "Enable read access for all users" ON messages
+       FOR SELECT USING (true);
 
-   In your Supabase Dashboard:
-   - Go to Database > Replication
-   - Enable replication for the `players` table
-   - Or run:
-   ```sql
+   DROP POLICY IF EXISTS "Enable insert for all users" ON messages;
+   CREATE POLICY "Enable insert for all users" ON messages
+       FOR INSERT WITH CHECK (true);
+
+   -- 7. ENABLE REALTIME
    ALTER TABLE players REPLICA IDENTITY FULL;
-   ```
+   ALTER TABLE messages REPLICA IDENTITY FULL;
 
-5. **Set Up Automatic Cleanup** (Optional)
+   -- 8. ADD TO REALTIME PUBLICATION
+   ALTER PUBLICATION supabase_realtime ADD TABLE players;
+   ALTER PUBLICATION supabase_realtime ADD TABLE messages;
 
-   Clean up offline players after 10 seconds:
-   ```sql
-   -- Create cleanup function
+   -- 9. CREATE CLEANUP FUNCTIONS
    CREATE OR REPLACE FUNCTION cleanup_offline_players()
    RETURNS void AS $$
    BEGIN
@@ -239,17 +261,51 @@ const CONFIG = {
    END;
    $$ LANGUAGE plpgsql;
 
-   -- Schedule cleanup every minute (requires Supabase Pro for cron)
-   -- Or call this function from your app periodically
+   CREATE OR REPLACE FUNCTION cleanup_old_messages()
+   RETURNS void AS $$
+   BEGIN
+       DELETE FROM messages
+       WHERE created_at < NOW() - INTERVAL '10 minutes';
+   END;
+   $$ LANGUAGE plpgsql;
+
+   -- SUCCESS! Your database is ready.
    ```
 
-6. **Update Configuration**
+3. **Enable Realtime Replication** (CRITICAL - Do this in Supabase Dashboard)
 
-   In `index.html` (around line 1036), update:
+   After running the SQL above:
+   - Go to **Database > Replication** in Supabase Dashboard
+   - Find `players` table → click to enable replication
+   - Find `messages` table → click to enable replication
+
+   This step is REQUIRED for real-time multiplayer to work!
+
+4. **Get Your Supabase Credentials**
+
+   From your Supabase project dashboard:
+   - Go to **Settings > API**
+   - Copy your **Project URL** (looks like: `https://xxx.supabase.co`)
+   - Copy your **anon/public** key (starts with `eyJ...`)
+
+5. **Update Configuration in index.html**
+
+   Open `index.html` and find the CONFIG object (around line 2430), then update:
    ```javascript
-   SUPABASE_URL: 'YOUR_PROJECT_URL',
-   SUPABASE_ANON_KEY: 'YOUR_ANON_KEY'
+   const CONFIG = {
+       SUPABASE_URL: 'https://YOUR_PROJECT_ID.supabase.co',
+       SUPABASE_ANON_KEY: 'your_anon_key_here',
+
+       // Optional: Add your custom Solana RPC for better performance
+       SOLANA_RPC_PRIMARY: 'https://api.mainnet-beta.solana.com',
+       SOLANA_RPC_FALLBACK: 'https://rpc.ankr.com/solana',
+   };
    ```
+
+   **Get a Free Custom RPC (Recommended):**
+   - [Helius](https://helius.dev) - 100k requests/day free
+   - [QuickNode](https://quicknode.com) - 100k requests/day free
+   - [Alchemy](https://alchemy.com) - 300M compute units/month free
 
 ### Wallet Networks
 
