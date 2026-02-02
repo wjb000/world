@@ -1264,6 +1264,10 @@
         function confirmUsername() {
             if (!GameState.walletAddress) {
                 console.error('confirmUsername called but walletAddress is null');
+                alert('Please connect your wallet first!');
+                // Hide username modal and show wallet screen
+                document.getElementById('usernameModal').classList.remove('visible');
+                document.getElementById('walletScreen').classList.remove('hidden');
                 return;
             }
             const input = document.getElementById('usernameInput').value.trim();
@@ -2704,6 +2708,21 @@
         });
 
         console.log('Crypto World initialized');
+
+        // Ensure correct initial UI state
+        function ensureCorrectUIState() {
+            // If no wallet is connected, ensure wallet screen is showing and all modals are hidden
+            if (!GameState.walletAddress) {
+                document.getElementById('walletScreen').classList.remove('hidden');
+                document.getElementById('serverBrowser').classList.remove('visible');
+                document.getElementById('usernameModal').classList.remove('visible');
+                document.getElementById('colorPickerModal').classList.remove('visible');
+                console.log('UI reset: showing wallet screen');
+            }
+        }
+
+        // Call on page load
+        setTimeout(ensureCorrectUIState, 100);
     </script>
 </body>
 </html>
