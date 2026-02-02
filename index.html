@@ -212,14 +212,15 @@
             justify-content: center;
             align-items: center;
             z-index: 10001;
-            transition: opacity 0.5s;
+            transition: opacity 0.3s;
         }
 
         #loadingScreen.visible {
-            display: flex;
+            display: flex !important;
         }
 
         #loadingScreen.hidden {
+            display: none !important;
             opacity: 0;
             pointer-events: none;
         }
@@ -260,13 +261,17 @@
 
         /* Game Canvas */
         #gameCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
             display: none;
             width: 100%;
             height: 100vh;
+            z-index: 1;
         }
 
         #gameCanvas.active {
-            display: block;
+            display: block !important;
         }
 
         /* HUD */
@@ -1815,11 +1820,11 @@
                 }
             } else {
                 console.log('Game scene already exists');
-                // Hide loading screen after a short delay since scene exists
-                setTimeout(() => {
-                    loadingScreen.classList.add('hidden');
-                    setTimeout(() => loadingScreen.classList.remove('visible'), 500);
-                }, 500);
+                // Hide loading screen immediately since scene exists
+                console.log('Hiding loading screen (scene exists)...');
+                loadingScreen.style.display = 'none';
+                loadingScreen.classList.remove('visible');
+                console.log('Loading screen hidden (scene exists)');
             }
 
             // If joining someone else's server (not the host)
@@ -2241,14 +2246,26 @@
 
             addChatMessage('System', 'Welcome to the server!', true);
 
-            // Hide loading screen after world is loaded
-            setTimeout(() => {
-                const loadingScreen = document.getElementById('loadingScreen');
-                loadingScreen.classList.add('hidden');
-                setTimeout(() => {
-                    loadingScreen.classList.remove('visible');
-                }, 500);
-            }, 1000);
+            // Hide loading screen immediately - world is loaded
+            console.log('Hiding loading screen...');
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (loadingScreen) {
+                loadingScreen.style.display = 'none';
+                loadingScreen.classList.remove('visible');
+                loadingScreen.classList.remove('hidden');
+                console.log('Loading screen hidden');
+            } else {
+                console.error('Loading screen element not found!');
+            }
+
+            // Make absolutely sure game canvas is visible
+            const gameCanvas = document.getElementById('gameCanvas');
+            if (gameCanvas) {
+                gameCanvas.style.display = 'block';
+                gameCanvas.style.visibility = 'visible';
+                gameCanvas.style.opacity = '1';
+                console.log('Game canvas visibility forced');
+            }
 
             console.log('=== INIT GAME COMPLETE ===');
 
