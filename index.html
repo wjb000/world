@@ -2024,12 +2024,14 @@
             GameState.scene.add(particles);
             GameState.particles = particles;
 
-            // Add buildings around the platform
+            // Add buildings around the platform - ENHANCED
             const buildingPositions = [
-                { x: -40, z: -30, scale: 1.5 },
-                { x: 40, z: -35, scale: 1.2 },
-                { x: -35, z: 25, scale: 1.8 },
-                { x: 30, z: 30, scale: 1.3 }
+                { x: -40, z: -30, scale: 2, rotation: 0 },
+                { x: 40, z: -35, scale: 2.5, rotation: Math.PI / 4 },
+                { x: -35, z: 25, scale: 2.2, rotation: Math.PI / 2 },
+                { x: 30, z: 30, scale: 2.8, rotation: -Math.PI / 4 },
+                { x: 50, z: 0, scale: 3, rotation: 0 },
+                { x: -50, z: 0, scale: 3, rotation: Math.PI }
             ];
 
             buildingPositions.forEach(pos => {
@@ -2039,34 +2041,73 @@
                     'https://threejs.org/examples/models/gltf/LittlestTokyo.glb',
                     (gltf) => {
                         const building = gltf.scene;
-                        building.scale.set(pos.scale, pos.scale, pos.scale);
+                        building.scale.set(pos.scale * 0.01, pos.scale * 0.01, pos.scale * 0.01);
                         building.position.set(pos.x, 0, pos.z);
+                        building.rotation.y = pos.rotation;
+
+                        // Enable shadows
+                        building.traverse((child) => {
+                            if (child.isMesh) {
+                                child.castShadow = true;
+                                child.receiveShadow = true;
+                            }
+                        });
+
                         GameState.scene.add(building);
+                        console.log('Building loaded at', pos.x, pos.z);
                     },
-                    undefined,
+                    (progress) => {
+                        // Loading progress
+                        if (progress.lengthComputable) {
+                            const percentComplete = (progress.loaded / progress.total) * 100;
+                            console.log('Loading building:', Math.round(percentComplete) + '%');
+                        }
+                    },
                     (error) => {
-                        // Fallback to simple box buildings
-                        const buildingGeometry = new THREE.BoxGeometry(8, 15, 8);
+                        console.warn('Failed to load building model, using fallback');
+                        // Fallback to cyberpunk-style buildings
+                        const buildingGeometry = new THREE.BoxGeometry(10, 20, 10);
                         const buildingMaterial = new THREE.MeshStandardMaterial({
                             color: 0x1a1a2e,
                             emissive: 0x0f3460,
-                            emissiveIntensity: 0.2
+                            emissiveIntensity: 0.3,
+                            metalness: 0.8,
+                            roughness: 0.2
                         });
                         const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
-                        building.position.set(pos.x, 7.5, pos.z);
+                        building.position.set(pos.x, 10, pos.z);
+                        building.rotation.y = pos.rotation;
                         building.castShadow = true;
+                        building.receiveShadow = true;
                         GameState.scene.add(building);
 
-                        // Add window lights
-                        for (let i = 0; i < 5; i++) {
-                            const windowLight = new THREE.PointLight(0xffaa00, 0.5, 5);
-                            windowLight.position.set(
-                                pos.x + (Math.random() - 0.5) * 4,
-                                3 + i * 2.5,
-                                pos.z + (Math.random() - 0.5) * 4
-                            );
-                            GameState.scene.add(windowLight);
+                        // Add glowing windows
+                        for (let i = 0; i < 6; i++) {
+                            for (let j = 0; j < 4; j++) {
+                                const windowGeometry = new THREE.PlaneGeometry(1, 1);
+                                const windowMaterial = new THREE.MeshStandardMaterial({
+                                    color: 0x00ccff,
+                                    emissive: 0x00ccff,
+                                    emissiveIntensity: Math.random() * 0.5 + 0.5,
+                                    transparent: true,
+                                    opacity: 0.8
+                                });
+                                const window = new THREE.Mesh(windowGeometry, windowMaterial);
+                                window.position.set(
+                                    pos.x + (j - 1.5) * 2,
+                                    3 + i * 3,
+                                    pos.z + 5.1
+                                );
+                                GameState.scene.add(window);
+
+                                // Add point light for each window
+                                const windowLight = new THREE.PointLight(0x00ccff, 0.3, 8);
+                                windowLight.position.copy(window.position);
+                                GameState.scene.add(windowLight);
+                            }
                         }
+
+                        console.log('Fallback building created at', pos.x, pos.z);
                     }
                 );
             });
@@ -2222,7 +2263,11 @@
 
         // Controls
         const keys = {};
+        let joystickActive = false;
+        let joystickVector = { x: 0, y: 0 };
+
         function setupControls() {
+            // Keyboard controls
             window.addEventListener('keydown', (e) => {
                 keys[e.key.toLowerCase()] = true;
             });
@@ -2230,6 +2275,55 @@
             window.addEventListener('keyup', (e) => {
                 keys[e.key.toLowerCase()] = false;
             });
+
+            // Mobile joystick controls
+            const joystick = document.getElementById('joystick');
+            const joystickKnob = document.getElementById('joystick-knob');
+
+            if (joystick && joystickKnob) {
+                // Show joystick on mobile
+                if (isMobile()) {
+                    joystick.style.display = 'block';
+                }
+
+                function handleTouch(e) {
+                    e.preventDefault();
+
+                    if (e.type === 'touchstart' || e.type === 'touchmove') {
+                        joystickActive = true;
+                        const touch = e.touches[0];
+                        const rect = joystick.getBoundingClientRect();
+                        const centerX = rect.left + rect.width / 2;
+                        const centerY = rect.top + rect.height / 2;
+
+                        let deltaX = touch.clientX - centerX;
+                        let deltaY = touch.clientY - centerY;
+
+                        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                        const maxDistance = rect.width / 3;
+
+                        if (distance > maxDistance) {
+                            deltaX = (deltaX / distance) * maxDistance;
+                            deltaY = (deltaY / distance) * maxDistance;
+                        }
+
+                        joystickKnob.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
+
+                        joystickVector.x = deltaX / maxDistance;
+                        joystickVector.y = deltaY / maxDistance;
+                    } else if (e.type === 'touchend' || e.type === 'touchcancel') {
+                        joystickActive = false;
+                        joystickKnob.style.transform = 'translate(-50%, -50%)';
+                        joystickVector.x = 0;
+                        joystickVector.y = 0;
+                    }
+                }
+
+                joystick.addEventListener('touchstart', handleTouch, { passive: false });
+                joystick.addEventListener('touchmove', handleTouch, { passive: false });
+                joystick.addEventListener('touchend', handleTouch, { passive: false });
+                joystick.addEventListener('touchcancel', handleTouch, { passive: false });
+            }
         }
 
         // Animation Loop
@@ -2250,6 +2344,7 @@
             let dz = 0;
             let isMoving = false;
 
+            // Keyboard input
             if (keys['w'] || keys['arrowup']) {
                 dz -= moveSpeed;
                 isMoving = true;
@@ -2267,10 +2362,31 @@
                 isMoving = true;
             }
 
-            // Apply movement
+            // Mobile joystick input
+            if (joystickActive) {
+                dx += joystickVector.x * moveSpeed * 1.5;
+                dz += joystickVector.y * moveSpeed * 1.5;
+                isMoving = true;
+            }
+
+            // Apply movement with boundary checking
             if (isMoving) {
-                GameState.playerMesh.position.x += dx;
-                GameState.playerMesh.position.z += dz;
+                const newX = GameState.playerMesh.position.x + dx;
+                const newZ = GameState.playerMesh.position.z + dz;
+
+                // Keep player within circular platform (radius 55, with some margin)
+                const distanceFromCenter = Math.sqrt(newX * newX + newZ * newZ);
+                const maxRadius = 52; // Slightly smaller than platform radius for safety
+
+                if (distanceFromCenter < maxRadius) {
+                    GameState.playerMesh.position.x = newX;
+                    GameState.playerMesh.position.z = newZ;
+                } else {
+                    // Allow movement along the edge
+                    const angle = Math.atan2(newZ, newX);
+                    GameState.playerMesh.position.x = Math.cos(angle) * maxRadius;
+                    GameState.playerMesh.position.z = Math.sin(angle) * maxRadius;
+                }
 
                 // CRITICAL FIX: Rotate character to face movement direction
                 const targetAngle = Math.atan2(dx, dz);
@@ -2384,11 +2500,14 @@
                 GameState.particles.rotation.y += 0.0005;
             }
 
-            // Camera follow
+            // Camera follow - Third-person view with smooth tracking
             const cameraOffset = new THREE.Vector3(0, 5, 10);
             const cameraPosition = GameState.playerMesh.position.clone().add(cameraOffset);
             GameState.camera.position.lerp(cameraPosition, 0.1);
-            GameState.camera.lookAt(GameState.playerMesh.position);
+
+            // Look at slightly above player for better view
+            const lookAtTarget = GameState.playerMesh.position.clone().add(new THREE.Vector3(0, 1, 0));
+            GameState.camera.lookAt(lookAtTarget);
 
             // Broadcast position more frequently (every frame when moving, less when idle)
             if (!GameState.lastBroadcast) GameState.lastBroadcast = 0;
