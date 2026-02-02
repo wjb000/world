@@ -1124,6 +1124,12 @@
 
         // Skip all modals and go directly to server browser (used during auto-reconnect)
         function skipToServerBrowser() {
+            // CRITICAL: Don't navigate away if already in a game!
+            if (GameState.currentServer) {
+                console.log('Already in a game - NOT navigating to server browser');
+                return;
+            }
+
             console.log('Going to server browser');
 
             // Hide wallet screen
