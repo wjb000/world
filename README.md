@@ -144,6 +144,81 @@ const CONFIG = {
 };
 ```
 
+### Supabase Backend Setup
+
+The game uses Supabase for centralized server management, replacing localStorage for better scalability and real-time updates.
+
+#### Setting Up Your Supabase Database:
+
+1. **Create a Supabase Project**
+   - Visit [https://supabase.com](https://supabase.com)
+   - Sign up for free account
+   - Create a new project
+
+2. **Create the `servers` Table**
+
+   Run this SQL in the Supabase SQL Editor:
+
+   ```sql
+   CREATE TABLE servers (
+       id TEXT PRIMARY KEY,
+       name TEXT NOT NULL,
+       owner TEXT NOT NULL,
+       creator TEXT,
+       creator_wallet TEXT,
+       players INTEGER DEFAULT 1,
+       player_count INTEGER DEFAULT 1,
+       created_at TIMESTAMPTZ DEFAULT NOW(),
+       last_heartbeat TIMESTAMPTZ DEFAULT NOW()
+   );
+
+   -- Add index for faster queries
+   CREATE INDEX idx_servers_heartbeat ON servers(last_heartbeat DESC);
+   CREATE INDEX idx_servers_created ON servers(created_at DESC);
+   ```
+
+3. **Enable Row Level Security (RLS)**
+
+   ```sql
+   ALTER TABLE servers ENABLE ROW LEVEL SECURITY;
+
+   -- Allow anyone to read servers
+   CREATE POLICY "Enable read access for all users" ON servers
+       FOR SELECT USING (true);
+
+   -- Allow anyone to insert servers
+   CREATE POLICY "Enable insert for all users" ON servers
+       FOR INSERT WITH CHECK (true);
+
+   -- Allow anyone to update servers (for heartbeat)
+   CREATE POLICY "Enable update for all users" ON servers
+       FOR UPDATE USING (true);
+
+   -- Allow anyone to delete servers
+   CREATE POLICY "Enable delete for all users" ON servers
+       FOR DELETE USING (true);
+   ```
+
+4. **Update Configuration**
+
+   In `index.html` (around line 1034), update:
+   ```javascript
+   SUPABASE_URL: 'YOUR_PROJECT_URL',
+   SUPABASE_ANON_KEY: 'YOUR_ANON_KEY'
+   ```
+
+5. **Optional: Set Up Automatic Cleanup**
+
+   Create a Supabase Edge Function to automatically clean up stale servers:
+   ```sql
+   -- Or use a cron job (requires Supabase Pro)
+   SELECT cron.schedule(
+       'cleanup-stale-servers',
+       '*/5 * * * *',  -- Every 5 minutes
+       $$ DELETE FROM servers WHERE last_heartbeat < NOW() - INTERVAL '30 seconds' $$
+   );
+   ```
+
 ### Wallet Networks
 
 **Solana (Phantom)**:

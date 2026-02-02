@@ -970,6 +970,7 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
         // LocalStorage safety wrapper
@@ -1029,8 +1030,17 @@
             // 2. Replace SOLANA_RPC_PRIMARY with your endpoint
             // 3. Optionally add your custom endpoint as SOLANA_RPC_FALLBACK
             SOLANA_RPC_PRIMARY: 'https://api.mainnet-beta.solana.com',
-            SOLANA_RPC_FALLBACK: 'https://rpc.ankr.com/solana'
+            SOLANA_RPC_FALLBACK: 'https://rpc.ankr.com/solana',
+
+            // Supabase Backend Configuration
+            SUPABASE_URL: 'https://qrbayufbmcxqjesbmpad.supabase.co',
+            SUPABASE_ANON_KEY: 'sb_publishable_we4uqlRpjzLHsvAx802Nkg_-oeQzNTe',
+            SERVER_TIMEOUT_MS: 30000 // 30 seconds
         };
+
+        // Initialize Supabase Client
+        const { createClient } = supabase;
+        const supabaseClient = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 
         // Game State
         const GameState = {
@@ -1672,64 +1682,90 @@
         }
 
         // Server Management with Heartbeat System
-        function cleanupEmptyServers() {
-            const servers = JSON.parse(SafeStorage.getItem('cryptoworld_servers') || '[]');
-            const now = Date.now();
-            const HEARTBEAT_TIMEOUT = 30000; // 30 seconds
+        async function cleanupEmptyServers() {
+            try {
+                // Delete servers that haven't sent heartbeat in the timeout period
+                const cutoffTime = new Date(Date.now() - CONFIG.SERVER_TIMEOUT_MS).toISOString();
+                const { data, error } = await supabaseClient
+                    .from('servers')
+                    .delete()
+                    .lt('last_heartbeat', cutoffTime)
+                    .select();
 
-            // Remove servers that haven't sent heartbeat in 30 seconds
-            const activeServers = servers.filter(server => {
-                const timeSinceHeartbeat = now - (server.lastHeartbeat || server.created || 0);
-                return timeSinceHeartbeat < HEARTBEAT_TIMEOUT;
-            });
+                if (error) {
+                    console.error('Error cleaning up stale servers:', error);
+                    return;
+                }
 
-            if (activeServers.length !== servers.length) {
-                SafeStorage.setItem('cryptoworld_servers', JSON.stringify(activeServers));
-                console.log(`Cleaned up stale servers. Active: ${activeServers.length}, Removed: ${servers.length - activeServers.length}`);
+                if (data && data.length > 0) {
+                    console.log(`Cleaned up ${data.length} stale servers from Supabase`);
+                }
+            } catch (err) {
+                console.error('Exception cleaning up servers:', err);
             }
         }
 
-        function loadServers() {
+        async function loadServers() {
             // Clean up stale servers first
-            cleanupEmptyServers();
-
-            const servers = JSON.parse(SafeStorage.getItem('cryptoworld_servers') || '[]');
-
-            // Filter to show:
-            // 1. Servers with recent heartbeat (active)
-            // 2. Not the server we're currently in (if any)
-            const activeServers = servers.filter(s => {
-                const notCurrentServer = !GameState.currentServer || s.id !== GameState.currentServer.id;
-                return notCurrentServer;
-            });
+            await cleanupEmptyServers();
 
             const serverList = document.getElementById('serverList');
-            serverList.innerHTML = '';
+            serverList.innerHTML = '<p style="text-align: center; color: #aaa; padding: 20px;">Loading servers...</p>';
 
-            if (activeServers.length === 0) {
-                serverList.innerHTML = '<p style="text-align: center; color: #aaa; padding: 40px;">No servers available. Create one to start playing!</p>';
-                return;
+            try {
+                // Fetch active servers from Supabase
+                const cutoffTime = new Date(Date.now() - CONFIG.SERVER_TIMEOUT_MS).toISOString();
+                const { data: servers, error } = await supabaseClient
+                    .from('servers')
+                    .select('*')
+                    .gte('last_heartbeat', cutoffTime)
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    console.error('Error loading servers from Supabase:', error);
+                    serverList.innerHTML = '<p style="text-align: center; color: #f66; padding: 40px;">Failed to load servers. Please refresh.</p>';
+                    return;
+                }
+
+                // Filter to show servers we're not currently in
+                const activeServers = servers.filter(s => {
+                    const notCurrentServer = !GameState.currentServer || s.id !== GameState.currentServer.id;
+                    return notCurrentServer;
+                });
+
+                serverList.innerHTML = '';
+
+                if (activeServers.length === 0) {
+                    serverList.innerHTML = '<p style="text-align: center; color: #aaa; padding: 40px;">No servers available. Create one to start playing!</p>';
+                    return;
+                }
+
+                activeServers.forEach(server => {
+                    const createdTime = new Date(server.created_at).getTime();
+                    const timeSinceCreated = Date.now() - createdTime;
+                    const ageText = timeSinceCreated < 60000 ? 'Just now' : `${Math.floor(timeSinceCreated / 60000)}m ago`;
+
+                    const card = document.createElement('div');
+                    card.className = 'server-card';
+                    card.innerHTML = `
+                        <h3>${escapeHTML(server.name)}</h3>
+                        <div class="server-info">
+                            <span class="player-count">🟢 Active</span>
+                            <span>${ageText}</span>
+                        </div>
+                        <div class="server-info">
+                            <span style="font-size: 12px;">by ${server.owner ? escapeHTML(server.owner.slice(0, 6) + '...' + server.owner.slice(-4)) : 'Unknown'}</span>
+                        </div>
+                        <button class="btn" onclick="joinServerById('${server.id}')">Join Server</button>
+                    `;
+                    serverList.appendChild(card);
+                });
+
+                console.log(`Loaded ${activeServers.length} active servers from Supabase`);
+            } catch (err) {
+                console.error('Exception loading servers:', err);
+                serverList.innerHTML = '<p style="text-align: center; color: #f66; padding: 40px;">Failed to load servers. Please refresh.</p>';
             }
-
-            activeServers.forEach(server => {
-                const timeSinceCreated = Date.now() - (server.created || 0);
-                const ageText = timeSinceCreated < 60000 ? 'Just now' : `${Math.floor(timeSinceCreated / 60000)}m ago`;
-
-                const card = document.createElement('div');
-                card.className = 'server-card';
-                card.innerHTML = `
-                    <h3>${server.name}</h3>
-                    <div class="server-info">
-                        <span class="player-count">🟢 Active</span>
-                        <span>${ageText}</span>
-                    </div>
-                    <div class="server-info">
-                        <span style="font-size: 12px;">by ${server.owner ? server.owner.slice(0, 6) + '...' + server.owner.slice(-4) : 'Unknown'}</span>
-                    </div>
-                    <button class="btn" onclick="joinServerById('${server.id}')">Join Server</button>
-                `;
-                serverList.appendChild(card);
-            });
         }
 
         // Server heartbeat - updates every 10 seconds when you're hosting
@@ -1738,16 +1774,26 @@
                 clearInterval(GameState.heartbeatInterval);
             }
 
-            GameState.heartbeatInterval = setInterval(() => {
+            GameState.heartbeatInterval = setInterval(async () => {
                 if (GameState.currentServer && GameState.peer?.id === GameState.currentServer.id) {
-                    // Update heartbeat timestamp for our server
-                    const servers = JSON.parse(SafeStorage.getItem('cryptoworld_servers') || '[]');
-                    const serverIndex = servers.findIndex(s => s.id === GameState.currentServer.id);
+                    try {
+                        // Update heartbeat timestamp in Supabase
+                        const { data, error } = await supabaseClient
+                            .from('servers')
+                            .update({
+                                last_heartbeat: new Date().toISOString(),
+                                players: GameState.connections.size + 1 // Include self
+                            })
+                            .eq('id', GameState.currentServer.id)
+                            .select();
 
-                    if (serverIndex !== -1) {
-                        servers[serverIndex].lastHeartbeat = Date.now();
-                        SafeStorage.setItem('cryptoworld_servers', JSON.stringify(servers));
-                        console.log('Server heartbeat sent');
+                        if (error) {
+                            console.error('Error updating server heartbeat:', error);
+                        } else {
+                            console.log('Server heartbeat sent to Supabase');
+                        }
+                    } catch (err) {
+                        console.error('Exception updating heartbeat:', err);
                     }
                 }
             }, 10000); // Every 10 seconds
@@ -1761,27 +1807,62 @@
         }
 
         // Clean up server when leaving
-        function removeMyServer() {
+        async function removeMyServer() {
             if (GameState.currentServer && GameState.peer?.id === GameState.currentServer.id) {
-                const servers = JSON.parse(SafeStorage.getItem('cryptoworld_servers') || '[]');
-                const filteredServers = servers.filter(s => s.id !== GameState.currentServer.id);
-                SafeStorage.setItem('cryptoworld_servers', JSON.stringify(filteredServers));
-                console.log('Removed my server from list');
+                try {
+                    const { error } = await supabaseClient
+                        .from('servers')
+                        .delete()
+                        .eq('id', GameState.currentServer.id);
+
+                    if (error) {
+                        console.error('Error removing server from Supabase:', error);
+                    } else {
+                        console.log('Removed my server from Supabase');
+                    }
+                } catch (err) {
+                    console.error('Exception removing server:', err);
+                }
             }
         }
 
-        function joinServerById(serverId) {
-            const servers = JSON.parse(SafeStorage.getItem('cryptoworld_servers')) || [];
-            const server = servers.find(s => s.id === serverId);
-            if (server) {
-                joinServer(server);
-            } else {
-                alert('Server not found!');
-                loadServers(); // Refresh list
+        async function joinServerById(serverId) {
+            try {
+                // Fetch server from Supabase
+                const { data: server, error } = await supabaseClient
+                    .from('servers')
+                    .select('*')
+                    .eq('id', serverId)
+                    .single();
+
+                if (error || !server) {
+                    console.error('Server not found:', error);
+                    alert('Server not found!');
+                    await loadServers(); // Refresh list
+                    return;
+                }
+
+                // Convert Supabase format to internal format
+                const serverData = {
+                    id: server.id,
+                    name: server.name,
+                    owner: server.owner,
+                    creator: server.creator,
+                    creatorWallet: server.creator_wallet,
+                    players: server.players,
+                    playerCount: server.player_count,
+                    created: new Date(server.created_at).getTime(),
+                    lastHeartbeat: new Date(server.last_heartbeat).getTime()
+                };
+
+                joinServer(serverData);
+            } catch (err) {
+                console.error('Exception joining server:', err);
+                alert('Failed to join server. Please try again.');
             }
         }
 
-        function createServer() {
+        async function createServer() {
             const serverName = document.getElementById('serverName').value.trim();
 
             if (!serverName) {
@@ -1806,10 +1887,35 @@
                 lastHeartbeat: Date.now() // Initialize heartbeat
             };
 
-            // Save to localStorage
-            const servers = JSON.parse(SafeStorage.getItem('cryptoworld_servers') || '[]');
-            servers.push(server);
-            SafeStorage.setItem('cryptoworld_servers', JSON.stringify(servers));
+            // Save to Supabase
+            try {
+                const { data, error } = await supabaseClient
+                    .from('servers')
+                    .insert([{
+                        id: server.id,
+                        name: server.name,
+                        owner: server.owner,
+                        creator: server.creator,
+                        creator_wallet: server.creatorWallet,
+                        players: server.players,
+                        player_count: server.playerCount,
+                        created_at: new Date(server.created).toISOString(),
+                        last_heartbeat: new Date(server.lastHeartbeat).toISOString()
+                    }])
+                    .select();
+
+                if (error) {
+                    console.error('Error creating server in Supabase:', error);
+                    alert('Failed to create server. Please try again.');
+                    return;
+                }
+
+                console.log('Server created in Supabase:', data);
+            } catch (err) {
+                console.error('Exception creating server:', err);
+                alert('Failed to create server. Please try again.');
+                return;
+            }
 
             console.log('Server created:', server);
 
@@ -3053,14 +3159,14 @@
 
         document.getElementById('leaveServerBtn').onclick = leaveServer;
 
-        function leaveServer() {
+        async function leaveServer() {
             console.log('Leaving server...');
 
             // Stop heartbeat if we're the host
             stopServerHeartbeat();
 
             // Remove our server from the list if we're the host
-            removeMyServer();
+            await removeMyServer();
 
             // Disconnect all peers
             GameState.connections.forEach((conn, peerId) => {
@@ -3111,7 +3217,7 @@
             document.getElementById('serverBrowser').classList.add('visible');
 
             // Refresh server list
-            loadServers();
+            await loadServers();
         }
 
         document.getElementById('toggleVoice').onclick = () => {
@@ -3150,21 +3256,40 @@
         };
 
         // Create portal modal
-        document.getElementById('createPortalBtn').onclick = () => {
-            // Populate server list
-            const servers = JSON.parse(SafeStorage.getItem('cryptoworld_servers') || '[]');
+        document.getElementById('createPortalBtn').onclick = async () => {
             const select = document.getElementById('portalDestination');
-            select.innerHTML = '<option value="">Select destination server...</option>';
+            select.innerHTML = '<option value="">Loading servers...</option>';
 
-            servers.forEach(server => {
-                if (server.id !== GameState.currentServer.id) {
-                    const option = document.createElement('option');
-                    option.value = server.id;
-                    option.textContent = `${server.name} (${server.players || 0} players)`;
-                    option.dataset.serverName = server.name;
-                    select.appendChild(option);
+            try {
+                // Fetch active servers from Supabase
+                const cutoffTime = new Date(Date.now() - CONFIG.SERVER_TIMEOUT_MS).toISOString();
+                const { data: servers, error } = await supabaseClient
+                    .from('servers')
+                    .select('*')
+                    .gte('last_heartbeat', cutoffTime)
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    console.error('Error loading servers for portal:', error);
+                    select.innerHTML = '<option value="">Failed to load servers</option>';
+                    return;
                 }
-            });
+
+                select.innerHTML = '<option value="">Select destination server...</option>';
+
+                servers.forEach(server => {
+                    if (server.id !== GameState.currentServer.id) {
+                        const option = document.createElement('option');
+                        option.value = server.id;
+                        option.textContent = `${server.name} (${server.players || 0} players)`;
+                        option.dataset.serverName = server.name;
+                        select.appendChild(option);
+                    }
+                });
+            } catch (err) {
+                console.error('Exception loading servers for portal:', err);
+                select.innerHTML = '<option value="">Failed to load servers</option>';
+            }
 
             document.getElementById('createPortalModal').classList.add('visible');
         };
