@@ -934,7 +934,8 @@
             playerColor: 0x00ccff,
             clock: null,
             isAutoReconnecting: false,
-            serverRefreshInterval: null
+            serverRefreshInterval: null,
+            animating: false
         };
 
         // Mobile Detection
@@ -1561,14 +1562,20 @@
             // In production, this would fetch from a decentralized registry
             const servers = JSON.parse(localStorage.getItem('cryptoworld_servers') || '[]');
 
-            // Filter to only show servers with players
-            const activeServers = servers.filter(s => (s.playerCount || 0) > 0);
+            // Filter to show:
+            // 1. Servers with 1+ players
+            // 2. Not the server we're currently in (if any)
+            const activeServers = servers.filter(s => {
+                const hasPlayers = (s.playerCount || 0) > 0;
+                const notCurrentServer = !GameState.currentServer || s.id !== GameState.currentServer;
+                return hasPlayers && notCurrentServer;
+            });
 
             const serverList = document.getElementById('serverList');
             serverList.innerHTML = '';
 
             if (activeServers.length === 0) {
-                serverList.innerHTML = '<p style="text-align: center; color: #aaa; padding: 40px;">No active servers. Create one to start playing!</p>';
+                serverList.innerHTML = '<p style="text-align: center; color: #aaa; padding: 40px;">No servers available. Create one to start playing!</p>';
                 return;
             }
 
@@ -1578,8 +1585,8 @@
                 card.innerHTML = `
                     <h3>${server.name}</h3>
                     <div class="server-info">
-                        <span class="player-count">${server.playerCount || 0} players</span>
-                        <span>Created by: ${server.owner ? server.owner.slice(0, 6) + '...' + server.owner.slice(-4) : 'Unknown'}</span>
+                        <span class="player-count">${server.playerCount || 0} player(s)</span>
+                        <span>by ${server.owner ? server.owner.slice(0, 6) + '...' + server.owner.slice(-4) : 'Unknown'}</span>
                     </div>
                     <button class="btn" onclick="joinServerById('${server.id}')">Join Server</button>
                 `;
@@ -1599,83 +1606,116 @@
         }
 
         function createServer() {
-            const name = document.getElementById('serverName').value;
-            if (!name) {
+            const serverName = document.getElementById('serverName').value.trim();
+
+            if (!serverName) {
                 alert('Please enter a server name');
+                return;
+            }
+
+            if (!GameState.peer || !GameState.peer.id) {
+                alert('Connection not ready. Please wait a moment and try again.');
                 return;
             }
 
             const server = {
                 id: GameState.peer.id,
-                name: name,
+                name: serverName,
                 owner: GameState.walletAddress,
+                creator: GameState.username,
+                creatorWallet: GameState.walletAddress,
                 players: 1,
                 playerCount: 1,
                 created: Date.now()
             };
 
+            // Save to localStorage
             const servers = JSON.parse(localStorage.getItem('cryptoworld_servers') || '[]');
             servers.push(server);
             localStorage.setItem('cryptoworld_servers', JSON.stringify(servers));
 
-            // Immediately refresh the server list to show the new server
-            loadServers();
+            console.log('Server created:', server);
 
+            // Close modal
             document.getElementById('createServerModal').classList.remove('visible');
+
+            // Auto-join the server we just created
             joinServer(server);
         }
 
         function joinServer(server) {
-            if (!server || !server.id) {
-                console.error('Invalid server object:', server);
-                alert('Error: Invalid server data');
+            console.log('=== JOIN SERVER DEBUG ===');
+            console.log('Server object:', JSON.stringify(server, null, 2));
+            console.log('GameState.peer:', GameState.peer);
+            console.log('GameState.peer.id:', GameState.peer?.id);
+            console.log('GameState.scene:', GameState.scene);
+
+            // Validate inputs
+            if (!server) {
+                console.error('No server object provided');
+                alert('Error: Invalid server');
                 return;
             }
 
-            console.log('Attempting to join server:', server.name, 'ID:', server.id);
+            if (!server.id) {
+                console.error('Server has no ID');
+                alert('Error: Server is missing ID');
+                return;
+            }
 
-            // Validate peer is initialized
             if (!GameState.peer || !GameState.peer.id) {
                 console.error('Peer not initialized');
                 alert('Connection error. Please refresh and try again.');
                 return;
             }
 
-            // Update game state
-            GameState.currentServer = server.id;
+            console.log('All validations passed');
 
-            // Update player count - only increment if joining a different server
+            // Store server info
+            GameState.currentServer = server.id;
+            console.log('Set currentServer to:', GameState.currentServer);
+
+            // Hide server browser
+            document.getElementById('serverBrowser').classList.remove('visible');
+            console.log('Hid server browser');
+
+            // Show game canvas
+            const gameCanvas = document.getElementById('gameCanvas');
+            gameCanvas.classList.add('active');
+            gameCanvas.style.display = 'block';
+            console.log('Showed game canvas');
+
+            // Initialize game if not already initialized
+            if (!GameState.scene) {
+                console.log('Initializing game scene...');
+                try {
+                    initGame();
+                    console.log('Game initialized successfully');
+                } catch (error) {
+                    console.error('Failed to initialize game:', error);
+                    alert('Failed to start game. Please refresh and try again.');
+                    return;
+                }
+            } else {
+                console.log('Game scene already exists');
+            }
+
+            // If joining someone else's server (not the host)
             if (server.id !== GameState.peer.id) {
+                console.log('Joining another player\'s server');
+
+                // Update player count
                 const servers = JSON.parse(localStorage.getItem('cryptoworld_servers')) || [];
                 const serverIndex = servers.findIndex(s => s.id === server.id);
+
                 if (serverIndex !== -1) {
                     servers[serverIndex].playerCount = (servers[serverIndex].playerCount || 0) + 1;
                     localStorage.setItem('cryptoworld_servers', JSON.stringify(servers));
-                    console.log('Updated server player count to:', servers[serverIndex].playerCount);
+                    console.log('Updated player count to:', servers[serverIndex].playerCount);
                 }
-            }
 
-            // Hide server browser, show game
-            document.getElementById('serverBrowser').classList.remove('visible');
-            document.getElementById('gameCanvas').classList.add('active');
-
-            // Initialize game
-            if (!GameState.scene) {
-                try {
-                    initGame();
-                } catch (error) {
-                    console.error('Failed to initialize game:', error);
-                    alert('Failed to start game. Please try again.');
-                    // Return to server browser
-                    document.getElementById('gameCanvas').classList.remove('active');
-                    document.getElementById('serverBrowser').classList.add('visible');
-                    return;
-                }
-            }
-
-            // Connect to server host if not the host
-            if (server.id !== GameState.peer.id) {
-                console.log('Connecting to server host:', server.id);
+                // Connect to server host
+                console.log('Attempting to connect to host:', server.id);
 
                 try {
                     const conn = GameState.peer.connect(server.id, {
@@ -1684,67 +1724,83 @@
                     });
 
                     if (!conn) {
-                        throw new Error('Failed to create peer connection');
+                        throw new Error('Failed to create connection object');
                     }
 
-                    // Handle connection errors
-                    conn.on('error', (err) => {
-                        console.error('Connection error:', err);
-                        alert(`Failed to connect to server: ${err.message || 'Unknown error'}`);
+                    console.log('Connection object created:', conn);
+
+                    // Handle connection
+                    conn.on('open', () => {
+                        console.log('Connection opened to:', server.id);
+                        addChatMessage('System', `Connected to server: ${server.name}`, true);
                     });
 
-                    // Handle connection close
+                    conn.on('error', (error) => {
+                        console.error('Connection error:', error);
+                        addChatMessage('System', 'Connection error. Please try again.', true);
+                    });
+
                     conn.on('close', () => {
-                        console.warn('Connection to server closed');
+                        console.log('Connection closed');
+                        addChatMessage('System', 'Disconnected from server', true);
                     });
 
                     handlePeerConnection(conn);
 
-                    // Request peer list after connection
-                    conn.on('open', () => {
-                        console.log('Successfully connected to server host');
-                        conn.send({ type: 'request_peers' });
+                    console.log('Connection handlers set up');
 
-                        // Broadcast to existing connections that we joined
-                        GameState.connections.forEach(c => {
-                            if (c.open && c.peer !== conn.peer) {
-                                c.send({
-                                    type: 'new_peer',
-                                    peerId: GameState.peer.id
-                                });
-                            }
-                        });
-                    });
-
-                    console.log('Connection initiated to:', server.id);
                 } catch (error) {
                     console.error('Failed to connect to server:', error);
-                    alert('Failed to join server. Please try again.');
+                    alert('Failed to join server. Please try again.\n\nError: ' + error.message);
                     leaveServer();
+                    return;
                 }
             } else {
                 console.log('You are the server host');
+                addChatMessage('System', `Server created: ${server.name}`, true);
             }
 
-            addChatMessage('System', `Joined server: ${server.name}`, true);
+            console.log('=== JOIN SERVER COMPLETE ===');
         }
 
         // Game Init
         function initGame() {
-            const canvas = document.getElementById('gameCanvas');
-            GameState.scene = new THREE.Scene();
-            GameState.scene.background = new THREE.Color(0x000510);
+            console.log('=== INIT GAME ===');
 
-            // Initialize clock for delta time
-            GameState.clock = new THREE.Clock();
+            try {
+                const canvas = document.getElementById('gameCanvas');
+                if (!canvas) {
+                    throw new Error('Game canvas element not found');
+                }
+                console.log('Canvas found');
 
-            // Show instructions when game starts
-            document.getElementById('instructions').classList.add('active');
+                // Initialize Three.js scene
+                if (!GameState.scene) {
+                    GameState.scene = new THREE.Scene();
+                    GameState.scene.background = new THREE.Color(0x000510);
+                    console.log('Scene created');
+                }
 
-            GameState.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            GameState.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-            GameState.renderer.setSize(window.innerWidth, window.innerHeight);
-            GameState.renderer.shadowMap.enabled = true;
+                // Initialize clock for delta time
+                if (!GameState.clock) {
+                    GameState.clock = new THREE.Clock();
+                    console.log('Clock initialized');
+                }
+
+                // Show instructions when game starts
+                document.getElementById('instructions').classList.add('active');
+
+                if (!GameState.camera) {
+                    GameState.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                    console.log('Camera created');
+                }
+
+                if (!GameState.renderer) {
+                    GameState.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+                    GameState.renderer.setSize(window.innerWidth, window.innerHeight);
+                    GameState.renderer.shadowMap.enabled = true;
+                    console.log('Renderer created');
+                }
 
             // Lights
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -2017,11 +2073,26 @@
 
             // Controls
             setupControls();
+            console.log('Controls set up');
 
-            // Start animation
-            animate();
+            // Start animation loop
+            if (!GameState.animating) {
+                GameState.animating = true;
+                animate();
+                console.log('Animation loop started');
+            } else {
+                console.log('Animation loop already running');
+            }
 
             addChatMessage('System', 'Welcome to the server!', true);
+
+            console.log('=== INIT GAME COMPLETE ===');
+
+            } catch (error) {
+                console.error('=== INIT GAME FAILED ===');
+                console.error(error);
+                throw error;
+            }
         }
 
         function createRemotePlayer(peerId, wallet, username, color, position, rotation) {
