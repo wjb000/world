@@ -1250,11 +1250,13 @@
 
         function showUsernameModal() {
             if (!GameState.walletAddress) {
-                console.error('showUsernameModal called but walletAddress is null');
+                console.error('showUsernameModal called but walletAddress is null - preventing modal from showing');
+                ensureCorrectUIState(); // Force correct UI state
                 return;
             }
             const modal = document.getElementById('usernameModal');
             modal.classList.add('visible');
+            modal.style.display = 'flex';
 
             // Set default username as shortened wallet address
             const defaultUsername = `${GameState.walletAddress.slice(0, 4)}...${GameState.walletAddress.slice(-2)}`;
@@ -1265,9 +1267,8 @@
             if (!GameState.walletAddress) {
                 console.error('confirmUsername called but walletAddress is null');
                 alert('Please connect your wallet first!');
-                // Hide username modal and show wallet screen
-                document.getElementById('usernameModal').classList.remove('visible');
-                document.getElementById('walletScreen').classList.remove('hidden');
+                // Aggressively reset UI to wallet screen
+                ensureCorrectUIState();
                 return;
             }
             const input = document.getElementById('usernameInput').value.trim();
@@ -2713,16 +2714,32 @@
         function ensureCorrectUIState() {
             // If no wallet is connected, ensure wallet screen is showing and all modals are hidden
             if (!GameState.walletAddress) {
-                document.getElementById('walletScreen').classList.remove('hidden');
-                document.getElementById('serverBrowser').classList.remove('visible');
-                document.getElementById('usernameModal').classList.remove('visible');
-                document.getElementById('colorPickerModal').classList.remove('visible');
-                console.log('UI reset: showing wallet screen');
+                // Aggressively reset UI using both classes and direct styles
+                const walletScreen = document.getElementById('walletScreen');
+                const serverBrowser = document.getElementById('serverBrowser');
+                const usernameModal = document.getElementById('usernameModal');
+                const colorModal = document.getElementById('colorPickerModal');
+
+                walletScreen.classList.remove('hidden');
+                walletScreen.style.display = 'flex';
+
+                serverBrowser.classList.remove('visible');
+                serverBrowser.style.display = 'none';
+
+                usernameModal.classList.remove('visible');
+                usernameModal.style.display = 'none';
+
+                colorModal.classList.remove('visible');
+                colorModal.style.display = 'none';
+
+                console.log('UI reset: showing wallet screen, hiding all modals');
             }
         }
 
-        // Call on page load
-        setTimeout(ensureCorrectUIState, 100);
+        // Call multiple times to ensure it sticks
+        setTimeout(ensureCorrectUIState, 50);
+        setTimeout(ensureCorrectUIState, 200);
+        setTimeout(ensureCorrectUIState, 500);
     </script>
 </body>
 </html>
