@@ -527,6 +527,268 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Personal Website Elements */
+        #siteTitle {
+            position: absolute;
+            top: 100px;
+            left: 20px;
+            text-align: left;
+            pointer-events: none;
+            z-index: 100;
+            background: linear-gradient(135deg, rgba(0, 204, 255, 0.15), rgba(0, 153, 204, 0.15));
+            padding: 15px 25px;
+            border-radius: 15px;
+            border: 3px solid #00ccff;
+            box-shadow: 0 0 30px rgba(0, 204, 255, 0.6), 0 0 60px rgba(0, 204, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        #siteTitle h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: bold;
+            color: #00ccff;
+            text-shadow:
+                0 0 10px rgba(0, 204, 255, 0.8),
+                0 0 20px rgba(0, 204, 255, 0.6),
+                0 0 30px rgba(0, 204, 255, 0.4);
+            animation: titleGlow 2s ease-in-out infinite;
+        }
+
+        #siteTitle p {
+            margin: 5px 0 0 0;
+            font-size: 14px;
+            color: #00ccff;
+            text-shadow:
+                0 0 5px rgba(0, 204, 255, 0.5),
+                0 0 10px rgba(0, 204, 255, 0.3);
+        }
+
+        @keyframes titleGlow {
+            0%, 100% {
+                text-shadow:
+                    0 0 10px rgba(0, 204, 255, 0.8),
+                    0 0 20px rgba(0, 204, 255, 0.6),
+                    0 0 30px rgba(0, 204, 255, 0.4);
+            }
+            50% {
+                text-shadow:
+                    0 0 20px rgba(0, 204, 255, 1),
+                    0 0 30px rgba(0, 204, 255, 0.8),
+                    0 0 40px rgba(0, 204, 255, 0.6);
+            }
+        }
+
+        #instructions {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(30,30,30,0.8));
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 14px;
+            text-align: center;
+            pointer-events: none;
+            z-index: 100;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: none;
+        }
+
+        #instructions.active {
+            display: block;
+        }
+
+        #joystick {
+            position: absolute;
+            bottom: 80px;
+            left: 80px;
+            width: 140px;
+            height: 140px;
+            background: radial-gradient(circle, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            display: none;
+            touch-action: none;
+            z-index: 100;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        #joystick-knob {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, rgba(255,255,255,0.8), rgba(255,255,255,0.5));
+            border: 3px solid white;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+        }
+
+        @media (max-width: 768px) {
+            #joystick {
+                display: block;
+            }
+            #siteTitle {
+                padding: 6px 8px;
+                top: 80px;
+                border-width: 2px;
+                max-width: 120px;
+            }
+            #siteTitle h1 {
+                font-size: 16px;
+            }
+            #siteTitle p {
+                font-size: 8px;
+            }
+        }
+
+        /* Loot Popups */
+        .lootPopup {
+            position: fixed;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 20px 30px;
+            border-radius: 15px;
+            border: 4px solid;
+            z-index: 1000;
+            display: none;
+            text-align: center;
+            min-width: 300px;
+            pointer-events: none;
+        }
+
+        .lootPopup.visible {
+            display: block;
+            animation: popupBounce 0.5s ease;
+        }
+
+        .lootPopup button {
+            pointer-events: all;
+        }
+
+        @keyframes popupBounce {
+            0% { transform: translateX(-50%) scale(0.8); opacity: 0; }
+            50% { transform: translateX(-50%) scale(1.05); }
+            100% { transform: translateX(-50%) scale(1); opacity: 1; }
+        }
+
+        .lootPopup h3 {
+            margin: 0 0 10px 0;
+            color: #fff;
+            font-size: 20px;
+            text-transform: uppercase;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .lootPopup p {
+            margin: 0 0 15px 0;
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .lootPopup button {
+            background: linear-gradient(135deg, #fff, #ffe);
+            color: #000;
+            border: 3px solid;
+            padding: 12px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+        }
+
+        .lootPopup button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+            background: linear-gradient(135deg, #ffffaa, #ffff88);
+        }
+
+        .lootPopup button:active {
+            transform: scale(0.95);
+        }
+
+        /* Gold/legendary popup for iPhone */
+        #lootPopup {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.95), rgba(255, 170, 0, 0.95));
+            border-color: #ffd700;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 215, 0, 0.4);
+        }
+
+        #lootPopup button {
+            border-color: #ffd700;
+        }
+
+        /* Purple/epic popup for Apple Watch */
+        #lootPopup2 {
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.95), rgba(75, 0, 130, 0.95));
+            border-color: #9370db;
+            box-shadow: 0 0 30px rgba(138, 43, 226, 0.8), 0 0 60px rgba(138, 43, 226, 0.4);
+        }
+
+        #lootPopup2 button {
+            border-color: #9370db;
+        }
+
+        /* Green/emerald popup for Resume */
+        #lootPopup3 {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95));
+            border-color: #10b981;
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.8), 0 0 60px rgba(16, 185, 129, 0.4);
+        }
+
+        #lootPopup3 button {
+            border-color: #10b981;
+        }
+
+        /* Orange popup for GitHub */
+        #lootPopup4 {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.95), rgba(234, 88, 12, 0.95));
+            border-color: #f97316;
+            box-shadow: 0 0 30px rgba(249, 115, 22, 0.8), 0 0 60px rgba(249, 115, 22, 0.4);
+        }
+
+        #lootPopup4 button {
+            border-color: #f97316;
+        }
+
+        /* Blue/cyan popup for BOB Robot Project */
+        #lootPopupBobProject {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.95), rgba(8, 145, 178, 0.95));
+            border-color: #06b6d4;
+            box-shadow: 0 0 30px rgba(6, 182, 212, 0.8), 0 0 60px rgba(6, 182, 212, 0.4);
+        }
+
+        #lootPopupBobProject button {
+            border-color: #06b6d4;
+        }
+
+        /* Coral/orange popup for AGV Project */
+        #agvPopup {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.95), rgba(255, 69, 0, 0.95));
+            border-color: #ff6b35;
+            box-shadow: 0 0 30px rgba(255, 107, 53, 0.8), 0 0 60px rgba(255, 107, 53, 0.4);
+        }
+
+        /* Pink/magenta popup for Cover Letter */
+        #coverLetterPopup {
+            background: linear-gradient(135deg, rgba(233, 30, 99, 0.95), rgba(194, 24, 91, 0.95));
+            border-color: #e91e63;
+            box-shadow: 0 0 30px rgba(233, 30, 99, 0.8), 0 0 60px rgba(233, 30, 99, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -661,6 +923,63 @@
         </div>
     </div>
 
+    <!-- Personal Website Elements -->
+    <div id="siteTitle">
+        <h1>wyatt's site</h1>
+        <p>resume/links</p>
+    </div>
+
+    <div id="instructions">
+        <strong>WASD</strong> to Move | <strong>SHIFT</strong> to Sprint
+    </div>
+
+    <div id="joystick">
+        <div id="joystick-knob"></div>
+    </div>
+
+    <!-- Loot Popups -->
+    <div id="lootPopup" class="lootPopup">
+        <h3>📹 Video Available</h3>
+        <p>iPhone 8 Teardown Video</p>
+        <button id="openButton">OPEN</button>
+    </div>
+
+    <div id="lootPopup2" class="lootPopup">
+        <h3>📹 Video Available</h3>
+        <p>Apple Watch SE Teardown Video</p>
+        <button id="openButton2">OPEN</button>
+    </div>
+
+    <div id="lootPopup3" class="lootPopup">
+        <h3>📄 Document Available</h3>
+        <p>Wyatt's Resume</p>
+        <button id="openButton3">OPEN</button>
+    </div>
+
+    <div id="lootPopup4" class="lootPopup">
+        <h3>💻 Profile Available</h3>
+        <p>Wyatt's GitHub</p>
+        <button id="openButton4">OPEN</button>
+    </div>
+
+    <div id="lootPopupBobProject" class="lootPopup">
+        <h3>🤖 Robot Project</h3>
+        <p>BOB Control System</p>
+        <button id="openButtonBobProject">VIEW PROJECT</button>
+    </div>
+
+    <div id="agvPopup" class="lootPopup">
+        <h3>🚗 Remote Control AGV Project</h3>
+        <p>Automated Guided Vehicle Control System</p>
+        <button id="agvOpenBtn">VIEW PROJECT</button>
+    </div>
+
+    <div id="coverLetterPopup" class="lootPopup">
+        <h3>📄 Document Available</h3>
+        <p>Cover Letter</p>
+        <button id="openButtonCoverLetter">OPEN</button>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -686,7 +1005,11 @@
             renderer: null,
             playerMesh: null,
             droppedItems: [],
-            portals: []
+            portals: [],
+            lootItems: [],
+            mixer: null,
+            animations: {},
+            particles: null
         };
 
         // Wallet Connection
@@ -895,8 +1218,10 @@
         function initGame() {
             const canvas = document.getElementById('gameCanvas');
             GameState.scene = new THREE.Scene();
-            GameState.scene.background = new THREE.Color(0x87CEEB);
-            GameState.scene.fog = new THREE.Fog(0x87CEEB, 10, 100);
+            GameState.scene.background = new THREE.Color(0x000510);
+
+            // Show instructions when game starts
+            document.getElementById('instructions').classList.add('active');
 
             GameState.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             GameState.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -912,30 +1237,308 @@
             sunLight.castShadow = true;
             GameState.scene.add(sunLight);
 
-            // Ground
-            const ground = new THREE.Mesh(
-                new THREE.PlaneGeometry(200, 200),
-                new THREE.MeshStandardMaterial({ color: 0x2d5016 })
-            );
-            ground.rotation.x = -Math.PI / 2;
-            ground.receiveShadow = true;
-            GameState.scene.add(ground);
+            // Cyberpunk Platform
+            const platformRadius = 55;
 
-            // Player
-            GameState.playerMesh = new THREE.Group();
-            const playerGeometry = new THREE.BoxGeometry(1, 2, 1);
-            const playerMaterial = new THREE.MeshStandardMaterial({
-                color: 0x00ff41,
-                emissive: 0x00ff41,
-                emissiveIntensity: 0.3
+            // Create canvas texture with circuit lines
+            const textureCanvas = document.createElement('canvas');
+            textureCanvas.width = 2048;
+            textureCanvas.height = 2048;
+            const texCtx = textureCanvas.getContext('2d');
+
+            // Dark background
+            texCtx.fillStyle = '#0a0a0a';
+            texCtx.fillRect(0, 0, 2048, 2048);
+
+            // Draw circuit lines
+            texCtx.strokeStyle = '#00ffff';
+            texCtx.lineWidth = 2;
+            texCtx.shadowBlur = 10;
+            texCtx.shadowColor = '#00ffff';
+
+            for (let i = 0; i < 100; i++) {
+                const x = Math.random() * 2048;
+                const y = Math.random() * 2048;
+                const length = Math.random() * 200 + 50;
+                const angle = Math.random() * Math.PI * 2;
+
+                texCtx.beginPath();
+                texCtx.moveTo(x, y);
+                texCtx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
+                texCtx.stroke();
+            }
+
+            const floorTexture = new THREE.CanvasTexture(textureCanvas);
+
+            // Create circular platform
+            const platformGeometry = new THREE.CircleGeometry(platformRadius, 64);
+            const platformMaterial = new THREE.MeshStandardMaterial({
+                map: floorTexture,
+                roughness: 0.3,
+                metalness: 0.7,
+                emissive: new THREE.Color(0x002244),
+                emissiveIntensity: 0.5
             });
-            const mesh = new THREE.Mesh(playerGeometry, playerMaterial);
-            mesh.position.y = 1;
-            mesh.castShadow = true;
-            GameState.playerMesh.add(mesh);
+
+            const platform = new THREE.Mesh(platformGeometry, platformMaterial);
+            platform.rotation.x = -Math.PI / 2;
+            platform.receiveShadow = true;
+            GameState.scene.add(platform);
+
+            // Blue glowing ring around edge
+            const ringGeometry = new THREE.RingGeometry(platformRadius - 1, platformRadius + 0.5, 64);
+            const ringMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending
+            });
+            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.y = 0.1;
+            GameState.scene.add(ring);
+
+            // Point lights around the ring
+            const numLights = 12;
+            for (let i = 0; i < numLights; i++) {
+                const angle = (i / numLights) * Math.PI * 2;
+                const x = Math.cos(angle) * platformRadius;
+                const z = Math.sin(angle) * platformRadius;
+                const light = new THREE.PointLight(0x00ffff, 1, 20);
+                light.position.set(x, 0.5, z);
+                GameState.scene.add(light);
+            }
+
+            // Player - Robot model with fallback
+            GameState.playerMesh = new THREE.Group();
+            GameState.playerMesh.position.y = 0;
             GameState.scene.add(GameState.playerMesh);
 
+            // Animation mixer for robot
+            GameState.mixer = null;
+            GameState.animations = {};
+
+            // Try to load robot model
+            const loader = new THREE.GLTFLoader();
+            loader.load(
+                'https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb',
+                (gltf) => {
+                    const model = gltf.scene;
+                    model.scale.set(0.5, 0.5, 0.5);
+
+                    // Apply cyan blue color
+                    model.traverse((node) => {
+                        if (node.isMesh) {
+                            node.material = node.material.clone();
+                            node.material.color.setHex(0x00ccff);
+                            node.material.emissive = new THREE.Color(0x00ccff);
+                            node.material.emissiveIntensity = 0.3;
+                            node.castShadow = true;
+                        }
+                    });
+
+                    GameState.playerMesh.add(model);
+
+                    // Setup animations
+                    GameState.mixer = new THREE.AnimationMixer(model);
+                    gltf.animations.forEach((clip) => {
+                        GameState.animations[clip.name] = GameState.mixer.clipAction(clip);
+                    });
+
+                    // Play idle animation
+                    if (GameState.animations['Idle']) {
+                        GameState.animations['Idle'].play();
+                    }
+                },
+                undefined,
+                (error) => {
+                    console.warn('Robot model failed to load, using fallback capsule');
+                    // Fallback capsule
+                    const capsuleGeometry = new THREE.CapsuleGeometry(0.5, 1.5, 8, 16);
+                    const capsuleMaterial = new THREE.MeshStandardMaterial({
+                        color: 0x00ccff,
+                        emissive: 0x00ccff,
+                        emissiveIntensity: 0.3
+                    });
+                    const capsule = new THREE.Mesh(capsuleGeometry, capsuleMaterial);
+                    capsule.position.y = 1;
+                    capsule.castShadow = true;
+                    GameState.playerMesh.add(capsule);
+                }
+            );
+
             GameState.camera.position.set(0, 5, 10);
+
+            // Loot Items Array
+            GameState.lootItems = [];
+
+            // Helper function to create loot item
+            function createLootItem(x, y, z, color, label, url, popupId) {
+                const group = new THREE.Group();
+
+                // Create thumbnail geometry
+                const thumbnailGeometry = new THREE.BoxGeometry(3, 0.1, 2);
+                const thumbnailMaterial = new THREE.MeshStandardMaterial({
+                    color: color,
+                    emissive: color,
+                    emissiveIntensity: 0.5
+                });
+                const thumbnail = new THREE.Mesh(thumbnailGeometry, thumbnailMaterial);
+                thumbnail.castShadow = true;
+                group.add(thumbnail);
+
+                // Glowing border
+                const borderGeometry = new THREE.PlaneGeometry(3.2, 2.2);
+                const borderMaterial = new THREE.MeshBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: 0.6,
+                    side: THREE.DoubleSide,
+                    blending: THREE.AdditiveBlending
+                });
+                const border = new THREE.Mesh(borderGeometry, borderMaterial);
+                border.rotation.x = -Math.PI / 2;
+                border.position.y = -0.05;
+                group.add(border);
+
+                // Label text
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 256;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                ctx.fillRect(0, 0, 512, 256);
+                ctx.strokeStyle = '#' + color.toString(16).padStart(6, '0');
+                ctx.lineWidth = 8;
+                ctx.strokeRect(4, 4, 504, 248);
+                ctx.fillStyle = '#' + color.toString(16).padStart(6, '0');
+                ctx.font = 'bold 32px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#' + color.toString(16).padStart(6, '0');
+                ctx.fillText(label, 256, 128);
+
+                const labelTexture = new THREE.CanvasTexture(canvas);
+                const labelMesh = new THREE.Mesh(
+                    new THREE.PlaneGeometry(4, 2),
+                    new THREE.MeshBasicMaterial({
+                        map: labelTexture,
+                        transparent: true,
+                        side: THREE.DoubleSide
+                    })
+                );
+                labelMesh.position.y = 3;
+                group.add(labelMesh);
+
+                // Add point light
+                const light = new THREE.PointLight(color, 2, 10);
+                light.position.copy(new THREE.Vector3(x, y + 0.5, z));
+                GameState.scene.add(light);
+
+                group.position.set(x, y, z);
+                GameState.scene.add(group);
+
+                // Store loot item data
+                GameState.lootItems.push({
+                    position: { x, y, z },
+                    radius: 4,
+                    url: url,
+                    popupId: popupId,
+                    group: group
+                });
+            }
+
+            // Create all 7 loot items
+            createLootItem(0, 0.5, -28, 0xffd700, 'IPHONE 8', 'https://www.youtube.com/watch?v=xfU4AUFF61k', 'lootPopup');
+            createLootItem(-24, 0.5, -18, 0x9370db, 'APPLE WATCH', 'https://www.youtube.com/watch?v=maRxFHxgG7c', 'lootPopup2');
+            createLootItem(24, 0.5, -18, 0x10b981, 'RESUME', 'RESUME2026.pdf', 'lootPopup3');
+            createLootItem(28, 0.5, -8, 0xf97316, 'GITHUB', 'https://github.com/wjb000', 'lootPopup4');
+            createLootItem(-12, 0.5, -23, 0x06b6d4, 'BOB ROBOT', 'robot-project.html', 'lootPopupBobProject');
+            createLootItem(12, 0.5, -23, 0xff6b35, 'AGV', 'agv-control.html', 'agvPopup');
+            createLootItem(-30, 0.5, -12, 0xe91e63, 'COVER LETTER', 'Cover Letter.pdf', 'coverLetterPopup');
+
+            // Setup loot popup event handlers
+            document.getElementById('openButton').onclick = () => window.open('https://www.youtube.com/watch?v=xfU4AUFF61k', '_blank');
+            document.getElementById('openButton2').onclick = () => window.open('https://www.youtube.com/watch?v=maRxFHxgG7c', '_blank');
+            document.getElementById('openButton3').onclick = () => window.open('RESUME2026.pdf', '_blank');
+            document.getElementById('openButton4').onclick = () => window.open('https://github.com/wjb000', '_blank');
+            document.getElementById('openButtonBobProject').onclick = () => window.open('robot-project.html', '_blank');
+            document.getElementById('agvOpenBtn').onclick = () => window.open('agv-control.html', '_blank');
+            document.getElementById('openButtonCoverLetter').onclick = () => window.open('Cover Letter.pdf', '_blank');
+
+            // Particle system
+            const particleCount = 500;
+            const particleGeometry = new THREE.BufferGeometry();
+            const particlePositions = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount; i++) {
+                particlePositions[i * 3] = (Math.random() - 0.5) * 100;
+                particlePositions[i * 3 + 1] = Math.random() * 50;
+                particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+            }
+
+            particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+
+            const particleMaterial = new THREE.PointsMaterial({
+                color: 0x00ffff,
+                size: 0.1,
+                transparent: true,
+                opacity: 0.6,
+                blending: THREE.AdditiveBlending
+            });
+
+            const particles = new THREE.Points(particleGeometry, particleMaterial);
+            GameState.scene.add(particles);
+            GameState.particles = particles;
+
+            // Add buildings around the platform
+            const buildingPositions = [
+                { x: -40, z: -30, scale: 1.5 },
+                { x: 40, z: -35, scale: 1.2 },
+                { x: -35, z: 25, scale: 1.8 },
+                { x: 30, z: 30, scale: 1.3 }
+            ];
+
+            buildingPositions.forEach(pos => {
+                // Try to load LittlestTokyo model for buildings
+                const buildingLoader = new THREE.GLTFLoader();
+                buildingLoader.load(
+                    'https://threejs.org/examples/models/gltf/LittlestTokyo.glb',
+                    (gltf) => {
+                        const building = gltf.scene;
+                        building.scale.set(pos.scale, pos.scale, pos.scale);
+                        building.position.set(pos.x, 0, pos.z);
+                        GameState.scene.add(building);
+                    },
+                    undefined,
+                    (error) => {
+                        // Fallback to simple box buildings
+                        const buildingGeometry = new THREE.BoxGeometry(8, 15, 8);
+                        const buildingMaterial = new THREE.MeshStandardMaterial({
+                            color: 0x1a1a2e,
+                            emissive: 0x0f3460,
+                            emissiveIntensity: 0.2
+                        });
+                        const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+                        building.position.set(pos.x, 7.5, pos.z);
+                        building.castShadow = true;
+                        GameState.scene.add(building);
+
+                        // Add window lights
+                        for (let i = 0; i < 5; i++) {
+                            const windowLight = new THREE.PointLight(0xffaa00, 0.5, 5);
+                            windowLight.position.set(
+                                pos.x + (Math.random() - 0.5) * 4,
+                                3 + i * 2.5,
+                                pos.z + (Math.random() - 0.5) * 4
+                            );
+                            GameState.scene.add(windowLight);
+                        }
+                    }
+                );
+            });
 
             // Controls
             setupControls();
@@ -1032,19 +1635,69 @@
 
             if (!GameState.scene) return;
 
+            // Update animation mixer
+            if (GameState.mixer) {
+                GameState.mixer.update(0.016);
+            }
+
             // Movement
             const moveSpeed = 0.1;
+            let isMoving = false;
+
             if (keys['w'] || keys['arrowup']) {
                 GameState.playerMesh.position.z -= moveSpeed;
+                isMoving = true;
             }
             if (keys['s'] || keys['arrowdown']) {
                 GameState.playerMesh.position.z += moveSpeed;
+                isMoving = true;
             }
             if (keys['a'] || keys['arrowleft']) {
                 GameState.playerMesh.position.x -= moveSpeed;
+                isMoving = true;
             }
             if (keys['d'] || keys['arrowright']) {
                 GameState.playerMesh.position.x += moveSpeed;
+                isMoving = true;
+            }
+
+            // Switch animations based on movement
+            if (GameState.animations) {
+                if (isMoving && GameState.animations['Walking']) {
+                    if (!GameState.animations['Walking'].isRunning()) {
+                        if (GameState.animations['Idle']) GameState.animations['Idle'].stop();
+                        GameState.animations['Walking'].play();
+                    }
+                } else if (!isMoving && GameState.animations['Idle']) {
+                    if (!GameState.animations['Idle'].isRunning()) {
+                        if (GameState.animations['Walking']) GameState.animations['Walking'].stop();
+                        GameState.animations['Idle'].play();
+                    }
+                }
+            }
+
+            // Loot collision detection
+            if (GameState.lootItems) {
+                GameState.lootItems.forEach((loot) => {
+                    const distance = Math.sqrt(
+                        Math.pow(GameState.playerMesh.position.x - loot.position.x, 2) +
+                        Math.pow(GameState.playerMesh.position.z - loot.position.z, 2)
+                    );
+
+                    const popup = document.getElementById(loot.popupId);
+                    if (distance < loot.radius) {
+                        if (!popup.classList.contains('visible')) {
+                            popup.classList.add('visible');
+                        }
+                    } else {
+                        popup.classList.remove('visible');
+                    }
+                });
+            }
+
+            // Animate particles
+            if (GameState.particles) {
+                GameState.particles.rotation.y += 0.0005;
             }
 
             // Camera follow
