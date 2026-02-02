@@ -661,9 +661,12 @@
     <div id="playerCount">Players: 1</div>
 
     <!-- Color Picker -->
-    <div id="colorPicker">
-        <h3>Choose Your Color</h3>
-        <div class="color-options">
+    <div id="colorPicker" style="max-height: 50px; overflow: hidden; transition: max-height 0.3s;">
+        <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" id="colorPickerHeader">
+            <h3 style="margin: 0;">🎨 Choose Your Color</h3>
+            <button id="toggleColorPicker" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">▶</button>
+        </div>
+        <div class="color-options" id="colorOptions" style="margin-top: 15px;">
             <div class="color-option" data-color="#00ff41" style="background: #00ff41;"></div>
             <div class="color-option" data-color="#ff0040" style="background: #ff0040;"></div>
             <div class="color-option" data-color="#06b6d4" style="background: #06b6d4;"></div>
@@ -678,6 +681,21 @@
             <div class="color-option" data-color="#14b8a6" style="background: #14b8a6;"></div>
         </div>
     </div>
+
+    <script>
+        // Color picker collapse/expand toggle
+        document.getElementById('colorPickerHeader').addEventListener('click', () => {
+            const colorPicker = document.getElementById('colorPicker');
+            const toggleBtn = document.getElementById('toggleColorPicker');
+            if (colorPicker.style.maxHeight === '50px') {
+                colorPicker.style.maxHeight = '300px';
+                toggleBtn.textContent = '▼';
+            } else {
+                colorPicker.style.maxHeight = '50px';
+                toggleBtn.textContent = '▶';
+            }
+        });
+    </script>
 
     <!-- Wallet Connection Screen -->
     <div id="walletScreen">
@@ -2859,129 +2877,176 @@
             otherPlayer.position.set(position.x, position.y, position.z);
             otherPlayer.rotation.y = rotation;
 
-            // Parse color properly (handle hex strings and THREE.Color)
+            // Parse color properly
             let playerColor = color;
             if (typeof color === 'string') {
-                // Ensure it's a valid hex color
                 if (!color.startsWith('#')) {
                     playerColor = '#' + color.replace('0x', '');
                 }
             }
 
-            // Create humanoid player body (similar to main player)
-            const bodyGroup = new THREE.Group();
+            let playerMesh = null;
+            let playerMixer = null;
+            let animations = { idle: null, walk: null, run: null };
+            let currentAction = null;
 
-            // Head
-            const headGeo = new THREE.SphereGeometry(0.3, 16, 16);
-            const headMat = new THREE.MeshStandardMaterial({
-                color: playerColor,
-                emissive: playerColor,
-                emissiveIntensity: 0.5,
-                metalness: 0.3,
-                roughness: 0.7
-            });
-            const head = new THREE.Mesh(headGeo, headMat);
-            head.position.y = 1.7;
-            bodyGroup.add(head);
+            // If main player model is loaded, clone it
+            if (playerModel) {
+                try {
+                    // Clone the player model
+                    const clonedModel = playerModel.clone();
+                    clonedModel.scale.copy(playerModel.scale);
 
-            // Body
-            const bodyGeo = new THREE.BoxGeometry(0.6, 0.8, 0.4);
-            const bodyMat = new THREE.MeshStandardMaterial({
-                color: playerColor,
-                emissive: playerColor,
-                emissiveIntensity: 0.4,
-                metalness: 0.3,
-                roughness: 0.7
-            });
-            const body = new THREE.Mesh(bodyGeo, bodyMat);
-            body.position.y = 1.2;
-            bodyGroup.add(body);
+                    // Apply player color to the cloned model
+                    clonedModel.traverse((child) => {
+                        if (child.isMesh && child.material) {
+                            // Clone material to avoid affecting other players
+                            child.material = child.material.clone();
 
-            // Arms
-            const armGeo = new THREE.BoxGeometry(0.2, 0.6, 0.2);
-            const leftArm = new THREE.Mesh(armGeo, bodyMat.clone());
-            leftArm.position.set(-0.4, 1.2, 0);
-            bodyGroup.add(leftArm);
+                            // Apply player's chosen color to accent parts
+                            const currentColor = child.material.color;
+                            if (currentColor.r > 0.5 && currentColor.g < 0.5 ||
+                                currentColor.r < 0.3 && currentColor.g > 0.7 && currentColor.b > 0.7) {
+                                child.material.color = new THREE.Color(playerColor);
+                                child.material.emissive = new THREE.Color(playerColor);
+                                child.material.emissiveIntensity = 0.3;
+                            }
+                        }
+                    });
 
-            const rightArm = new THREE.Mesh(armGeo, bodyMat.clone());
-            rightArm.position.set(0.4, 1.2, 0);
-            bodyGroup.add(rightArm);
+                    otherPlayer.add(clonedModel);
+                    playerMesh = clonedModel;
 
-            // Legs
-            const legGeo = new THREE.BoxGeometry(0.25, 0.7, 0.25);
-            const leftLeg = new THREE.Mesh(legGeo, bodyMat.clone());
-            leftLeg.position.set(-0.15, 0.5, 0);
-            bodyGroup.add(leftLeg);
+                    // Set up animation mixer for this player
+                    if (playerMixer && playerMixer.getRoot) {
+                        const root = playerMixer.getRoot();
+                        if (root.animations) {
+                            playerMixer = new THREE.AnimationMixer(clonedModel);
 
-            const rightLeg = new THREE.Mesh(legGeo, bodyMat.clone());
-            rightLeg.position.set(0.15, 0.5, 0);
-            bodyGroup.add(rightLeg);
+                            root.animations.forEach((clip) => {
+                                const name = clip.name.toLowerCase();
+                                const action = playerMixer.clipAction(clip);
+                                action.setLoop(THREE.LoopRepeat);
 
-            // Add glow effect
-            const glowGeo = new THREE.SphereGeometry(0.8, 16, 16);
-            const glowMat = new THREE.MeshBasicMaterial({
-                color: playerColor,
-                transparent: true,
-                opacity: 0.2,
-                blending: THREE.AdditiveBlending
-            });
-            const glow = new THREE.Mesh(glowGeo, glowMat);
-            glow.position.y = 1.2;
-            bodyGroup.add(glow);
+                                if (name.includes('idle')) animations.idle = action;
+                                else if (name.includes('walk')) animations.walk = action;
+                                else if (name.includes('run')) animations.run = action;
+                            });
 
-            otherPlayer.add(bodyGroup);
+                            // Start with idle
+                            if (animations.idle) {
+                                animations.idle.play();
+                                currentAction = animations.idle;
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.warn('Failed to clone player model:', err);
+                    playerMesh = null;
+                }
+            }
 
-            // Add name tag with wallet address
+            // Fallback to simple capsule if model not available
+            if (!playerMesh) {
+                const fallbackGeo = new THREE.CapsuleGeometry(0.4, 1.2, 8, 16);
+                const fallbackMat = new THREE.MeshStandardMaterial({
+                    color: playerColor,
+                    emissive: playerColor,
+                    emissiveIntensity: 0.4,
+                    metalness: 0.6,
+                    roughness: 0.4
+                });
+                playerMesh = new THREE.Mesh(fallbackGeo, fallbackMat);
+                playerMesh.position.y = 1;
+                otherPlayer.add(playerMesh);
+            }
+
+            // Add name tag
             const canvas = document.createElement('canvas');
             canvas.width = 512;
             canvas.height = 128;
             const ctx = canvas.getContext('2d');
-
-            // Background
             ctx.fillStyle = 'rgba(0,0,0,0.8)';
             ctx.fillRect(0, 0, 512, 128);
-
-            // Border
             ctx.strokeStyle = playerColor;
             ctx.lineWidth = 4;
             ctx.strokeRect(2, 2, 508, 124);
-
-            // Text
             ctx.fillStyle = playerColor;
             ctx.font = 'bold 32px monospace';
             ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
             ctx.fillText(peerId.slice(0, 6) + '...' + peerId.slice(-4), 256, 64);
 
             const texture = new THREE.CanvasTexture(canvas);
-            const labelMaterial = new THREE.MeshBasicMaterial({
-                map: texture,
-                transparent: true,
-                side: THREE.DoubleSide
-            });
-            const label = new THREE.Mesh(new THREE.PlaneGeometry(3, 0.75), labelMaterial);
-            label.position.y = 2.8;
+            const label = new THREE.Mesh(
+                new THREE.PlaneGeometry(3, 0.75),
+                new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide })
+            );
+            label.position.y = 2.5;
             otherPlayer.add(label);
 
             scene.add(otherPlayer);
             otherPlayers.set(peerId, {
                 group: otherPlayer,
-                mesh: body,
-                bodyGroup: bodyGroup,
-                label: label
+                mesh: playerMesh,
+                label: label,
+                mixer: playerMixer,
+                animations: animations,
+                currentAction: currentAction,
+                lastPosition: new THREE.Vector3(position.x, position.y, position.z),
+                velocity: 0
             });
 
             updatePlayerCount();
-            console.log('Player created successfully');
+            console.log('Player created with animations:', !!playerMixer);
         }
 
         function updateOtherPlayer(peerId, position, rotation) {
             const player = otherPlayers.get(peerId);
-            if (player) {
-                // Smooth interpolation
-                player.group.position.lerp(new THREE.Vector3(position.x, position.y, position.z), 0.3);
-                player.group.rotation.y = rotation;
+            if (!player) return;
+
+            const targetPos = new THREE.Vector3(position.x, position.y, position.z);
+            const currentPos = player.group.position;
+
+            // Calculate velocity for animation
+            if (player.lastPosition) {
+                const distance = currentPos.distanceTo(targetPos);
+                player.velocity = distance;
+
+                // Determine animation based on velocity
+                if (player.animations && player.animations.idle) {
+                    let targetAction = null;
+
+                    if (distance < 0.01) {
+                        // Not moving - idle
+                        targetAction = player.animations.idle;
+                    } else if (distance < 0.5) {
+                        // Slow movement - walk
+                        targetAction = player.animations.walk || player.animations.idle;
+                    } else {
+                        // Fast movement - run
+                        targetAction = player.animations.run || player.animations.walk || player.animations.idle;
+                    }
+
+                    // Smoothly transition animations
+                    if (targetAction && targetAction !== player.currentAction) {
+                        if (player.currentAction) {
+                            targetAction.reset();
+                            targetAction.crossFadeFrom(player.currentAction, 0.3, true);
+                        }
+                        targetAction.play();
+                        player.currentAction = targetAction;
+                    }
+                }
             }
+
+            // Smooth interpolation (better smoothing)
+            player.group.position.lerp(targetPos, 0.15);
+
+            // Smooth rotation
+            const rotDiff = rotation - player.group.rotation.y;
+            player.group.rotation.y += rotDiff * 0.15;
+
+            player.lastPosition.copy(targetPos);
         }
 
         function updateOtherPlayerColor(peerId, color) {
@@ -3196,6 +3261,14 @@
                 const safeDelta = Math.min(delta, 0.1);
                 playerMixer.update(safeDelta);
             }
+
+            // Update other players' animations
+            otherPlayers.forEach((player) => {
+                if (player.mixer) {
+                    const safeDelta = Math.min(delta, 0.1);
+                    player.mixer.update(safeDelta);
+                }
+            });
 
             // FPS counter
             frames++;
