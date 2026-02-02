@@ -176,14 +176,14 @@ const CONFIG = {
    Copy and paste this **ENTIRE SQL SCRIPT** into your Supabase SQL Editor (run it all at once):
 
    ```sql
-   -- =====================================================
+  -- =====================================================
    -- CRYPTO WORLD - COMPLETE DATABASE SETUP
    -- =====================================================
 
    -- 1. CREATE PLAYERS TABLE
    CREATE TABLE IF NOT EXISTS players (
        id TEXT PRIMARY KEY,
-       username TEXT NOT NULL,
+        username TEXT NOT NULL,
        wallet_address TEXT,
        wallet_type TEXT,
        pos_x REAL NOT NULL DEFAULT 0,

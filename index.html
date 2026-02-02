@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>wyatt's site</title>
+    <title>Crypto World</title>
     <style>
         * {
             margin: 0;
@@ -1249,8 +1249,18 @@
         const textureLoader = new THREE.TextureLoader();
         const videoThumbnailGroup = new THREE.Group();
 
-        // Load YouTube thumbnail
-        const thumbnailTexture = textureLoader.load('https://img.youtube.com/vi/sZDZNAuZfM8/maxresdefault.jpg');
+        // Create black texture with HELLO WORLD text
+        const canvas1 = document.createElement('canvas');
+        canvas1.width = 512;
+        canvas1.height = 288;
+        const ctx1 = canvas1.getContext('2d');
+        ctx1.fillStyle = '#000000';
+        ctx1.fillRect(0, 0, 512, 288);
+        ctx1.fillStyle = '#ffffff';
+        ctx1.font = 'bold 48px Arial';
+        ctx1.textAlign = 'center';
+        ctx1.fillText('HELLO WORLD', 256, 144);
+        const thumbnailTexture = new THREE.CanvasTexture(canvas1);
         const thumbnailGeometry = new THREE.PlaneGeometry(4, 2.25); // 16:9 aspect ratio
         const thumbnailMaterial = new THREE.MeshBasicMaterial({
             map: thumbnailTexture,
@@ -1311,9 +1321,8 @@
         labelCtx.shadowColor = '#ffd700';
         labelCtx.fillStyle = '#ffd700';
         labelCtx.font = 'bold 40px Arial';
-        labelCtx.fillText('IPHONE 8', 256, 80);
-        labelCtx.fillText('TEARDOWN', 256, 130);
-        labelCtx.fillText('VIDEO', 256, 180);
+        labelCtx.fillText('HELLO', 256, 110);
+        labelCtx.fillText('WORLD', 256, 160);
 
         const labelTexture = new THREE.CanvasTexture(labelCanvas);
         const labelMesh = new THREE.Mesh(
@@ -1351,8 +1360,18 @@
         // SECOND LOOT ITEM - Apple Watch SE Teardown (PURPLE/EPIC THEME)
         const videoThumbnailGroup2 = new THREE.Group();
 
-        // Load Apple Watch thumbnail
-        const thumbnailTexture2 = textureLoader.load('https://img.youtube.com/vi/maRxFHxgG7c/maxresdefault.jpg');
+        // Create black texture with HELLO WORLD text
+        const canvas2 = document.createElement('canvas');
+        canvas2.width = 512;
+        canvas2.height = 288;
+        const ctx2 = canvas2.getContext('2d');
+        ctx2.fillStyle = '#000000';
+        ctx2.fillRect(0, 0, 512, 288);
+        ctx2.fillStyle = '#ffffff';
+        ctx2.font = 'bold 48px Arial';
+        ctx2.textAlign = 'center';
+        ctx2.fillText('HELLO WORLD', 256, 144);
+        const thumbnailTexture2 = new THREE.CanvasTexture(canvas2);
         const thumbnailMesh2 = new THREE.Mesh(thumbnailGeometry.clone(), new THREE.MeshBasicMaterial({
             map: thumbnailTexture2,
             side: THREE.DoubleSide,
@@ -1402,9 +1421,8 @@
         labelCtx2.shadowColor = '#9370db';
         labelCtx2.fillStyle = '#9370db';
         labelCtx2.font = 'bold 38px Arial';
-        labelCtx2.fillText('APPLE WATCH SE', 256, 80);
-        labelCtx2.fillText('TEARDOWN', 256, 140);
-        labelCtx2.fillText('VIDEO', 256, 190);
+        labelCtx2.fillText('HELLO', 256, 110);
+        labelCtx2.fillText('WORLD', 256, 160);
 
         const labelTexture2 = new THREE.CanvasTexture(labelCanvas2);
         const labelMesh2 = new THREE.Mesh(
@@ -1470,7 +1488,7 @@
         // Project title
         agvCtx.font = 'bold 52px Arial';
         agvCtx.fillText('REMOTE CONTROL', 512, 400);
-        agvCtx.fillText('AGV PROJECT', 512, 470);
+        agvCtx.fillText('HELLO WORLD', 512, 470);
 
         const agvTexture = new THREE.CanvasTexture(agvCanvas);
         const agvMesh = new THREE.Mesh(thumbnailGeometry.clone(), new THREE.MeshBasicMaterial({
@@ -1523,7 +1541,7 @@
         agvLabelCtx.fillStyle = '#ff6b35';
         agvLabelCtx.font = 'bold 32px Arial';
         agvLabelCtx.fillText('REMOTE CONTROL', 256, 90);
-        agvLabelCtx.fillText('AGV PROJECT', 256, 165);
+        agvLabelCtx.fillText('HELLO WORLD', 256, 140);
 
         const agvLabelTexture = new THREE.CanvasTexture(agvLabelCanvas);
         const agvLabelMesh = new THREE.Mesh(
@@ -1569,37 +1587,13 @@
         resumeCtx.fillRect(0, 0, 1024, 576);
 
         // Add document lines to make it look like a resume
-        resumeCtx.strokeStyle = '#333333';
-        resumeCtx.lineWidth = 2;
-        const lineSpacing = 40;
-        const marginLeft = 80;
-        const marginRight = 80;
-
-        // Title area
-        resumeCtx.fillStyle = '#10b981';
-        resumeCtx.fillRect(0, 0, 1024, 100);
+        // Black background with HELLO WORLD
+        resumeCtx.fillStyle = '#000000';
+        resumeCtx.fillRect(0, 0, 1024, 576);
         resumeCtx.fillStyle = '#ffffff';
-        resumeCtx.font = 'bold 48px Arial';
+        resumeCtx.font = 'bold 72px Arial';
         resumeCtx.textAlign = 'center';
-        resumeCtx.fillText('WYATT RESUME', 512, 65);
-
-        // Document lines
-        resumeCtx.fillStyle = '#333333';
-        for (let i = 0; i < 10; i++) {
-            const y = 140 + i * lineSpacing;
-            const lineWidth = 800 - Math.random() * 200;
-            resumeCtx.fillRect(marginLeft, y, lineWidth, 3);
-        }
-
-        // Section headers (bold lines)
-        resumeCtx.fillStyle = '#10b981';
-        resumeCtx.fillRect(marginLeft, 200, 200, 6);
-        resumeCtx.fillRect(marginLeft, 340, 180, 6);
-
-        // PDF icon in corner
-        resumeCtx.fillStyle = '#ef4444';
-        resumeCtx.font = 'bold 60px Arial';
-        resumeCtx.fillText('PDF', 900, 520);
+        resumeCtx.fillText('HELLO WORLD', 512, 288);
 
         const resumeTexture = new THREE.CanvasTexture(resumeCanvas);
         const thumbnailMesh3 = new THREE.Mesh(thumbnailGeometry.clone(), new THREE.MeshBasicMaterial({
@@ -1651,8 +1645,8 @@
         labelCtx3.shadowColor = '#10b981';
         labelCtx3.fillStyle = '#10b981';
         labelCtx3.font = 'bold 38px Arial';
-        labelCtx3.fillText("WYATT'S", 256, 100);
-        labelCtx3.fillText('RESUME', 256, 160);
+        labelCtx3.fillText('HELLO', 256, 110);
+        labelCtx3.fillText('WORLD', 256, 160);
 
         const labelTexture3 = new THREE.CanvasTexture(labelCanvas3);
         const labelMesh3 = new THREE.Mesh(
@@ -1802,8 +1796,8 @@
         labelCtx4.shadowColor = '#f97316';
         labelCtx4.fillStyle = '#f97316';
         labelCtx4.font = 'bold 38px Arial';
-        labelCtx4.fillText("WYATT'S", 256, 100);
-        labelCtx4.fillText('GITHUB', 256, 160);
+        labelCtx4.fillText('HELLO', 256, 110);
+        labelCtx4.fillText('WORLD', 256, 160);
 
         const labelTexture4 = new THREE.CanvasTexture(labelCanvas4);
         const labelMesh4 = new THREE.Mesh(
@@ -1858,9 +1852,9 @@
         bobProjectCtx.textBaseline = 'middle';
         bobProjectCtx.fillText('🤖', 512, 200);
         bobProjectCtx.font = 'bold 60px Arial';
-        bobProjectCtx.fillText('ROBOT PROJECT', 512, 340);
+        bobProjectCtx.fillText('HELLO WORLD', 512, 340);
         bobProjectCtx.font = 'bold 42px Arial';
-        bobProjectCtx.fillText('BOB CONTROL SYSTEM', 512, 410);
+        bobProjectCtx.fillText('HELLO WORLD', 512, 410);
         bobProjectCtx.font = '32px Arial';
         bobProjectCtx.fillStyle = '#67e8f9';
         bobProjectCtx.fillText('VIEW PROJECT', 512, 480);
@@ -1914,7 +1908,7 @@
         bobLabelCtx.shadowColor = '#06b6d4';
         bobLabelCtx.fillStyle = '#06b6d4';
         bobLabelCtx.font = 'bold 50px Arial';
-        bobLabelCtx.fillText('ROBOT', 256, 108);
+        bobLabelCtx.fillText('HELLO WORLD', 256, 128);
         bobLabelCtx.fillText('PROJECT', 256, 168);
 
         const bobLabelTexture = new THREE.CanvasTexture(bobLabelCanvas);
@@ -1977,7 +1971,7 @@
 
         // Title
         coverLetterCtx.font = 'bold 56px Arial';
-        coverLetterCtx.fillText('COVER', 512, 390);
+        coverLetterCtx.fillText('HELLO WORLD', 512, 390);
         coverLetterCtx.fillText('LETTER', 512, 460);
 
         const coverLetterTexture = new THREE.CanvasTexture(coverLetterCanvas);
@@ -2029,7 +2023,7 @@
         coverLabelCtx.shadowColor = '#e91e63';
         coverLabelCtx.fillStyle = '#e91e63';
         coverLabelCtx.font = 'bold 48px Arial';
-        coverLabelCtx.fillText('COVER', 256, 100);
+        coverLabelCtx.fillText('HELLO WORLD', 256, 128);
         coverLabelCtx.fillText('LETTER', 256, 165);
 
         const coverLabelTexture = new THREE.CanvasTexture(coverLabelCanvas);
