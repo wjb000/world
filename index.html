@@ -2853,46 +2853,126 @@
         function createOtherPlayer(peerId, color, position, rotation) {
             if (otherPlayers.has(peerId)) return;
 
+            console.log('Creating player:', peerId, 'with color:', color);
+
             const otherPlayer = new THREE.Group();
             otherPlayer.position.set(position.x, position.y, position.z);
             otherPlayer.rotation.y = rotation;
 
-            // Create simple cube player representation
-            const geometry = new THREE.BoxGeometry(1, 2, 1);
-            const material = new THREE.MeshStandardMaterial({
-                color: color,
-                emissive: color,
-                emissiveIntensity: 0.3
-            });
-            const mesh = new THREE.Mesh(geometry, material);
-            mesh.position.y = 1;
-            otherPlayer.add(mesh);
+            // Parse color properly (handle hex strings and THREE.Color)
+            let playerColor = color;
+            if (typeof color === 'string') {
+                // Ensure it's a valid hex color
+                if (!color.startsWith('#')) {
+                    playerColor = '#' + color.replace('0x', '');
+                }
+            }
 
-            // Add name tag
+            // Create humanoid player body (similar to main player)
+            const bodyGroup = new THREE.Group();
+
+            // Head
+            const headGeo = new THREE.SphereGeometry(0.3, 16, 16);
+            const headMat = new THREE.MeshStandardMaterial({
+                color: playerColor,
+                emissive: playerColor,
+                emissiveIntensity: 0.5,
+                metalness: 0.3,
+                roughness: 0.7
+            });
+            const head = new THREE.Mesh(headGeo, headMat);
+            head.position.y = 1.7;
+            bodyGroup.add(head);
+
+            // Body
+            const bodyGeo = new THREE.BoxGeometry(0.6, 0.8, 0.4);
+            const bodyMat = new THREE.MeshStandardMaterial({
+                color: playerColor,
+                emissive: playerColor,
+                emissiveIntensity: 0.4,
+                metalness: 0.3,
+                roughness: 0.7
+            });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 1.2;
+            bodyGroup.add(body);
+
+            // Arms
+            const armGeo = new THREE.BoxGeometry(0.2, 0.6, 0.2);
+            const leftArm = new THREE.Mesh(armGeo, bodyMat.clone());
+            leftArm.position.set(-0.4, 1.2, 0);
+            bodyGroup.add(leftArm);
+
+            const rightArm = new THREE.Mesh(armGeo, bodyMat.clone());
+            rightArm.position.set(0.4, 1.2, 0);
+            bodyGroup.add(rightArm);
+
+            // Legs
+            const legGeo = new THREE.BoxGeometry(0.25, 0.7, 0.25);
+            const leftLeg = new THREE.Mesh(legGeo, bodyMat.clone());
+            leftLeg.position.set(-0.15, 0.5, 0);
+            bodyGroup.add(leftLeg);
+
+            const rightLeg = new THREE.Mesh(legGeo, bodyMat.clone());
+            rightLeg.position.set(0.15, 0.5, 0);
+            bodyGroup.add(rightLeg);
+
+            // Add glow effect
+            const glowGeo = new THREE.SphereGeometry(0.8, 16, 16);
+            const glowMat = new THREE.MeshBasicMaterial({
+                color: playerColor,
+                transparent: true,
+                opacity: 0.2,
+                blending: THREE.AdditiveBlending
+            });
+            const glow = new THREE.Mesh(glowGeo, glowMat);
+            glow.position.y = 1.2;
+            bodyGroup.add(glow);
+
+            otherPlayer.add(bodyGroup);
+
+            // Add name tag with wallet address
             const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 64;
+            canvas.width = 512;
+            canvas.height = 128;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = 'rgba(0,0,0,0.7)';
-            ctx.fillRect(0, 0, 256, 64);
-            ctx.fillStyle = color;
-            ctx.font = 'bold 24px Arial';
+
+            // Background
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(0, 0, 512, 128);
+
+            // Border
+            ctx.strokeStyle = playerColor;
+            ctx.lineWidth = 4;
+            ctx.strokeRect(2, 2, 508, 124);
+
+            // Text
+            ctx.fillStyle = playerColor;
+            ctx.font = 'bold 32px monospace';
             ctx.textAlign = 'center';
-            ctx.fillText('Player', 128, 40);
+            ctx.textBaseline = 'middle';
+            ctx.fillText(peerId.slice(0, 6) + '...' + peerId.slice(-4), 256, 64);
 
             const texture = new THREE.CanvasTexture(canvas);
             const labelMaterial = new THREE.MeshBasicMaterial({
                 map: texture,
-                transparent: true
+                transparent: true,
+                side: THREE.DoubleSide
             });
-            const label = new THREE.Mesh(new THREE.PlaneGeometry(2, 0.5), labelMaterial);
-            label.position.y = 3;
+            const label = new THREE.Mesh(new THREE.PlaneGeometry(3, 0.75), labelMaterial);
+            label.position.y = 2.8;
             otherPlayer.add(label);
 
             scene.add(otherPlayer);
-            otherPlayers.set(peerId, { group: otherPlayer, mesh: mesh, label: label });
+            otherPlayers.set(peerId, {
+                group: otherPlayer,
+                mesh: body,
+                bodyGroup: bodyGroup,
+                label: label
+            });
 
             updatePlayerCount();
+            console.log('Player created successfully');
         }
 
         function updateOtherPlayer(peerId, position, rotation) {
@@ -2906,9 +2986,17 @@
 
         function updateOtherPlayerColor(peerId, color) {
             const player = otherPlayers.get(peerId);
-            if (player) {
-                player.mesh.material.color.setStyle(color);
-                player.mesh.material.emissive.setStyle(color);
+            if (player && player.bodyGroup) {
+                // Update all body parts with new color
+                player.bodyGroup.traverse((child) => {
+                    if (child.isMesh && child.material) {
+                        child.material.color.setStyle(color);
+                        if (child.material.emissive) {
+                            child.material.emissive.setStyle(color);
+                        }
+                    }
+                });
+                console.log('Updated player color to:', color);
             }
         }
 
