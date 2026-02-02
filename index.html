@@ -190,6 +190,7 @@
             display: flex;
             justify-content: space-between;
             margin-top: 15px;
+            margin-bottom: 15px;
             font-size: 14px;
             color: #aaa;
         }
@@ -197,6 +198,11 @@
         .player-count {
             color: var(--secondary);
             font-weight: bold;
+        }
+
+        .server-card .btn {
+            width: 100%;
+            margin-top: 10px;
         }
 
         /* Game Canvas */
@@ -927,7 +933,8 @@
             username: null,
             playerColor: 0x00ccff,
             clock: null,
-            isAutoReconnecting: false
+            isAutoReconnecting: false,
+            serverRefreshInterval: null
         };
 
         // Auto-reconnect on page load
@@ -1049,6 +1056,15 @@
             initPeer();
             loadServers();
 
+            // Set up periodic refresh for server list (every 5 seconds)
+            if (!GameState.serverRefreshInterval) {
+                GameState.serverRefreshInterval = setInterval(() => {
+                    if (document.getElementById('serverBrowser').classList.contains('visible')) {
+                        loadServers();
+                    }
+                }, 5000);
+            }
+
             console.log('Successfully navigated to server browser');
         }
 
@@ -1056,37 +1072,56 @@
         async function connectPhantom() {
             try {
                 const { solana } = window;
+
                 if (!solana?.isPhantom) {
-                    alert('Please install Phantom wallet!');
+                    alert('Please install Phantom wallet!\n\nVisit: https://phantom.app/');
                     window.open('https://phantom.app/', '_blank');
                     return;
                 }
 
-                const response = await solana.connect();
-                GameState.wallet = solana;
-                GameState.walletAddress = response.publicKey.toString();
-                GameState.walletType = 'phantom';
+                // Show connecting state
+                console.log('Connecting to Phantom...');
 
-                // Fetch balance but don't let it block the flow
-                try {
-                    await fetchPhantomBalance(response.publicKey);
-                } catch (error) {
-                    console.warn('Balance fetch failed, continuing with 0 balance:', error);
-                    GameState.balance = 0;
+                // Request connection
+                const response = await solana.connect();
+
+                if (!response?.publicKey) {
+                    throw new Error('Failed to get public key from Phantom');
                 }
 
-                // Save to localStorage
-                localStorage.setItem('walletType', GameState.walletType);
-                localStorage.setItem('walletAddress', GameState.walletAddress);
+                const address = response.publicKey.toString();
+                console.log('Phantom connected:', address);
 
-                // Continue flow regardless of balance fetch result
-                onWalletConnected();
+                GameState.wallet = solana;
+                GameState.walletAddress = address;
+                GameState.walletType = 'phantom';
+                GameState.username = `${address.slice(0, 6)}...${address.slice(-4)}`;
+                GameState.playerColor = 0x00ccff;
+
+                // Try to fetch balance (non-blocking)
+                fetchPhantomBalance(response.publicKey).catch(err => {
+                    console.warn('Balance fetch failed:', err);
+                    GameState.balance = 0;
+                });
+
+                // Save to localStorage
+                localStorage.setItem('walletType', 'phantom');
+                localStorage.setItem('walletAddress', address);
+                localStorage.setItem('username', GameState.username);
+                localStorage.setItem('color', GameState.playerColor.toString());
+
+                // Continue to game
+                skipToServerBrowser();
+
             } catch (error) {
                 console.error('Phantom connection failed:', error);
-                if (error.message.includes('User rejected')) {
-                    alert('Connection rejected. Please approve the connection in Phantom.');
+
+                if (error.code === 4001) {
+                    alert('Connection rejected. Please approve the connection in Phantom wallet.');
+                } else if (error.message?.includes('User rejected')) {
+                    alert('Connection cancelled.');
                 } else {
-                    alert('Failed to connect Phantom wallet. Please try again.');
+                    alert('Failed to connect Phantom wallet. Please try again.\n\nError: ' + error.message);
                 }
             }
         }
@@ -1129,50 +1164,86 @@
         async function connectMetaMask() {
             try {
                 if (!window.ethereum) {
-                    alert('Please install MetaMask!');
+                    alert('Please install MetaMask!\n\nVisit: https://metamask.io/');
                     window.open('https://metamask.io/', '_blank');
                     return;
                 }
 
-                const provider = new ethers.providers.Web3Provider(window.ethereum);
-                await provider.send('eth_requestAccounts', []);
-                const signer = provider.getSigner();
-                const address = await signer.getAddress();
+                console.log('Connecting to MetaMask...');
+
+                // Request accounts
+                const accounts = await window.ethereum.request({
+                    method: 'eth_requestAccounts'
+                });
+
+                if (!accounts || accounts.length === 0) {
+                    throw new Error('No accounts found in MetaMask');
+                }
+
+                const address = accounts[0];
+                console.log('MetaMask connected:', address);
 
                 GameState.wallet = window.ethereum;
                 GameState.walletAddress = address;
                 GameState.walletType = 'metamask';
+                GameState.username = `${address.slice(0, 6)}...${address.slice(-4)}`;
+                GameState.playerColor = 0x00ccff;
 
-                // Get balance with error handling
-                try {
-                    const balance = await provider.getBalance(address);
+                // Try to fetch balance (non-blocking)
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                provider.getBalance(address).then(balance => {
                     GameState.balance = parseFloat(ethers.utils.formatEther(balance));
-                    console.log('Balance fetched successfully');
-                } catch (balanceError) {
-                    console.warn('Failed to fetch balance:', balanceError);
+                    console.log('Balance fetched:', GameState.balance);
+                }).catch(err => {
+                    console.warn('Balance fetch failed:', err);
                     GameState.balance = 0;
-                }
+                });
 
                 // Save to localStorage
-                localStorage.setItem('walletType', GameState.walletType);
-                localStorage.setItem('walletAddress', GameState.walletAddress);
+                localStorage.setItem('walletType', 'metamask');
+                localStorage.setItem('walletAddress', address);
+                localStorage.setItem('username', GameState.username);
+                localStorage.setItem('color', GameState.playerColor.toString());
 
-                onWalletConnected();
+                // Continue to game
+                skipToServerBrowser();
+
             } catch (error) {
                 console.error('MetaMask connection failed:', error);
+
                 if (error.code === 4001) {
                     alert('Connection rejected. Please approve the connection in MetaMask.');
+                } else if (error.code === -32002) {
+                    alert('MetaMask connection request pending. Please check your MetaMask extension.');
                 } else {
-                    alert('Failed to connect MetaMask. Please try again.');
+                    alert('Failed to connect MetaMask. Please try again.\n\nError: ' + error.message);
                 }
             }
         }
 
         function disconnectWallet() {
+            // Show loading state
+            const btn = document.getElementById('disconnectWalletBtn');
+            if (btn) btn.textContent = 'Disconnecting...';
+
+            // Clear all data
             localStorage.removeItem('walletType');
             localStorage.removeItem('walletAddress');
             localStorage.removeItem('username');
             localStorage.removeItem('color');
+
+            // Clear game state
+            GameState.wallet = null;
+            GameState.walletAddress = null;
+            GameState.walletType = null;
+            GameState.username = null;
+
+            // Disconnect from server if in one
+            if (GameState.currentServer) {
+                leaveServer();
+            }
+
+            // Reload page
             location.reload();
         }
 
@@ -1417,20 +1488,13 @@
         // Server Management
         function cleanupEmptyServers() {
             const servers = JSON.parse(localStorage.getItem('cryptoworld_servers') || '[]');
-            const now = Date.now();
 
-            // Remove servers with 0 players that are older than 5 minutes
-            const activeServers = servers.filter(server => {
-                if ((server.playerCount === 0 || server.players === 0)) {
-                    const age = now - (server.created || 0);
-                    return age < 300000; // Keep for 5 minutes even if empty
-                }
-                return true; // Keep servers with players
-            });
+            // Remove any server with 0 players immediately
+            const activeServers = servers.filter(server => (server.playerCount || 0) > 0);
 
             if (activeServers.length !== servers.length) {
-                console.log(`Cleaned up ${servers.length - activeServers.length} empty servers`);
                 localStorage.setItem('cryptoworld_servers', JSON.stringify(activeServers));
+                console.log(`Cleaned up servers. Active: ${activeServers.length}, Removed: ${servers.length - activeServers.length}`);
             }
         }
 
@@ -1441,27 +1505,41 @@
             // In production, this would fetch from a decentralized registry
             const servers = JSON.parse(localStorage.getItem('cryptoworld_servers') || '[]');
 
+            // Filter to only show servers with players
+            const activeServers = servers.filter(s => (s.playerCount || 0) > 0);
+
             const serverList = document.getElementById('serverList');
             serverList.innerHTML = '';
 
-            if (servers.length === 0) {
-                serverList.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No servers available. Create one!</div>';
+            if (activeServers.length === 0) {
+                serverList.innerHTML = '<p style="text-align: center; color: #aaa; padding: 40px;">No active servers. Create one to start playing!</p>';
                 return;
             }
 
-            servers.forEach(server => {
+            activeServers.forEach(server => {
                 const card = document.createElement('div');
                 card.className = 'server-card';
                 card.innerHTML = `
                     <h3>${server.name}</h3>
                     <div class="server-info">
-                        <span class="player-count">👥 ${server.players || 0} players</span>
-                        <span>🌍 ${server.id.slice(0, 8)}...</span>
+                        <span class="player-count">${server.playerCount || 0} players</span>
+                        <span>Created by: ${server.owner ? server.owner.slice(0, 6) + '...' + server.owner.slice(-4) : 'Unknown'}</span>
                     </div>
+                    <button class="btn" onclick="joinServerById('${server.id}')">Join Server</button>
                 `;
-                card.onclick = () => joinServer(server);
                 serverList.appendChild(card);
             });
+        }
+
+        function joinServerById(serverId) {
+            const servers = JSON.parse(localStorage.getItem('cryptoworld_servers')) || [];
+            const server = servers.find(s => s.id === serverId);
+            if (server) {
+                joinServer(server);
+            } else {
+                alert('Server not found!');
+                loadServers(); // Refresh list
+            }
         }
 
         function createServer() {
@@ -1484,37 +1562,64 @@
             servers.push(server);
             localStorage.setItem('cryptoworld_servers', JSON.stringify(servers));
 
+            // Immediately refresh the server list to show the new server
+            loadServers();
+
             document.getElementById('createServerModal').classList.remove('visible');
             joinServer(server);
         }
 
         function joinServer(server) {
-            console.log('Attempting to join server:', server);
-
-            // Validate server object
             if (!server || !server.id) {
                 console.error('Invalid server object:', server);
-                alert('Cannot join server: Invalid server data');
+                alert('Error: Invalid server data');
                 return;
             }
+
+            console.log('Attempting to join server:', server.name, 'ID:', server.id);
 
             // Validate peer is initialized
             if (!GameState.peer || !GameState.peer.id) {
-                console.error('Peer not initialized. Cannot join server.');
-                alert('Connection not ready. Please wait and try again.');
+                console.error('Peer not initialized');
+                alert('Connection error. Please refresh and try again.');
                 return;
             }
 
-            console.log(`Joining server "${server.name}" (ID: ${server.id})`);
-            console.log('Your peer ID:', GameState.peer.id);
+            // Update game state
+            GameState.currentServer = server.id;
 
-            GameState.currentServer = server;
+            // Update player count - only increment if joining a different server
+            if (server.id !== GameState.peer.id) {
+                const servers = JSON.parse(localStorage.getItem('cryptoworld_servers')) || [];
+                const serverIndex = servers.findIndex(s => s.id === server.id);
+                if (serverIndex !== -1) {
+                    servers[serverIndex].playerCount = (servers[serverIndex].playerCount || 0) + 1;
+                    localStorage.setItem('cryptoworld_servers', JSON.stringify(servers));
+                    console.log('Updated server player count to:', servers[serverIndex].playerCount);
+                }
+            }
+
+            // Hide server browser, show game
             document.getElementById('serverBrowser').classList.remove('visible');
             document.getElementById('gameCanvas').classList.add('active');
 
+            // Initialize game
+            if (!GameState.scene) {
+                try {
+                    initGame();
+                } catch (error) {
+                    console.error('Failed to initialize game:', error);
+                    alert('Failed to start game. Please try again.');
+                    // Return to server browser
+                    document.getElementById('gameCanvas').classList.remove('active');
+                    document.getElementById('serverBrowser').classList.add('visible');
+                    return;
+                }
+            }
+
             // Connect to server host if not the host
             if (server.id !== GameState.peer.id) {
-                console.log('You are a client. Connecting to server host:', server.id);
+                console.log('Connecting to server host:', server.id);
 
                 try {
                     const conn = GameState.peer.connect(server.id, {
@@ -1523,7 +1628,7 @@
                     });
 
                     if (!conn) {
-                        throw new Error('Failed to create connection');
+                        throw new Error('Failed to create peer connection');
                     }
 
                     // Handle connection errors
@@ -1554,27 +1659,18 @@
                             }
                         });
                     });
+
+                    console.log('Connection initiated to:', server.id);
                 } catch (error) {
                     console.error('Failed to connect to server:', error);
-                    alert('Failed to connect to server. Please try again.');
-                    // Return to server browser
-                    document.getElementById('gameCanvas').classList.remove('active');
-                    document.getElementById('serverBrowser').classList.add('visible');
-                    return;
+                    alert('Failed to join server. Please try again.');
+                    leaveServer();
                 }
             } else {
                 console.log('You are the server host');
             }
 
-            try {
-                initGame();
-            } catch (error) {
-                console.error('Failed to initialize game:', error);
-                alert('Failed to start game. Please try again.');
-                // Return to server browser
-                document.getElementById('gameCanvas').classList.remove('active');
-                document.getElementById('serverBrowser').classList.add('visible');
-            }
+            addChatMessage('System', `Joined server: ${server.name}`, true);
         }
 
         // Game Init
@@ -2497,9 +2593,45 @@
             document.getElementById('dropLinkModal').classList.remove('visible');
         };
 
-        document.getElementById('leaveServerBtn').onclick = () => {
-            location.reload();
-        };
+        document.getElementById('leaveServerBtn').onclick = leaveServer;
+
+        function leaveServer() {
+            // Update server player count
+            if (GameState.currentServer) {
+                const servers = JSON.parse(localStorage.getItem('cryptoworld_servers')) || [];
+                const serverIndex = servers.findIndex(s => s.id === GameState.currentServer);
+
+                if (serverIndex !== -1) {
+                    servers[serverIndex].playerCount = (servers[serverIndex].playerCount || 1) - 1;
+
+                    // Remove server if no players left
+                    if (servers[serverIndex].playerCount <= 0) {
+                        servers.splice(serverIndex, 1);
+                        console.log('Server removed - no players remaining');
+                    }
+
+                    localStorage.setItem('cryptoworld_servers', JSON.stringify(servers));
+                }
+            }
+
+            // Disconnect all peers
+            GameState.connections.forEach((conn, peerId) => {
+                if (conn.open) {
+                    conn.close();
+                }
+            });
+            GameState.connections.clear();
+
+            // Clear game state
+            GameState.currentServer = null;
+
+            // Return to server browser
+            document.getElementById('gameCanvas').classList.remove('active');
+            document.getElementById('serverBrowser').classList.add('visible');
+
+            // Refresh server list
+            loadServers();
+        }
 
         document.getElementById('toggleVoice').onclick = () => {
             GameState.voiceEnabled = !GameState.voiceEnabled;
