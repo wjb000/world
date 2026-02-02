@@ -108,6 +108,42 @@ vercel --prod
 
 ## 🔧 Configuration
 
+### RPC Endpoint Setup (Recommended for Production)
+
+The game uses Solana RPC endpoints for balance fetching. For better performance and reliability, set up a dedicated RPC:
+
+#### Free RPC Providers:
+
+**Option 1: Helius (Recommended)**
+1. Visit [https://helius.dev](https://helius.dev)
+2. Sign up for free account (100k requests/day)
+3. Create a new project
+4. Copy your RPC endpoint
+5. Update `CONFIG.SOLANA_RPC_PRIMARY` in `index.html` (line ~1023)
+
+**Option 2: QuickNode**
+1. Visit [https://quicknode.com](https://quicknode.com)
+2. Sign up for free tier (100k requests/day)
+3. Create Solana Mainnet endpoint
+4. Copy your endpoint URL
+5. Update `CONFIG.SOLANA_RPC_PRIMARY` in `index.html` (line ~1023)
+
+**Option 3: Alchemy**
+1. Visit [https://alchemy.com](https://alchemy.com)
+2. Sign up for free tier (300M compute units/month)
+3. Create Solana Mainnet app
+4. Copy your HTTPS endpoint
+5. Update `CONFIG.SOLANA_RPC_PRIMARY` in `index.html` (line ~1023)
+
+#### Configuration Location:
+```javascript
+// In index.html around line 1023
+const CONFIG = {
+    SOLANA_RPC_PRIMARY: 'YOUR_RPC_ENDPOINT_HERE',
+    SOLANA_RPC_FALLBACK: 'https://rpc.ankr.com/solana'
+};
+```
+
 ### Wallet Networks
 
 **Solana (Phantom)**:

@@ -1018,6 +1018,20 @@
             }
         };
 
+        // Configuration
+        const CONFIG = {
+            // Solana RPC Configuration
+            // To use your own dedicated RPC (recommended for production):
+            // 1. Sign up for a free RPC provider:
+            //    - Helius: https://helius.dev (100k requests/day free)
+            //    - QuickNode: https://quicknode.com (100k requests/day free)
+            //    - Alchemy: https://alchemy.com (300M compute units/month free)
+            // 2. Replace SOLANA_RPC_PRIMARY with your endpoint
+            // 3. Optionally add your custom endpoint as SOLANA_RPC_FALLBACK
+            SOLANA_RPC_PRIMARY: 'https://api.mainnet-beta.solana.com',
+            SOLANA_RPC_FALLBACK: 'https://rpc.ankr.com/solana'
+        };
+
         // Game State
         const GameState = {
             wallet: null,
@@ -1288,10 +1302,8 @@
             document.getElementById('hudBalance').textContent = 'Balance: Fetching...';
 
             const rpcEndpoints = [
-                'https://solana-api.projectserum.com',
-                'https://rpc.ankr.com/solana',
-                'https://solana-mainnet.rpc.extrnode.com',
-                'https://api.mainnet-beta.solana.com' // Try this last
+                CONFIG.SOLANA_RPC_PRIMARY,
+                CONFIG.SOLANA_RPC_FALLBACK
             ];
 
             let balance = 0;
@@ -1300,7 +1312,7 @@
             for (const endpoint of rpcEndpoints) {
                 try {
                     console.log(`Trying Solana RPC: ${endpoint}`);
-                    const connection = new solanaWeb3.Connection(endpoint);
+                    const connection = new solanaWeb3.Connection(endpoint, 'confirmed');
                     balance = await connection.getBalance(publicKey);
                     GameState.balance = balance / solanaWeb3.LAMPORTS_PER_SOL;
                     console.log(`Balance fetched successfully from ${endpoint}: ${GameState.balance} SOL`);
