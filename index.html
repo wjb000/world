@@ -1070,6 +1070,15 @@
                 console.log('Initializing LoginScene...');
                 const canvas = document.getElementById('loginCanvas');
 
+                // Debug logging for canvas visibility
+                console.log('LoginCanvas element found:', !!canvas);
+                if (canvas) {
+                    const styles = window.getComputedStyle(canvas);
+                    console.log('LoginCanvas display:', styles.display);
+                    console.log('LoginCanvas z-index:', styles.zIndex);
+                    console.log('LoginCanvas visibility:', styles.visibility);
+                }
+
                 // Scene setup
                 this.scene = new THREE.Scene();
                 this.scene.background = new THREE.Color(0x0a0e14);
@@ -1561,12 +1570,19 @@
                 GameState.walletAddress = response.publicKey.toString();
                 GameState.walletType = 'phantom';
 
-                await fetchPhantomBalance(response.publicKey);
+                // Fetch balance but don't let it block the flow
+                try {
+                    await fetchPhantomBalance(response.publicKey);
+                } catch (error) {
+                    console.warn('Balance fetch failed, continuing with 0 balance:', error);
+                    GameState.balance = 0;
+                }
 
                 // Save to localStorage
                 localStorage.setItem('walletType', GameState.walletType);
                 localStorage.setItem('walletAddress', GameState.walletAddress);
 
+                // Continue flow regardless of balance fetch result
                 onWalletConnected();
             } catch (error) {
                 console.error('Phantom connection failed:', error);
@@ -1583,26 +1599,33 @@
             document.getElementById('hudBalance').textContent = 'Balance: Fetching...';
 
             const rpcEndpoints = [
-                'https://api.mainnet-beta.solana.com',
                 'https://solana-api.projectserum.com',
-                'https://rpc.ankr.com/solana'
+                'https://rpc.ankr.com/solana',
+                'https://solana-mainnet.rpc.extrnode.com',
+                'https://api.mainnet-beta.solana.com' // Try this last
             ];
 
             let balance = 0;
+            let success = false;
+
             for (const endpoint of rpcEndpoints) {
                 try {
+                    console.log(`Trying Solana RPC: ${endpoint}`);
                     const connection = new solanaWeb3.Connection(endpoint);
                     balance = await connection.getBalance(publicKey);
                     GameState.balance = balance / solanaWeb3.LAMPORTS_PER_SOL;
-                    console.log('Balance fetched successfully from:', endpoint);
+                    console.log(`Balance fetched successfully from ${endpoint}: ${GameState.balance} SOL`);
+                    success = true;
                     break;
                 } catch (balanceError) {
                     console.warn(`Failed to fetch balance from ${endpoint}:`, balanceError);
-                    if (endpoint === rpcEndpoints[rpcEndpoints.length - 1]) {
-                        console.warn('All RPC endpoints failed, showing 0 balance');
-                        GameState.balance = 0;
-                    }
+                    // Continue to next endpoint
                 }
+            }
+
+            if (!success) {
+                console.warn('All RPC endpoints failed, setting balance to 0');
+                GameState.balance = 0;
             }
         }
 
@@ -1862,6 +1885,7 @@
 
             switch (data.type) {
                 case 'init':
+                    console.log(`Received init from peer: ${peerId.slice(0, 8)}... (${data.username})`);
                     createRemotePlayer(peerId, data.wallet, data.username, data.color, data.position, data.rotation);
                     // Send our state back
                     conn = GameState.connections.get(peerId);
@@ -1881,6 +1905,7 @@
                     }
                     break;
                 case 'position':
+                    console.log(`Received position update from peer: ${peerId.slice(0, 8)}...`);
                     updateRemotePlayer(peerId, data.position, data.rotation);
                     break;
                 case 'username':
@@ -1890,6 +1915,7 @@
                     updateRemotePlayerColor(peerId, data.color);
                     break;
                 case 'chat':
+                    console.log(`Received chat from peer ${peerId.slice(0, 8)}...: "${data.message}"`);
                     addChatMessage(data.sender, data.message);
                     break;
                 case 'item':
@@ -2333,6 +2359,7 @@
         }
 
         function createRemotePlayer(peerId, wallet, username, color, position, rotation) {
+            console.log(`Creating remote player: ${username || wallet.slice(0, 8)} at position (${position.x.toFixed(1)}, ${position.y.toFixed(1)}, ${position.z.toFixed(1)})`);
             const playerGroup = new THREE.Group();
             playerGroup.position.set(position.x, position.y, position.z);
             playerGroup.rotation.y = rotation || 0;
@@ -2402,6 +2429,9 @@
                     while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
                     player.group.rotation.y += angleDiff * 0.3;
                 }
+                console.log(`Updating remote player position: ${peerId.slice(0, 8)}... to (${position.x.toFixed(1)}, ${position.y.toFixed(1)}, ${position.z.toFixed(1)})`);
+            } else {
+                console.warn(`Tried to update unknown remote player: ${peerId.slice(0, 8)}...`);
             }
         }
 
@@ -2638,9 +2668,16 @@
                     },
                     rotation: GameState.playerMesh.rotation.y
                 };
+                let sentCount = 0;
                 GameState.connections.forEach(conn => {
-                    if (conn.open) conn.send(posData);
+                    if (conn.open) {
+                        conn.send(posData);
+                        sentCount++;
+                    }
                 });
+                if (sentCount > 0) {
+                    console.log(`Broadcasting position to ${sentCount} peer(s)`);
+                }
                 GameState.lastBroadcast = now;
             }
 
@@ -2676,9 +2713,14 @@
                 message: message
             };
 
+            let sentCount = 0;
             GameState.connections.forEach(conn => {
-                if (conn.open) conn.send(chatData);
+                if (conn.open) {
+                    conn.send(chatData);
+                    sentCount++;
+                }
             });
+            console.log(`Sent chat message to ${sentCount} peer(s): "${message}"`);
 
             input.value = '';
         }
