@@ -1047,7 +1047,8 @@
             particles: null,
             username: null,
             playerColor: 0x00ccff,
-            clock: null
+            clock: null,
+            isAutoReconnecting: false
         };
 
         // Login Scene - Animated Background for Wallet Connect Screen
@@ -1425,14 +1426,17 @@
 
             if (savedWalletType && savedWalletAddress) {
                 console.log('Found saved wallet, attempting auto-reconnect...');
+                GameState.isAutoReconnecting = true; // Set flag to prevent modals from showing
                 try {
                     if (savedWalletType === 'phantom') {
                         await autoConnectPhantom();
                     } else if (savedWalletType === 'metamask') {
                         await autoConnectMetaMask();
                     }
+                    GameState.isAutoReconnecting = false; // Reset flag after successful reconnect
                 } catch (error) {
                     console.warn('Auto-reconnect failed:', error);
+                    GameState.isAutoReconnecting = false; // Reset flag after failed reconnect
                     // Clear saved data and show wallet screen
                     localStorage.removeItem('walletType');
                     localStorage.removeItem('walletAddress');
@@ -1461,15 +1465,8 @@
 
                 await fetchPhantomBalance(response.publicKey);
 
-                // Pause login scene and skip wallet screen, go directly to server browser
-                LoginScene.pause();
-                document.getElementById('walletScreen').classList.add('hidden');
-                document.getElementById('serverBrowser').classList.add('visible');
-                document.getElementById('connectedWallet').textContent =
-                    `Connected: ${GameState.username} (${GameState.walletType})`;
-                updateHUD();
-                initPeer();
-                loadServers();
+                // Skip all modals and go directly to server browser
+                skipToServerBrowser();
             } catch (error) {
                 console.warn('Auto-connect phantom failed:', error);
                 throw error;
@@ -1500,19 +1497,53 @@
                     GameState.balance = 0;
                 }
 
-                // Pause login scene and skip wallet screen, go directly to server browser
-                LoginScene.pause();
-                document.getElementById('walletScreen').classList.add('hidden');
-                document.getElementById('serverBrowser').classList.add('visible');
-                document.getElementById('connectedWallet').textContent =
-                    `Connected: ${GameState.username} (${GameState.walletType})`;
-                updateHUD();
-                initPeer();
-                loadServers();
+                // Skip all modals and go directly to server browser
+                skipToServerBrowser();
             } catch (error) {
                 console.warn('Auto-connect MetaMask failed:', error);
                 throw error;
             }
+        }
+
+        // Skip all modals and go directly to server browser (used during auto-reconnect)
+        function skipToServerBrowser() {
+            console.log('Skipping to server browser after auto-reconnect');
+
+            // Hide all screens/modals aggressively using both classes and direct styles
+            const walletScreen = document.getElementById('walletScreen');
+            const usernameModal = document.getElementById('usernameModal');
+            const colorPickerModal = document.getElementById('colorPickerModal');
+            const serverBrowser = document.getElementById('serverBrowser');
+
+            // Hide wallet screen
+            walletScreen.classList.add('hidden');
+            walletScreen.style.display = 'none';
+
+            // Hide username modal
+            usernameModal.classList.remove('visible');
+            usernameModal.style.display = 'none';
+
+            // Hide color picker modal
+            colorPickerModal.classList.remove('visible');
+            colorPickerModal.style.display = 'none';
+
+            // Show server browser
+            serverBrowser.classList.add('visible');
+            serverBrowser.style.display = 'block';
+
+            // Update UI
+            document.getElementById('connectedWallet').textContent =
+                `Connected: ${GameState.username} (${GameState.walletType})`;
+
+            // Pause login scene
+            LoginScene.pause();
+
+            // Initialize game systems
+            updateHUD();
+            initPeer();
+            loadServers();
+
+            console.log('Successfully skipped to server browser');
         }
 
         // Wallet Connection
@@ -1642,6 +1673,12 @@
         }
 
         function showUsernameModal() {
+            // Skip showing modal during auto-reconnect
+            if (GameState.isAutoReconnecting) {
+                console.log('Skipping username modal during auto-reconnect');
+                return;
+            }
+
             if (!GameState.walletAddress) {
                 console.error('showUsernameModal called but walletAddress is null - preventing modal from showing');
                 ensureCorrectUIState(); // Force correct UI state
@@ -1677,6 +1714,12 @@
         }
 
         function showColorPicker() {
+            // Skip showing modal during auto-reconnect
+            if (GameState.isAutoReconnecting) {
+                console.log('Skipping color picker modal during auto-reconnect');
+                return;
+            }
+
             document.getElementById('colorPickerModal').classList.add('visible');
             // Load saved color if exists
             const savedColor = localStorage.getItem('color');
@@ -3111,6 +3154,12 @@
 
         // Ensure correct initial UI state
         function ensureCorrectUIState() {
+            // Skip UI reset during auto-reconnect
+            if (GameState.isAutoReconnecting) {
+                console.log('Skipping UI reset during auto-reconnect');
+                return;
+            }
+
             // If no wallet is connected, ensure wallet screen is showing and all modals are hidden
             if (!GameState.walletAddress) {
                 // Aggressively reset UI using both classes and direct styles
