@@ -1237,6 +1237,11 @@
         }
 
         function onWalletConnected() {
+            if (!GameState.walletAddress) {
+                console.error('onWalletConnected called but walletAddress is null');
+                alert('Wallet connection failed. Please try again.');
+                return;
+            }
             document.getElementById('walletScreen').classList.add('hidden');
 
             // Show username modal
@@ -1244,6 +1249,10 @@
         }
 
         function showUsernameModal() {
+            if (!GameState.walletAddress) {
+                console.error('showUsernameModal called but walletAddress is null');
+                return;
+            }
             const modal = document.getElementById('usernameModal');
             modal.classList.add('visible');
 
@@ -1253,6 +1262,10 @@
         }
 
         function confirmUsername() {
+            if (!GameState.walletAddress) {
+                console.error('confirmUsername called but walletAddress is null');
+                return;
+            }
             const input = document.getElementById('usernameInput').value.trim();
             GameState.username = input || `${GameState.walletAddress.slice(0, 4)}...${GameState.walletAddress.slice(-2)}`;
 
@@ -1289,6 +1302,10 @@
         }
 
         function updateHUD() {
+            if (!GameState.walletAddress) {
+                console.error('updateHUD called but walletAddress is null');
+                return;
+            }
             document.getElementById('hudWallet').textContent =
                 `${GameState.walletAddress.slice(0, 8)}...${GameState.walletAddress.slice(-6)}`;
             document.getElementById('hudBalance').textContent =
