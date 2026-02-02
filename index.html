@@ -798,12 +798,21 @@
             style="position: relative; margin-bottom: 40px; border-radius: 16px; overflow: hidden; background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(8,145,178,0.1)); padding: 4px; box-shadow: 0 0 40px rgba(6,182,212,0.6), inset 0 0 20px rgba(6,182,212,0.1);">
             <div style="background: #000; border-radius: 12px; overflow: hidden;">
                 <div style="padding:75% 0 0 0;position:relative;">
+                    <div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, rgba(6,182,212,0.2), rgba(8,145,178,0.2));">
+                        <div style="text-align:center;color:#06b6d4;">
+                            <div style="font-size:48px;margin-bottom:20px;">🤖</div>
+                            <div style="font-size:24px;font-weight:bold;">BOB Robot Project</div>
+                            <div style="font-size:16px;margin-top:10px;opacity:0.8;">Interactive Demo Coming Soon</div>
+                        </div>
+                    </div>
+                    <!-- Vimeo video disabled due to privacy settings
                     <iframe
                         src="https://player.vimeo.com/video/1160996063?autoplay=1&loop=1&autopause=0&muted=1&background=1&quality=1080p"
                         frameborder="0"
                         allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
                         referrerpolicy="strict-origin-when-cross-origin"
                         style="position:absolute;top:0;left:0;width:100%;height:100%;" title="Robot Demo"></iframe>
+                    -->
                 </div>
             </div>
             <div
@@ -840,14 +849,16 @@
         <div style="margin-bottom: 30px;">
             <h3 style="font-size: 32px; color: #a855f7; margin-bottom: 20px;">Hardware Photos</h3>
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
-                <img src="assets/IMG_5655 2.jpg"
-                    style="width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(168,85,247,0.3);">
-                <img src="assets/IMG_5656 2.jpg"
-                    style="width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(168,85,247,0.3);">
-                <img src="assets/IMG_5659 2.jpg"
-                    style="width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(168,85,247,0.3);">
-                <img src="assets/IMG_5660 2.jpg"
-                    style="width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(168,85,247,0.3);">
+                <div style="width: 100%; aspect-ratio: 1; border-radius: 8px; box-shadow: 0 0 20px rgba(168,85,247,0.3); background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(139,92,246,0.2)); display:flex; align-items:center; justify-content:center; color:#a855f7; font-size:48px;">📷</div>
+                <div style="width: 100%; aspect-ratio: 1; border-radius: 8px; box-shadow: 0 0 20px rgba(168,85,247,0.3); background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(139,92,246,0.2)); display:flex; align-items:center; justify-content:center; color:#a855f7; font-size:48px;">📷</div>
+                <div style="width: 100%; aspect-ratio: 1; border-radius: 8px; box-shadow: 0 0 20px rgba(168,85,247,0.3); background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(139,92,246,0.2)); display:flex; align-items:center; justify-content:center; color:#a855f7; font-size:48px;">📷</div>
+                <div style="width: 100%; aspect-ratio: 1; border-radius: 8px; box-shadow: 0 0 20px rgba(168,85,247,0.3); background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(139,92,246,0.2)); display:flex; align-items:center; justify-content:center; color:#a855f7; font-size:48px;">📷</div>
+                <!-- Original images commented out until assets are added
+                <img src="assets/IMG_5655 2.jpg" style="width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(168,85,247,0.3);">
+                <img src="assets/IMG_5656 2.jpg" style="width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(168,85,247,0.3);">
+                <img src="assets/IMG_5659 2.jpg" style="width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(168,85,247,0.3);">
+                <img src="assets/IMG_5660 2.jpg" style="width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(168,85,247,0.3);">
+                -->
             </div>
         </div>
 
@@ -907,52 +918,7 @@
 
     <script type="module">
         // Password protection
-        const passwordScreen = document.getElementById('passwordScreen');
-        const passwordInput = document.getElementById('passwordInput');
-        const submitButton = document.getElementById('submitPassword');
-        const passwordError = document.getElementById('passwordError');
-        const correctPassword = 'tesla';
-
-        // Check if already authenticated
-        if (sessionStorage.getItem('authenticated') === 'true') {
-            passwordScreen.classList.add('hidden');
-        }
-
-        function checkPassword() {
-            const enteredPassword = passwordInput.value.toLowerCase();
-            if (enteredPassword === correctPassword) {
-                sessionStorage.setItem('authenticated', 'true');
-                passwordScreen.classList.add('hidden');
-                passwordError.classList.remove('show');
-            } else {
-                passwordError.classList.add('show');
-                passwordInput.value = '';
-                passwordInput.focus();
-                // Shake animation
-                passwordInput.style.animation = 'shake 0.5s';
-                setTimeout(() => {
-                    passwordInput.style.animation = '';
-                }, 500);
-            }
-        }
-
-        submitButton.addEventListener('click', checkPassword);
-        passwordInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                checkPassword();
-            }
-        });
-
-        // Add shake animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes shake {
-                0%, 100% { transform: translateX(0); }
-                25% { transform: translateX(-10px); }
-                75% { transform: translateX(10px); }
-            }
-        `;
-        document.head.appendChild(style);
+        // Password screen removed - now using wallet authentication
 
         import * as THREE from 'three';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
