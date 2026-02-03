@@ -112,6 +112,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+
 -- SUCCESS! Your database is ready.
 ```
 

@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Crypto World</title>
     <style>
         * {
@@ -2450,6 +2450,145 @@
         const { createClient } = supabase;
         const supabaseClient = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 
+async function supabaseRetry(operation, maxRetries = 3, delay = 2000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      console.error(`Supabase operation failed (attempt ${attempt}):`, error);
+      if (attempt === maxRetries) {
+        showError('Connection error: ' + error.message);
+        throw error;
+      }
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
+
+// Function to show error UI
+function showError(msg) {
+  const errorDiv = document.getElementById('errorMessage');
+  if (!errorDiv) {
+    const newDiv = document.createElement('div');
+    newDiv.id = 'errorMessage';
+    newDiv.style.position = 'fixed';
+    newDiv.style.top = '10px';
+    newDiv.style.left = '50%';
+    newDiv.style.transform = 'translateX(-50%)';
+    newDiv.style.background = 'rgba(255, 0, 0, 0.8)';
+    newDiv.style.color = 'white';
+    newDiv.style.padding = '10px 20px';
+    newDiv.style.borderRadius = '5px';
+    newDiv.style.zIndex = '1000';
+    newDiv.style.display = 'none';
+    document.body.appendChild(newDiv);
+  }
+  errorDiv.textContent = msg;
+  errorDiv.style.display = 'block';
+  setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
+}
+
+// P2P (WebRTC) Setup
+const peers = new Map(); // peerId -> RTCPeerConnection
+const dataChannels = new Map(); // peerId -> RTCDataChannel
+
+async function initiateP2P(peerId) {
+  if (peers.has(peerId)) return;
+
+  const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+  peers.set(peerId, pc);
+
+  const channel = pc.createDataChannel('gameData');
+  channel.onopen = () => console.log(`P2P open with ${peerId}`);
+  channel.onmessage = (e) => handleP2PData(peerId, JSON.parse(e.data));
+  dataChannels.set(peerId, channel);
+
+  pc.onicecandidate = (e) => {
+    if (e.candidate) {
+      supabaseRetry(() => supabaseClient.from('signals').insert([{ from: myPlayerId, to: peerId, type: 'candidate', data: e.candidate }]));
+    }
+  };
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  await supabaseRetry(() => supabaseClient.from('signals').insert([{ from: myPlayerId, to: peerId, type: 'offer', data: offer }]));
+
+  // Handle incoming answer/candidate (via subscription)
+}
+
+function handleP2PData(peerId, msg) {
+  if (msg.type === 'position') {
+    updateOtherPlayer(peerId, msg.position, msg.rotation);
+  } else if (msg.type === 'chat') {
+    const dx = msg.pos_x - playerGroup.position.x;
+    const dz = msg.pos_z - playerGroup.position.z;
+    if (Math.sqrt(dx*dx + dz*dz) <= CONFIG.PROXIMITY_RANGE) {
+      const chatMessages = document.getElementById('chatMessages');
+      const msgDiv = document.createElement('div');
+      msgDiv.innerHTML = `<span style="color: #55FF55;">${msg.username}</span>: ${msg.message}`;
+      chatMessages.appendChild(msgDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  }
+}
+
+function sendP2PPosition() {
+  dataChannels.forEach((channel, peerId) => {
+    if (channel.readyState === 'open') {
+      channel.send(JSON.stringify({
+        type: 'position',
+        position: { x: playerGroup.position.x, y: playerGroup.position.y, z: playerGroup.position.z },
+        rotation: playerGroup.rotation.y
+      }));
+    }
+  });
+}
+
+function sendP2PChat(text) {
+  dataChannels.forEach((channel, peerId) => {
+    if (channel.readyState === 'open') {
+      channel.send(JSON.stringify({
+        type: 'chat',
+        username: walletAddress.slice(0,6) + '...' + walletAddress.slice(-4),
+        message: text,
+        pos_x: playerGroup.position.x,
+        pos_z: playerGroup.position.z
+      }));
+    }
+  });
+}
+
+// Subscribe to signals for P2P signaling
+function subscribeToSignals() {
+  supabaseClient.channel('signals').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals' }, async (payload) => {
+    const signal = payload.new;
+    if (signal.to !== myPlayerId) return;
+
+    let pc = peers.get(signal.from);
+    if (!pc) {
+      pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+      peers.set(signal.from, pc);
+      pc.ondatachannel = (e) => {
+        const channel = e.channel;
+        channel.onmessage = (ev) => handleP2PData(signal.from, JSON.parse(ev.data));
+        dataChannels.set(signal.from, channel);
+      };
+    }
+
+    if (signal.type === 'offer') {
+      await pc.setRemoteDescription(signal.data);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await supabaseRetry(() => supabaseClient.from('signals').insert([{ from: myPlayerId, to: signal.from, type: 'answer', data: answer }]));
+    } else if (signal.type === 'answer') {
+      await pc.setRemoteDescription(signal.data);
+    } else if (signal.type === 'candidate') {
+      await pc.addIceCandidate(signal.data);
+    }
+  }).subscribe();
+}
+
+
         // Wallet State
         let walletConnected = false;
         let walletAddress = null;
@@ -2635,7 +2774,7 @@
             try {
                 // Insert player into database
                 const username = walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : 'Player';
-                const { data, error } = await supabaseClient
+                const { data, error } = await supabaseRetry(() => supabaseClient
                     .from('players')
                     .insert([{
                         id: myPlayerId,
@@ -2650,7 +2789,7 @@
                         color: myColor,
                         last_seen: new Date().toISOString()
                     }])
-                    .select();
+                    .select());
 
                 if (error) {
                     console.error('Error initializing player:', error);
@@ -2663,7 +2802,10 @@
                 document.getElementById('colorPickerIcon').classList.add('visible');
                 document.getElementById('playerCount').classList.add('visible');
 
-                // Start position updates
+                // Start P2P signaling
+                subscribeToSignals();
+
+                // Start position updates (P2P hybrid)
                 startPositionUpdates();
 
                 // Start heartbeat
@@ -2675,22 +2817,97 @@
                 // Subscribe to player changes
                 subscribeToPlayers();
 
-                // Load existing players
+                // Load existing players and initiate P2P for nearby
                 loadExistingPlayers();
 
-                // Initialize chat system
+                // Initialize chat system (P2P hybrid)
                 subscribeToMessages();
                 loadProximityMessages();
 
-                // Update chat periodically
+                // Update chat periodically (for fallback)
                 chatUpdateInterval = setInterval(() => {
                     loadProximityMessages();
                 }, CONFIG.CHAT_UPDATE_INTERVAL);
+
+                // Periodically manage P2P connections (every 5s)
+                setInterval(manageP2PConnections, 5000);
 
             } catch (error) {
                 console.error('Error in initializePlayer:', error);
             }
         }
+
+// Manage P2P connections for nearby players
+function manageP2PConnections() {
+  otherPlayers.forEach((player, peerId) => {
+    const dx = player.group.position.x - playerGroup.position.x;
+    const dz = player.group.position.z - playerGroup.position.z;
+    const distance = Math.sqrt(dx * dx + dz * dz);
+
+    if (distance <= CONFIG.PROXIMITY_RANGE && !peers.has(peerId)) {
+      initiateP2P(peerId);
+    } else if (distance > CONFIG.PROXIMITY_RANGE && peers.has(peerId)) {
+      // Close P2P if out of range
+      const pc = peers.get(peerId);
+      pc.close();
+      peers.delete(peerId);
+      dataChannels.delete(peerId);
+    }
+  });
+}
+
+// Hybrid position updates: P2P for nearby, Supabase for all
+function startPositionUpdates() {
+  updateInterval = setInterval(async () => {
+    sendP2PPosition(); // P2P to nearby
+
+    // Fallback Supabase update (less frequent, e.g., every 200ms instead of 50ms)
+    if (Date.now() % 200 === 0) {
+      try {
+        await supabaseRetry(() => supabaseClient
+          .from('players')
+          .update({
+            pos_x: playerGroup.position.x,
+            pos_y: playerGroup.position.y,
+            pos_z: playerGroup.position.z,
+            rot_y: playerGroup.rotation.y,
+            last_seen: new Date().toISOString()
+          })
+          .eq('id', myPlayerId));
+      } catch (error) {
+        console.error('Error updating position:', error);
+      }
+    }
+  }, CONFIG.POSITION_UPDATE_INTERVAL);
+}
+
+// Hybrid chat: P2P for nearby, Supabase for persistence/all
+async function sendMessage(text) {
+  if (!text || !text.trim()) return;
+  if (!walletConnected) return;
+
+  sendP2PChat(text); // P2P to nearby
+
+  // Persist to Supabase
+  try {
+    await supabaseRetry(() => supabaseClient
+      .from('messages')
+      .insert([{
+        player_id: myPlayerId,
+        username: walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4),
+        message: text.trim(),
+        pos_x: playerGroup.position.x,
+        pos_y: playerGroup.position.y,
+        pos_z: playerGroup.position.z,
+        created_at: new Date().toISOString()
+      }]));
+    console.log('Message sent:', text);
+    document.getElementById('chatInput').value = '';
+    toggleChatInput(false);
+  } catch (error) {
+    console.error('Error sending message:', error);
+  }
+}
 
         // Subscribe to real-time player updates
         function subscribeToPlayers() {
