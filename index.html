@@ -583,7 +583,6 @@
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
         /* Wallet Screen Styles */
         #walletScreen {
@@ -708,11 +707,6 @@
                     <div>Phantom</div>
                     <div style="font-size: 11px; color: #aaa;">Solana</div>
                 </button>
-                <button class="wallet-btn" id="connectMetaMask">
-                    <div>🦊</div>
-                    <div>MetaMask</div>
-                    <div style="font-size: 11px; color: #aaa;">Base/ETH</div>
-                </button>
             </div>
             <p style="font-size: 12px; color: #666;">Your wallet is your identity in the metaverse</p>
         </div>
@@ -741,35 +735,66 @@
     </div>
 
     <!-- Proximity Chat UI - Collapsible -->
-    <div id="chatContainer" style="display: none; position: fixed; bottom: 20px; left: 20px; width: 350px; max-width: 90vw; background: rgba(0,0,0,0.8); border-radius: 15px; padding: 15px; z-index: 100; backdrop-filter: blur(10px); transition: all 0.3s;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <h3 style="color: #00ff41; margin: 0; font-size: 16px;">💬 Proximity Chat</h3>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <span id="nearbyCount" style="color: #aaa; font-size: 12px;">0 nearby</span>
-                <button id="toggleChat" style="background: none; border: none; color: #00ff41; font-size: 20px; cursor: pointer; padding: 0;">▼</button>
-            </div>
-        </div>
-        <div id="chatContent" style="transition: all 0.3s;">
-            <div id="chatMessages" style="height: 200px; overflow-y: auto; margin-bottom: 10px; padding: 10px; background: rgba(0,0,0,0.5); border-radius: 10px; color: white; font-size: 13px;"></div>
+    <!-- Minecraft-style Chat Container -->
+    <div id="chatContainer" style="display: none; position: fixed; bottom: 10px; left: 10px; width: 400px; max-width: 90vw; z-index: 100;">
+        <!-- Messages Display (Always visible) -->
+        <div id="chatMessages" style="max-height: 250px; overflow-y: auto; padding: 5px; display: flex; flex-direction: column; gap: 2px;"></div>
+
+        <!-- Chat Input Bar (Hidden by default) -->
+        <div id="chatInputBar" style="display: none; margin-top: 5px; background: rgba(0, 0, 0, 0.5); padding: 8px; border-radius: 3px;">
             <div style="display: flex; gap: 5px;">
-                <input type="text" id="chatInput" placeholder="Type a message..." style="flex: 1; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid #00ff41; border-radius: 8px; color: white; outline: none;" maxlength="200">
-                <button id="sendBtn" style="padding: 10px 20px; background: #00ff41; color: black; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Send</button>
+                <input type="text" id="chatInput" placeholder="Press Enter to send..." style="flex: 1; padding: 8px; background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.3); color: white; outline: none; font-family: monospace; font-size: 13px;" maxlength="200">
+                <button id="sendBtn" style="padding: 8px 15px; background: rgba(0, 200, 0, 0.7); color: white; border: none; cursor: pointer; font-weight: bold; font-size: 12px;">Send</button>
             </div>
-            <div style="margin-top: 5px; color: #aaa; font-size: 11px;">Only players within 50 units can see your messages</div>
+            <div style="margin-top: 4px; color: rgba(255, 255, 255, 0.5); font-size: 10px; font-family: monospace;">Within 50 units · <span id="nearbyCount">0 nearby</span></div>
         </div>
+
+        <!-- Open Chat Button -->
+        <button id="openChatBtn" style="margin-top: 5px; padding: 6px 12px; background: rgba(0, 0, 0, 0.5); color: white; border: 1px solid rgba(255, 255, 255, 0.3); cursor: pointer; font-size: 12px; font-family: monospace; border-radius: 3px;">Press T to chat</button>
     </div>
 
     <script>
-        // Chat collapse/expand toggle
-        document.getElementById('toggleChat').addEventListener('click', () => {
-            const chatContent = document.getElementById('chatContent');
-            const toggleBtn = document.getElementById('toggleChat');
-            if (chatContent.style.display === 'none') {
-                chatContent.style.display = 'block';
-                toggleBtn.textContent = '▼';
+        // Minecraft-style chat controls
+        const chatInputBar = document.getElementById('chatInputBar');
+        const chatInput = document.getElementById('chatInput');
+        const openChatBtn = document.getElementById('openChatBtn');
+        let chatOpen = false;
+
+        // Toggle chat input
+        function toggleChatInput(open) {
+            chatOpen = open;
+            if (open) {
+                chatInputBar.style.display = 'block';
+                openChatBtn.style.display = 'none';
+                chatInput.focus();
             } else {
-                chatContent.style.display = 'none';
-                toggleBtn.textContent = '▲';
+                chatInputBar.style.display = 'none';
+                openChatBtn.style.display = 'block';
+                chatInput.value = '';
+            }
+        }
+
+        // Open chat button click
+        openChatBtn.addEventListener('click', () => toggleChatInput(true));
+
+        // T key to open chat
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 't' || e.key === 'T') {
+                if (!chatOpen && document.activeElement.tagName !== 'INPUT') {
+                    e.preventDefault();
+                    toggleChatInput(true);
+                }
+            }
+            // ESC to close chat
+            if (e.key === 'Escape' && chatOpen) {
+                toggleChatInput(false);
+            }
+        });
+
+        // Enter key to send message (handled in sendMessage function)
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('sendBtn').click();
             }
         });
     </script>
@@ -2498,43 +2523,6 @@
             }
         }
 
-        async function connectMetaMask() {
-            try {
-                if (!window.ethereum) {
-                    alert('Please install MetaMask!\n\nVisit: https://metamask.io/');
-                    window.open('https://metamask.io/', '_blank');
-                    return;
-                }
-
-                const provider = new ethers.providers.Web3Provider(window.ethereum);
-                const accounts = await provider.send('eth_requestAccounts', []);
-
-                if (accounts.length === 0) {
-                    throw new Error('No accounts found');
-                }
-
-                walletAddress = accounts[0];
-                walletType = 'metamask';
-                walletConnected = true;
-
-                console.log('MetaMask connected:', walletAddress);
-
-                // Try to fetch balance
-                try {
-                    const balance = await provider.getBalance(walletAddress);
-                    walletBalance = ethers.utils.formatEther(balance).slice(0, 8);
-                } catch (err) {
-                    console.warn('Balance fetch failed:', err);
-                    walletBalance = 0;
-                }
-
-                onWalletConnected();
-
-            } catch (error) {
-                console.error('MetaMask connection failed:', error);
-                alert('Failed to connect MetaMask. Please try again.');
-            }
-        }
 
         function onWalletConnected() {
             // Save wallet info to localStorage for persistent login
@@ -2636,27 +2624,6 @@
                                     onWalletConnected();
                                 }
                             }
-                        } else if (savedWalletType === 'metamask') {
-                            if (window.ethereum) {
-                                const provider = new ethers.providers.Web3Provider(window.ethereum);
-                                const accounts = await provider.listAccounts();
-
-                                if (accounts.length > 0) {
-                                    walletAddress = accounts[0];
-                                    walletType = 'metamask';
-                                    walletConnected = true;
-
-                                    // Fetch balance
-                                    try {
-                                        const balance = await provider.getBalance(walletAddress);
-                                        walletBalance = ethers.utils.formatEther(balance).slice(0, 8);
-                                    } catch (err) {
-                                        walletBalance = 0;
-                                    }
-
-                                    onWalletConnected();
-                                }
-                            }
                         }
                     } catch (error) {
                         console.warn('Auto-reconnect failed:', error);
@@ -2670,7 +2637,6 @@
 
         // Set up wallet button listeners
         document.getElementById('connectPhantom').addEventListener('click', connectPhantom);
-        document.getElementById('connectMetaMask').addEventListener('click', connectMetaMask);
         document.getElementById('disconnectBtn').addEventListener('click', disconnectWallet);
 
         // Initialize player in Supabase
@@ -2711,6 +2677,9 @@
 
                 // Start heartbeat
                 startHeartbeat();
+
+                // Start player cleanup
+                startPlayerCleanup();
 
                 // Subscribe to player changes
                 subscribeToPlayers();
@@ -2849,6 +2818,43 @@
             }, CONFIG.HEARTBEAT_INTERVAL);
         }
 
+        // Auto-cleanup inactive players from the scene
+        let cleanupInterval = null;
+        function startPlayerCleanup() {
+            cleanupInterval = setInterval(async () => {
+                try {
+                    // Fetch all active players from database
+                    const { data: activePlayers, error } = await supabaseClient
+                        .from('players')
+                        .select('id, last_seen')
+                        .neq('id', myPlayerId);
+
+                    if (error) {
+                        console.error('Error fetching active players:', error);
+                        return;
+                    }
+
+                    const activePlayerIds = new Set(activePlayers.map(p => p.id));
+                    const now = new Date();
+
+                    // Remove players that are no longer in the database or haven't been seen in 15 seconds
+                    otherPlayers.forEach((player, playerId) => {
+                        const playerData = activePlayers.find(p => p.id === playerId);
+                        const shouldRemove = !activePlayerIds.has(playerId) ||
+                            (playerData && (now - new Date(playerData.last_seen)) > 15000);
+
+                        if (shouldRemove) {
+                            console.log('Removing inactive player:', playerId);
+                            scene.remove(player);
+                            otherPlayers.delete(playerId);
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error in player cleanup:', error);
+                }
+            }, 10000); // Check every 10 seconds
+        }
+
         // Clean up on page unload
         window.addEventListener('beforeunload', async () => {
             if (myPlayerId) {
@@ -2864,6 +2870,7 @@
 
             if (updateInterval) clearInterval(updateInterval);
             if (heartbeatInterval) clearInterval(heartbeatInterval);
+            if (cleanupInterval) clearInterval(cleanupInterval);
         });
 
         // Player initialization now happens after wallet connection in onWalletConnected()
@@ -3099,6 +3106,7 @@
 
                 console.log('Message sent:', text);
                 document.getElementById('chatInput').value = '';
+                toggleChatInput(false); // Close chat after sending
 
             } catch (error) {
                 console.error('Error in sendMessage:', error);
@@ -3137,11 +3145,12 @@
 
                 proximityMessages.forEach(msg => {
                     const msgDiv = document.createElement('div');
-                    msgDiv.style.marginBottom = '8px';
-                    msgDiv.style.padding = '5px';
-                    msgDiv.style.background = 'rgba(0,255,65,0.1)';
-                    msgDiv.style.borderRadius = '5px';
-                    msgDiv.innerHTML = `<strong style="color: #00ff41;">${msg.username}:</strong> <span style="color: #fff;">${msg.message}</span>`;
+                    msgDiv.style.padding = '2px 6px';
+                    msgDiv.style.background = 'rgba(0, 0, 0, 0.5)';
+                    msgDiv.style.marginBottom = '1px';
+                    msgDiv.style.fontSize = '13px';
+                    msgDiv.style.fontFamily = 'monospace';
+                    msgDiv.innerHTML = `<span style="color: #AAAAAA;">&lt;</span><span style="color: #55FF55;">${msg.username}</span><span style="color: #AAAAAA;">&gt;</span> <span style="color: #FFFFFF;">${msg.message}</span>`;
                     chatMessages.appendChild(msgDiv);
                 });
 
@@ -3267,6 +3276,10 @@
                 if (player.mixer) {
                     const safeDelta = Math.min(delta, 0.1);
                     player.mixer.update(safeDelta);
+                }
+                // Make name tags face the camera
+                if (player.label) {
+                    player.label.lookAt(camera.position);
                 }
             });
 
