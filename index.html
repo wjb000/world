@@ -2519,6 +2519,8 @@ async function initiateP2P(peerId) {
 function handleP2PData(peerId, msg) {
   if (msg.type === 'position') {
     updateOtherPlayer(peerId, msg.position, msg.rotation);
+    const player = otherPlayers.get(peerId);
+    if (player) player.lastUpdate = Date.now();
   } else if (msg.type === 'chat') {
     const dx = msg.pos_x - playerGroup.position.x;
     const dz = msg.pos_z - playerGroup.position.z;
@@ -2529,6 +2531,12 @@ function handleP2PData(peerId, msg) {
       chatMessages.appendChild(msgDiv);
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
+  } else if (msg.type === 'requestPosition') {
+    dataChannels.get(peerId).send(JSON.stringify({
+      type: 'position',
+      position: { x: playerGroup.position.x, y: playerGroup.position.y, z: playerGroup.position.z },
+      rotation: playerGroup.rotation.y
+    }));
   }
 }
 
@@ -2772,7 +2780,7 @@ function subscribeToSignals() {
         // Initialize player in Supabase
         async function initializePlayer() {
             try {
-                // Insert player into database
+                // Insert player into database (minimal for discovery)
                 const username = walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : 'Player';
                 const { data, error } = await supabaseRetry(() => supabaseClient
                     .from('players')
@@ -2781,11 +2789,6 @@ function subscribeToSignals() {
                         username: username,
                         wallet_address: walletAddress,
                         wallet_type: walletType,
-                        pos_x: playerGroup.position.x,
-                        pos_y: playerGroup.position.y,
-                        pos_z: playerGroup.position.z,
-                        rot_y: playerGroup.rotation.y,
-                        animation: 'Idle',
                         color: myColor,
                         last_seen: new Date().toISOString()
                     }])
@@ -2842,7 +2845,7 @@ function manageP2PConnections() {
 // Full P2P position updates
 function startPositionUpdates() {
   updateInterval = setInterval(() => {
-    sendP2PPosition(); // Send to all connected peers
+    sendP2PPosition();
   }, CONFIG.POSITION_UPDATE_INTERVAL);
 }
 
@@ -2910,8 +2913,8 @@ peers.forEach((pc, peerId) => {
 });
 
 
-        // Load existing players from database
-        async function loadExistingPlayers() {
+        // Load existing players for P2P connection
+async function loadExistingPlayers() {
   try {
     const { data: players, error } = await supabaseRetry(() => supabaseClient
       .from('players')
@@ -2926,7 +2929,7 @@ peers.forEach((pc, peerId) => {
     console.log('Loaded existing players:', players);
 
     players.forEach(player => {
-      createOtherPlayer(player.id, player.color, { x: 0, y: 0, z: 0 }, 0); // Dummy initial position
+      createOtherPlayer(player.id, player.color, { x: 0, y: 0, z: 0 }, 0);
       initiateP2P(player.id);
     });
 
@@ -2937,26 +2940,8 @@ peers.forEach((pc, peerId) => {
 }
 
         // Start position update interval
-        function startPositionUpdates() {
-            updateInterval = setInterval(async () => {
-                try {
-                    await supabaseClient
-                        .from('players')
-                        .update({
-                            pos_x: playerGroup.position.x,
-                            pos_y: playerGroup.position.y,
-                            pos_z: playerGroup.position.z,
-                            rot_y: playerGroup.rotation.y,
-                            last_seen: new Date().toISOString()
-                        })
-                        .eq('id', myPlayerId);
-                } catch (error) {
-                    console.error('Error updating position:', error);
-                }
-            }, CONFIG.POSITION_UPDATE_INTERVAL);
-        }
-
-        // Start heartbeat (still use for presence in Supabase)
+        
+        // Start heartbeat (for presence, no position)
 function startHeartbeat() {
   heartbeatInterval = setInterval(async () => {
     try {
@@ -2970,9 +2955,23 @@ function startHeartbeat() {
   }, CONFIG.HEARTBEAT_INTERVAL);
 }
 
-// Cleanup using P2P disconnects and heartbeat fallback
+// Cleanup using P2P and timeout
 let cleanupInterval = null;
 function startPlayerCleanup() {
+  cleanupInterval = setInterval(() => {
+    const now = Date.now();
+    otherPlayers.forEach((player, peerId) => {
+      if (now - player.lastUpdate > 15000) {
+        removeOtherPlayer(peerId);
+        const pc = peers.get(peerId);
+        if (pc) pc.close();
+        peers.delete(peerId);
+        dataChannels.delete(peerId);
+        updatePlayerCount();
+      }
+    });
+  }, 5000);
+
   // P2P disconnect handling
   peers.forEach((pc, peerId) => {
     pc.onconnectionstatechange = () => {
@@ -2984,33 +2983,6 @@ function startPlayerCleanup() {
       }
     };
   });
-
-  // Fallback Supabase cleanup every 10s
-  cleanupInterval = setInterval(async () => {
-    try {
-      const { data: activePlayers, error } = await supabaseRetry(() => supabaseClient
-        .from('players')
-        .select('id, last_seen')
-        .neq('id', myPlayerId));
-
-      if (error) return;
-
-      const now = new Date();
-      otherPlayers.forEach((player, playerId) => {
-        const playerData = activePlayers.find(p => p.id === playerId);
-        if (!playerData || (now - new Date(playerData.last_seen)) > 15000) {
-          removeOtherPlayer(playerId);
-          const pc = peers.get(playerId);
-          if (pc) pc.close();
-          peers.delete(playerId);
-          dataChannels.delete(playerId);
-        }
-      });
-      updatePlayerCount();
-    } catch (error) {
-      console.error('Error in cleanup:', error);
-    }
-  }, 10000);
 }
 
         // Clean up on page unload
@@ -3239,112 +3211,8 @@ function startPlayerCleanup() {
             updatePlayerCount();
         }
 
-        // Proximity Chat System
-        async function sendMessage(text) {
-            if (!text || !text.trim()) return;
-            if (!walletConnected) return;
+        // Chat handled via P2P, no Supabase
 
-            try {
-                const { data, error } = await supabaseClient
-                    .from('messages')
-                    .insert([{
-                        player_id: myPlayerId,
-                        username: walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4),
-                        message: text.trim(),
-                        pos_x: playerGroup.position.x,
-                        pos_y: playerGroup.position.y,
-                        pos_z: playerGroup.position.z,
-                        created_at: new Date().toISOString()
-                    }]);
-
-                if (error) {
-                    console.error('Error sending message:', error);
-                    return;
-                }
-
-                console.log('Message sent:', text);
-                document.getElementById('chatInput').value = '';
-                toggleChatInput(false); // Close chat after sending
-
-            } catch (error) {
-                console.error('Error in sendMessage:', error);
-            }
-        }
-
-        async function loadProximityMessages() {
-            if (!walletConnected || !playerGroup) return;
-
-            try {
-                // Get messages from last 5 minutes within proximity range
-                const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-
-                const { data: messages, error } = await supabaseClient
-                    .from('messages')
-                    .select('*')
-                    .gte('created_at', fiveMinutesAgo)
-                    .order('created_at', { ascending: true });
-
-                if (error) {
-                    console.error('Error loading messages:', error);
-                    return;
-                }
-
-                // Filter by proximity
-                const proximityMessages = messages.filter(msg => {
-                    const dx = msg.pos_x - playerGroup.position.x;
-                    const dz = msg.pos_z - playerGroup.position.z;
-                    const distance = Math.sqrt(dx * dx + dz * dz);
-                    return distance <= CONFIG.PROXIMITY_RANGE;
-                });
-
-                // Update chat display
-                const chatMessages = document.getElementById('chatMessages');
-                chatMessages.innerHTML = '';
-
-                proximityMessages.forEach(msg => {
-                    const msgDiv = document.createElement('div');
-                    msgDiv.style.padding = '2px 6px';
-                    msgDiv.style.background = 'rgba(0, 0, 0, 0.5)';
-                    msgDiv.style.marginBottom = '1px';
-                    msgDiv.style.fontSize = '13px';
-                    msgDiv.style.fontFamily = 'monospace';
-                    msgDiv.innerHTML = `<span style="color: #AAAAAA;">&lt;</span><span style="color: #55FF55;">${msg.username}</span><span style="color: #AAAAAA;">&gt;</span> <span style="color: #FFFFFF;">${msg.message}</span>`;
-                    chatMessages.appendChild(msgDiv);
-                });
-
-                // Scroll to bottom
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-
-                // Update nearby count
-                const nearbyPlayers = Array.from(otherPlayers.values()).filter(player => {
-                    const dx = player.group.position.x - playerGroup.position.x;
-                    const dz = player.group.position.z - playerGroup.position.z;
-                    const distance = Math.sqrt(dx * dx + dz * dz);
-                    return distance <= CONFIG.PROXIMITY_RANGE;
-                });
-
-                document.getElementById('nearbyCount').textContent = `${nearbyPlayers.length} nearby`;
-
-            } catch (error) {
-                console.error('Error in loadProximityMessages:', error);
-            }
-        }
-
-        // Subscribe to real-time messages
-        function subscribeToMessages() {
-            supabaseClient
-                .channel('messages-channel')
-                .on('postgres_changes', {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'messages'
-                }, (payload) => {
-                    console.log('New message:', payload.new);
-                    // Refresh messages
-                    loadProximityMessages();
-                })
-                .subscribe();
-        }
 
         // Set up chat UI listeners
         document.getElementById('sendBtn').addEventListener('click', () => {
