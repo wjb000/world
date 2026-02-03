@@ -2811,25 +2811,18 @@ function subscribeToSignals() {
                 // Start heartbeat
                 startHeartbeat();
 
-                // Start player cleanup
+                // Start player cleanup (reduced reliance on Supabase)
                 startPlayerCleanup();
 
-                // Subscribe to player changes
+                // Subscribe to player changes for discovery
                 subscribeToPlayers();
 
-                // Load existing players and initiate P2P for nearby
+                // Load existing players and initiate P2P for all
                 loadExistingPlayers();
 
-                // Initialize chat system (P2P hybrid)
-                subscribeToMessages();
-                loadProximityMessages();
+                // No Supabase messages subscription or loading - all via P2P
 
-                // Update chat periodically (for fallback)
-                chatUpdateInterval = setInterval(() => {
-                    loadProximityMessages();
-                }, CONFIG.CHAT_UPDATE_INTERVAL);
-
-                // Periodically manage P2P connections (every 5s)
+                // Periodically manage P2P connections
                 setInterval(manageP2PConnections, 5000);
 
             } catch (error) {
@@ -2837,158 +2830,111 @@ function subscribeToSignals() {
             }
         }
 
-// Manage P2P connections for nearby players
+// Full mesh P2P: Connect to all players
 function manageP2PConnections() {
   otherPlayers.forEach((player, peerId) => {
-    const dx = player.group.position.x - playerGroup.position.x;
-    const dz = player.group.position.z - playerGroup.position.z;
-    const distance = Math.sqrt(dx * dx + dz * dz);
-
-    if (distance <= CONFIG.PROXIMITY_RANGE && !peers.has(peerId)) {
+    if (!peers.has(peerId)) {
       initiateP2P(peerId);
-    } else if (distance > CONFIG.PROXIMITY_RANGE && peers.has(peerId)) {
-      // Close P2P if out of range
-      const pc = peers.get(peerId);
-      pc.close();
-      peers.delete(peerId);
-      dataChannels.delete(peerId);
     }
   });
 }
 
-// Hybrid position updates: P2P for nearby, Supabase for all
+// Full P2P position updates
 function startPositionUpdates() {
-  updateInterval = setInterval(async () => {
-    sendP2PPosition(); // P2P to nearby
-
-    // Fallback Supabase update (less frequent, e.g., every 200ms instead of 50ms)
-    if (Date.now() % 200 === 0) {
-      try {
-        await supabaseRetry(() => supabaseClient
-          .from('players')
-          .update({
-            pos_x: playerGroup.position.x,
-            pos_y: playerGroup.position.y,
-            pos_z: playerGroup.position.z,
-            rot_y: playerGroup.rotation.y,
-            last_seen: new Date().toISOString()
-          })
-          .eq('id', myPlayerId));
-      } catch (error) {
-        console.error('Error updating position:', error);
-      }
-    }
+  updateInterval = setInterval(() => {
+    sendP2PPosition(); // Send to all connected peers
   }, CONFIG.POSITION_UPDATE_INTERVAL);
 }
 
-// Hybrid chat: P2P for nearby, Supabase for persistence/all
+// Full P2P chat
 async function sendMessage(text) {
   if (!text || !text.trim()) return;
   if (!walletConnected) return;
 
-  sendP2PChat(text); // P2P to nearby
-
-  // Persist to Supabase
-  try {
-    await supabaseRetry(() => supabaseClient
-      .from('messages')
-      .insert([{
-        player_id: myPlayerId,
-        username: walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4),
-        message: text.trim(),
-        pos_x: playerGroup.position.x,
-        pos_y: playerGroup.position.y,
-        pos_z: playerGroup.position.z,
-        created_at: new Date().toISOString()
-      }]));
-    console.log('Message sent:', text);
-    document.getElementById('chatInput').value = '';
-    toggleChatInput(false);
-  } catch (error) {
-    console.error('Error sending message:', error);
-  }
+  sendP2PChat(text);
+  console.log('Message sent via P2P:', text);
+  document.getElementById('chatInput').value = '';
+  toggleChatInput(false);
 }
 
-        // Subscribe to real-time player updates
-        function subscribeToPlayers() {
-            supabaseClient
-                .channel('players-channel')
-                .on('postgres_changes', {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'players'
-                }, (payload) => {
-                    console.log('Player joined:', payload.new);
-                    if (payload.new.id !== myPlayerId) {
-                        createOtherPlayer(payload.new.id, payload.new.color, {
-                            x: payload.new.pos_x,
-                            y: payload.new.pos_y,
-                            z: payload.new.pos_z
-                        }, payload.new.rot_y);
-                        updatePlayerCount();
-                    }
-                })
-                .on('postgres_changes', {
-                    event: 'UPDATE',
-                    schema: 'public',
-                    table: 'players'
-                }, (payload) => {
-                    if (payload.new.id !== myPlayerId) {
-                        updateOtherPlayer(payload.new.id, {
-                            x: payload.new.pos_x,
-                            y: payload.new.pos_y,
-                            z: payload.new.pos_z
-                        }, payload.new.rot_y);
+        // Subscribe to player changes for discovery only (no positions)
+function subscribeToPlayers() {
+  supabaseClient
+    .channel('players-channel')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'players'
+    }, (payload) => {
+      if (payload.new.id !== myPlayerId) {
+        createOtherPlayer(payload.new.id, payload.new.color, { x: 0, y: 0, z: 0 }, 0); // Initial position dummy
+        initiateP2P(payload.new.id); // Connect P2P
+        updatePlayerCount();
+      }
+    })
+    .on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'players'
+    }, (payload) => {
+      if (payload.new.id !== myPlayerId && payload.new.color !== payload.old?.color) {
+        updateOtherPlayerColor(payload.new.id, payload.new.color);
+      }
+    })
+    .on('postgres_changes', {
+      event: 'DELETE',
+      schema: 'public',
+      table: 'players'
+    }, (payload) => {
+      if (payload.old.id !== myPlayerId) {
+        removeOtherPlayer(payload.old.id);
+        const pc = peers.get(payload.old.id);
+        if (pc) pc.close();
+        peers.delete(payload.old.id);
+        dataChannels.delete(payload.old.id);
+        updatePlayerCount();
+      }
+    })
+    .subscribe();
+}
 
-                        // Update color if changed
-                        if (payload.new.color !== payload.old?.color) {
-                            updateOtherPlayerColor(payload.new.id, payload.new.color);
-                        }
-                    }
-                })
-                .on('postgres_changes', {
-                    event: 'DELETE',
-                    schema: 'public',
-                    table: 'players'
-                }, (payload) => {
-                    console.log('Player left:', payload.old);
-                    if (payload.old.id !== myPlayerId) {
-                        removeOtherPlayer(payload.old.id);
-                        updatePlayerCount();
-                    }
-                })
-                .subscribe();
-        }
+// Add disconnect detection for P2P
+peers.forEach((pc, peerId) => {
+  pc.onconnectionstatechange = () => {
+    if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+      removeOtherPlayer(peerId);
+      peers.delete(peerId);
+      dataChannels.delete(peerId);
+    }
+  };
+});
+
 
         // Load existing players from database
         async function loadExistingPlayers() {
-            try {
-                const { data: players, error } = await supabaseClient
-                    .from('players')
-                    .select('*')
-                    .neq('id', myPlayerId);
+  try {
+    const { data: players, error } = await supabaseRetry(() => supabaseClient
+      .from('players')
+      .select('id, color')
+      .neq('id', myPlayerId));
 
-                if (error) {
-                    console.error('Error loading players:', error);
-                    return;
-                }
+    if (error) {
+      console.error('Error loading players:', error);
+      return;
+    }
 
-                console.log('Loaded existing players:', players);
+    console.log('Loaded existing players:', players);
 
-                players.forEach(player => {
-                    createOtherPlayer(player.id, player.color, {
-                        x: player.pos_x,
-                        y: player.pos_y,
-                        z: player.pos_z
-                    }, player.rot_y);
-                });
+    players.forEach(player => {
+      createOtherPlayer(player.id, player.color, { x: 0, y: 0, z: 0 }, 0); // Dummy initial position
+      initiateP2P(player.id);
+    });
 
-                updatePlayerCount();
-
-            } catch (error) {
-                console.error('Error in loadExistingPlayers:', error);
-            }
-        }
+    updatePlayerCount();
+  } catch (error) {
+    console.error('Error in loadExistingPlayers:', error);
+  }
+}
 
         // Start position update interval
         function startPositionUpdates() {
@@ -3010,58 +2956,62 @@ async function sendMessage(text) {
             }, CONFIG.POSITION_UPDATE_INTERVAL);
         }
 
-        // Start heartbeat interval
-        function startHeartbeat() {
-            heartbeatInterval = setInterval(async () => {
-                try {
-                    await supabaseClient
-                        .from('players')
-                        .update({
-                            last_seen: new Date().toISOString()
-                        })
-                        .eq('id', myPlayerId);
-                } catch (error) {
-                    console.error('Error sending heartbeat:', error);
-                }
-            }, CONFIG.HEARTBEAT_INTERVAL);
+        // Start heartbeat (still use for presence in Supabase)
+function startHeartbeat() {
+  heartbeatInterval = setInterval(async () => {
+    try {
+      await supabaseRetry(() => supabaseClient
+        .from('players')
+        .update({ last_seen: new Date().toISOString() })
+        .eq('id', myPlayerId));
+    } catch (error) {
+      console.error('Error sending heartbeat:', error);
+    }
+  }, CONFIG.HEARTBEAT_INTERVAL);
+}
+
+// Cleanup using P2P disconnects and heartbeat fallback
+let cleanupInterval = null;
+function startPlayerCleanup() {
+  // P2P disconnect handling
+  peers.forEach((pc, peerId) => {
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+        removeOtherPlayer(peerId);
+        peers.delete(peerId);
+        dataChannels.delete(peerId);
+        updatePlayerCount();
+      }
+    };
+  });
+
+  // Fallback Supabase cleanup every 10s
+  cleanupInterval = setInterval(async () => {
+    try {
+      const { data: activePlayers, error } = await supabaseRetry(() => supabaseClient
+        .from('players')
+        .select('id, last_seen')
+        .neq('id', myPlayerId));
+
+      if (error) return;
+
+      const now = new Date();
+      otherPlayers.forEach((player, playerId) => {
+        const playerData = activePlayers.find(p => p.id === playerId);
+        if (!playerData || (now - new Date(playerData.last_seen)) > 15000) {
+          removeOtherPlayer(playerId);
+          const pc = peers.get(playerId);
+          if (pc) pc.close();
+          peers.delete(playerId);
+          dataChannels.delete(playerId);
         }
-
-        // Auto-cleanup inactive players from the scene
-        let cleanupInterval = null;
-        function startPlayerCleanup() {
-            cleanupInterval = setInterval(async () => {
-                try {
-                    // Fetch all active players from database
-                    const { data: activePlayers, error } = await supabaseClient
-                        .from('players')
-                        .select('id, last_seen')
-                        .neq('id', myPlayerId);
-
-                    if (error) {
-                        console.error('Error fetching active players:', error);
-                        return;
-                    }
-
-                    const activePlayerIds = new Set(activePlayers.map(p => p.id));
-                    const now = new Date();
-
-                    // Remove players that are no longer in the database or haven't been seen in 15 seconds
-                    otherPlayers.forEach((player, playerId) => {
-                        const playerData = activePlayers.find(p => p.id === playerId);
-                        const shouldRemove = !activePlayerIds.has(playerId) ||
-                            (playerData && (now - new Date(playerData.last_seen)) > 15000);
-
-                        if (shouldRemove) {
-                            console.log('Removing inactive player:', playerId);
-                            scene.remove(player);
-                            otherPlayers.delete(playerId);
-                        }
-                    });
-                } catch (error) {
-                    console.error('Error in player cleanup:', error);
-                }
-            }, 10000); // Check every 10 seconds
-        }
+      });
+      updatePlayerCount();
+    } catch (error) {
+      console.error('Error in cleanup:', error);
+    }
+  }, 10000);
+}
 
         // Clean up on page unload
         window.addEventListener('beforeunload', async () => {
