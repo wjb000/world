@@ -508,56 +508,51 @@
         }
 
         /* Multiplayer Color Picker - Hidden until 2+ players */
-        #colorPicker {
+        #colorPickerIcon {
             position: fixed;
-            top: 20px;
+            bottom: 80px;
             right: 20px;
-            background: rgba(0, 0, 0, 0.9);
-            padding: 20px;
-            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.8);
             border: 2px solid rgba(255, 255, 255, 0.3);
-            z-index: 10000;
+            border-radius: 50%;
+            cursor: pointer;
             display: none;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.3s;
+            z-index: 10000;
             opacity: 0;
-            transition: opacity 0.3s;
         }
 
-        #colorPicker.visible {
-            display: block;
+        #colorPickerIcon.visible {
+            display: flex;
             opacity: 1;
         }
 
-        #colorPicker h3 {
-            color: #fff;
-            margin-bottom: 15px;
-            font-size: 18px;
-            text-align: center;
-        }
-
-        .color-options {
-            display: grid;
-            grid-template-columns: repeat(4, 50px);
-            gap: 10px;
-        }
-
-        .color-option {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 3px solid transparent;
-            transition: all 0.3s;
-        }
-
-        .color-option:hover {
+        #colorPickerIcon:hover {
             transform: scale(1.1);
             border-color: #fff;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
         }
 
-        .color-option.selected {
-            border-color: #fff;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        #colorPickerPopup {
+            position: fixed;
+            bottom: 130px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            display: none;
+            z-index: 10001;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+        }
+
+        #colorPickerPopup.visible {
+            display: block;
         }
 
         #playerCount {
@@ -660,38 +655,34 @@
     <div id="playerCount">Players: 1</div>
 
     <!-- Color Picker -->
-    <div id="colorPicker" style="max-height: 50px; overflow: hidden; transition: max-height 0.3s;">
-        <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" id="colorPickerHeader">
-            <h3 style="margin: 0;">🎨 Choose Your Color</h3>
-            <button id="toggleColorPicker" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">▶</button>
-        </div>
-        <div class="color-options" id="colorOptions" style="margin-top: 15px;">
-            <div class="color-option" data-color="#00ff41" style="background: #00ff41;"></div>
-            <div class="color-option" data-color="#ff0040" style="background: #ff0040;"></div>
-            <div class="color-option" data-color="#06b6d4" style="background: #06b6d4;"></div>
-            <div class="color-option" data-color="#9370db" style="background: #9370db;"></div>
-            <div class="color-option" data-color="#ffd700" style="background: #ffd700;"></div>
-            <div class="color-option" data-color="#ff6b35" style="background: #ff6b35;"></div>
-            <div class="color-option" data-color="#e91e63" style="background: #e91e63;"></div>
-            <div class="color-option" data-color="#10b981" style="background: #10b981;"></div>
-            <div class="color-option" data-color="#f97316" style="background: #f97316;"></div>
-            <div class="color-option" data-color="#8b5cf6" style="background: #8b5cf6;"></div>
-            <div class="color-option" data-color="#ec4899" style="background: #ec4899;"></div>
-            <div class="color-option" data-color="#14b8a6" style="background: #14b8a6;"></div>
-        </div>
+    <!-- Minimal Color Picker -->
+    <div id="colorPickerIcon">🎨</div>
+    <div id="colorPickerPopup">
+        <input type="color" id="colorInput" value="#00ccff" style="width: 150px; height: 150px; border: none; cursor: pointer; background: transparent;">
     </div>
 
     <script>
         // Color picker collapse/expand toggle
-        document.getElementById('colorPickerHeader').addEventListener('click', () => {
-            const colorPicker = document.getElementById('colorPicker');
-            const toggleBtn = document.getElementById('toggleColorPicker');
-            if (colorPicker.style.maxHeight === '50px') {
-                colorPicker.style.maxHeight = '300px';
-                toggleBtn.textContent = '▼';
+        // Minimal color picker controls
+        const colorPickerIcon = document.getElementById('colorPickerIcon');
+        const colorPickerPopup = document.getElementById('colorPickerPopup');
+        const colorInput = document.getElementById('colorInput');
+        let colorPickerOpen = false;
+
+        colorPickerIcon.addEventListener('click', () => {
+            colorPickerOpen = !colorPickerOpen;
+            if (colorPickerOpen) {
+                colorPickerPopup.classList.add('visible');
             } else {
-                colorPicker.style.maxHeight = '50px';
-                toggleBtn.textContent = '▶';
+                colorPickerPopup.classList.remove('visible');
+            }
+        });
+
+        // Close popup when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!colorPickerIcon.contains(e.target) && !colorPickerPopup.contains(e.target)) {
+                colorPickerOpen = false;
+                colorPickerPopup.classList.remove('visible');
             }
         });
     </script>
@@ -2669,7 +2660,7 @@
                 console.log('Player initialized in Supabase:', data);
 
                 // Show multiplayer UI
-                document.getElementById('colorPicker').classList.add('visible');
+                document.getElementById('colorPickerIcon').classList.add('visible');
                 document.getElementById('playerCount').classList.add('visible');
 
                 // Start position updates
@@ -3222,38 +3213,34 @@
         // Position updates now handled by startPositionUpdates() interval
 
         // Color picker functionality
-        document.querySelectorAll('.color-option').forEach(option => {
-            option.addEventListener('click', async () => {
-                const color = option.dataset.color;
-                myColor = color;
+        colorInput.addEventListener('change', async (e) => {
+            const color = e.target.value;
+            myColor = color;
 
-                // Update selection visual
-                document.querySelectorAll('.color-option').forEach(opt => {
-                    opt.classList.remove('selected');
+            // Update player body color if it exists
+            if (playerBody) {
+                playerBody.traverse((child) => {
+                    if (child.isMesh) {
+                        child.material.color.setStyle(color);
+                        child.material.emissive.setStyle(color);
+                    }
                 });
-                option.classList.add('selected');
+            }
 
-                // Update player body color if it exists
-                if (playerBody) {
-                    playerBody.traverse((child) => {
-                        if (child.isMesh) {
-                            child.material.color.setStyle(color);
-                            child.material.emissive.setStyle(color);
-                        }
-                    });
-                }
+            // Update color in Supabase
+            try {
+                await supabaseClient
+                    .from('players')
+                    .update({ color: color })
+                    .eq('id', myPlayerId);
+                console.log('Color updated to:', color);
+            } catch (error) {
+                console.error('Error updating color:', error);
+            }
 
-                // Update color in Supabase
-                try {
-                    await supabaseClient
-                        .from('players')
-                        .update({ color: color })
-                        .eq('id', myPlayerId);
-                    console.log('Color updated to:', color);
-                } catch (error) {
-                    console.error('Error updating color:', error);
-                }
-            });
+            // Close popup after selecting
+            colorPickerOpen = false;
+            colorPickerPopup.classList.remove('visible');
         });
 
         // Position broadcasting handled by Supabase real-time updates
