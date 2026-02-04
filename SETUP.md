@@ -113,7 +113,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 
--- SUCCESS! Your database is ready.
+-- SUCCESS! Your database issssss ready.
 ```
 
 4. Click **Run** button
