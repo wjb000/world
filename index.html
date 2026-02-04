@@ -2584,8 +2584,7 @@ function subscribeToSignals() {
       await pc.setRemoteDescription(signal.data);
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
-      await supabaseRetry(() => supabaseClient.from('signals').insert([{ from: myPlayerId, to: signal.from, type: 'answer', data: answer }]));
-    } else if (signal.type === 'answer') {
+          } else if (signal.type === 'answer') {
       await pc.setRemoteDescription(signal.data);
     } else if (signal.type === 'candidate') {
       await pc.addIceCandidate(signal.data);
