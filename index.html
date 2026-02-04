@@ -576,8 +576,7 @@
             opacity: 1;
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.min.js"></script>
     <style>
         /* Wallet Screen Styles */
         #walletScreen {
@@ -2939,9 +2938,7 @@ async function loadExistingPlayers() {
   }
 }
 
-        // Start position update interval
-        
-        // Start heartbeat (for presence, no position)
+        // Start heartbeat for presence
 function startHeartbeat() {
   heartbeatInterval = setInterval(async () => {
     try {
