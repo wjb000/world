@@ -2446,7 +2446,6 @@
         };
 
         // Initialize Supabase Client
-        const { createClient } = supabase;
         const supabaseClient = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 
 async function supabaseRetry(operation, maxRetries = 3, delay = 2000) {
