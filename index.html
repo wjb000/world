@@ -562,6 +562,9 @@
             margin-bottom: 10px;
         }
     </style>
+    <!-- Add Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-database.js"></script>
 </head>
 <body>
     <!-- Player Count Display -->
@@ -813,30 +816,6 @@
                 🎮 Try Interactive Simulator
             </a>
         </div>
-    </div>
-    <script>
-        // BOB Project Modal Controls
-        const bobProjectModal = document.getElementById('bobProjectModal');
-        const closeBobProject = document.getElementById('closeBobProject');
-        closeBobProject.addEventListener('click', () => {
-            bobProjectModal.classList.remove('visible');
-        });
-    </script>
-    <!-- Single BOB Robot Project Popup -->
-    <div id="lootPopupBobProject" class="lootPopup" style="z-index: 9999;">
-        <h3>🤖 Robot Project</h3>
-        <p>BOB Control System</p>
-        <button id="openButtonBobProject">VIEW PROJECT</button>
-    </div>
-    <!-- P2P Connection UI -->
-    <div id="p2pConnect" style="display: none; position: fixed; top: 60px; right: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; color: white; z-index: 100; width: 300px;">
-        <h3>P2P Connection</h3>
-        <input id="peerId" type="text" placeholder="Peer Wallet ID" style="width: 100%; margin-bottom: 10px;">
-        <button id="createOffer">Create Offer (Host)</button>
-        <button id="setOffer">Set Offer and Generate Answer (Client)</button>
-        <textarea id="sdpOffer" placeholder="Offer JSON" style="width: 100%; height: 100px; margin-top: 10px;"></textarea>
-        <textarea id="sdpAnswer" placeholder="Answer JSON" style="width: 100%; height: 100px; margin-top: 10px;"></textarea>
-        <button id="setAnswer">Set Answer (Host)</button>
     </div>
     <script type="importmap">
     {
@@ -2106,9 +2085,9 @@
         const clock = new THREE.Clock();
         // Configuration
         const CONFIG = {
-            // Proximity Settings
             PROXIMITY_RANGE: 50,
             POSITION_UPDATE_INTERVAL: 50,
+            HEARTBEAT_INTERVAL: 5000,
             CHAT_UPDATE_INTERVAL: 3000
         };
         // Function to show error UI
@@ -2136,29 +2115,69 @@
         // P2P (WebRTC) Setup
         const peers = new Map(); // peerId -> RTCPeerConnection
         const dataChannels = new Map(); // peerId -> RTCDataChannel
-        async function createOfferForPeer(peerId) {
+        const firebaseConfig = {
+          // Replace with your Firebase project config
+          apiKey: "YOUR_API_KEY",
+          authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+          databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+          projectId: "YOUR_PROJECT_ID",
+          storageBucket: "YOUR_PROJECT_ID.appspot.com",
+          messagingSenderId: "YOUR_SENDER_ID",
+          appId: "YOUR_APP_ID"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database(app);
+        async function initiateP2P(peerId) {
           if (peers.has(peerId)) return;
           const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
           peers.set(peerId, pc);
           const channel = pc.createDataChannel('gameData');
-          channel.onopen = () => {
-            console.log(`P2P open with ${peerId}`);
-            channel.send(JSON.stringify({
-              type: 'position',
-              position: { x: playerGroup.position.x, y: playerGroup.position.y, z: playerGroup.position.z },
-              rotation: playerGroup.rotation.y
-            }));
-            channel.send(JSON.stringify({
-              type: 'color',
-              color: myColor
-            }));
-          };
+          channel.onopen = () => console.log(`P2P open with ${peerId}`);
           channel.onmessage = (e) => handleP2PData(peerId, JSON.parse(e.data));
           dataChannels.set(peerId, channel);
+          pc.onicecandidate = (e) => {
+            if (e.candidate) {
+              database.ref(`signaling/${myPlayerId}-${peerId}/candidates`).push(e.candidate.toJSON());
+            }
+          };
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          database.ref(`signaling/${myPlayerId}-${peerId}/offer`).set(pc.localDescription.toJSON());
+          // Listen for answer
+          database.ref(`signaling/${peerId}-${myPlayerId}/answer`).on('value', async (snapshot) => {
+            const answer = snapshot.val();
+            if (answer && !pc.remoteDescription) {
+              await pc.setRemoteDescription(new RTCSessionDescription(answer));
+            }
+          });
+          // Listen for candidates from peer
+          database.ref(`signaling/${peerId}-${myPlayerId}/candidates`).on('child_added', async (snapshot) => {
+            const candidate = snapshot.val();
+            if (candidate) {
+              await pc.addIceCandidate(new RTCIceCandidate(candidate));
+            }
+          });
+          pc.onconnectionstatechange = () => {
+            if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+              removeOtherPlayer(peerId);
+              peers.delete(peerId);
+              dataChannels.delete(peerId);
+              updatePlayerCount();
+            }
+          };
+        }
+        async function answerP2P(peerId) {
+          const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+          peers.set(peerId, pc);
           pc.ondatachannel = (e) => {
             const channel = e.channel;
             channel.onmessage = (ev) => handleP2PData(peerId, JSON.parse(ev.data));
             dataChannels.set(peerId, channel);
+          };
+          pc.onicecandidate = (e) => {
+            if (e.candidate) {
+              database.ref(`signaling/${myPlayerId}-${peerId}/candidates`).push(e.candidate.toJSON());
+            }
           };
           pc.onconnectionstatechange = () => {
             if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
@@ -2168,70 +2187,23 @@
               updatePlayerCount();
             }
           };
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          // Wait for ICE gathering to complete
-          await new Promise((resolve) => {
-            if (pc.iceGatheringState === 'complete') {
-              resolve();
-            } else {
-              const checkState = () => {
-                if (pc.iceGatheringState === 'complete') {
-                  pc.removeEventListener('icegatheringstatechange', checkState);
-                  resolve();
-                }
-              };
-              pc.addEventListener('icegatheringstatechange', checkState);
+          // Get offer
+          database.ref(`signaling/${peerId}-${myPlayerId}/offer`).on('value', async (snapshot) => {
+            const offer = snapshot.val();
+            if (offer && !pc.remoteDescription) {
+              await pc.setRemoteDescription(new RTCSessionDescription(offer));
+              const answer = await pc.createAnswer();
+              await pc.setLocalDescription(answer);
+              database.ref(`signaling/${peerId}-${myPlayerId}/answer`).set(pc.localDescription.toJSON());
             }
           });
-          const fullOffer = pc.localDescription;
-          return JSON.stringify(fullOffer);
-        }
-        async function setOfferAndCreateAnswer(peerId, offerStr) {
-          let pc = peers.get(peerId);
-          if (!pc) {
-            pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-            peers.set(peerId, pc);
-            pc.ondatachannel = (e) => {
-              const channel = e.channel;
-              channel.onmessage = (ev) => handleP2PData(peerId, JSON.parse(ev.data));
-              dataChannels.set(peerId, channel);
-            };
-            pc.onconnectionstatechange = () => {
-              if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
-                removeOtherPlayer(peerId);
-                peers.delete(peerId);
-                dataChannels.delete(peerId);
-                updatePlayerCount();
-              }
-            };
-          }
-          const offer = JSON.parse(offerStr);
-          await pc.setRemoteDescription(offer);
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          // Wait for ICE gathering to complete
-          await new Promise((resolve) => {
-            if (pc.iceGatheringState === 'complete') {
-              resolve();
-            } else {
-              const checkState = () => {
-                if (pc.iceGatheringState === 'complete') {
-                  pc.removeEventListener('icegatheringstatechange', checkState);
-                  resolve();
-                }
-              };
-              pc.addEventListener('icegatheringstatechange', checkState);
+          // Listen for candidates
+          database.ref(`signaling/${peerId}-${myPlayerId}/candidates`).on('child_added', async (snapshot) => {
+            const candidate = snapshot.val();
+            if (candidate) {
+              await pc.addIceCandidate(new RTCIceCandidate(candidate));
             }
           });
-          const fullAnswer = pc.localDescription;
-          return JSON.stringify(fullAnswer);
-        }
-        async function setAnswerForPeer(peerId, answerStr) {
-          const pc = peers.get(peerId);
-          if (!pc) return console.error('No pc for peer');
-          const answer = JSON.parse(answerStr);
-          await pc.setRemoteDescription(answer);
         }
         function handleP2PData(peerId, msg) {
           if (msg.type === 'position') {
@@ -2260,7 +2232,7 @@
         }
         function sendP2PPosition() {
           dataChannels.forEach((channel, peerId) => {
-            if (channel && channel.readyState === 'open') {
+            if (channel.readyState === 'open') {
               channel.send(JSON.stringify({
                 type: 'position',
                 position: { x: playerGroup.position.x, y: playerGroup.position.y, z: playerGroup.position.z },
@@ -2271,7 +2243,7 @@
         }
         function sendP2PChat(text) {
           dataChannels.forEach((channel, peerId) => {
-            if (channel && channel.readyState === 'open') {
+            if (channel.readyState === 'open') {
               channel.send(JSON.stringify({
                 type: 'chat',
                 username: walletAddress.slice(0,6) + '...' + walletAddress.slice(-4),
@@ -2290,8 +2262,9 @@
         // Multiplayer System
         const otherPlayers = new Map();
         let myPlayerId = null;
-        let myColor = '#00ff41'; // Default color
+        let myColor = '#00ccff'; // Default color
         let updateInterval = null;
+        let heartbeatInterval = null;
         let cleanupInterval = null;
         // Wallet Connection Functions
         async function connectPhantom() {
@@ -2371,8 +2344,13 @@
             localStorage.removeItem('walletAddress');
             localStorage.removeItem('walletBalance');
             localStorage.removeItem('lastLogin');
+            // Cleanup Firebase
+            if (myPlayerId) {
+                database.ref(`players/${myPlayerId}`).remove();
+            }
             // Clear intervals
             if (updateInterval) clearInterval(updateInterval);
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
             if (cleanupInterval) clearInterval(cleanupInterval);
             // Close all peers
             peers.forEach(pc => pc.close());
@@ -2427,109 +2405,96 @@
         // Set up wallet button listeners
         document.getElementById('connectPhantom').addEventListener('click', connectPhantom);
         document.getElementById('disconnectBtn').addEventListener('click', disconnectWallet);
-        // Initialize player
+        // Initialize player in Firebase
         function initializePlayer() {
-            // Show multiplayer UI
-            document.getElementById('colorPickerIcon').classList.add('visible');
-            document.getElementById('playerCount').classList.add('visible');
-            document.getElementById('p2pConnect').style.display = 'block';
-            // Start position updates
-            startPositionUpdates();
-            // Start player cleanup
-            startPlayerCleanup();
-            // Set up P2P UI listeners
-            document.getElementById('createOffer').addEventListener('click', async () => {
-                const peerId = document.getElementById('peerId').value;
-                if (!peerId) return alert('Enter peer ID');
-                try {
-                    const offerJson = await createOfferForPeer(peerId);
-                    document.getElementById('sdpOffer').value = offerJson;
-                    console.log('Offer created for ' + peerId);
-                    // Create player placeholder
-                    createOtherPlayer(peerId, '#ffffff', {x:0,y:0,z:0}, 0);
-                } catch (err) {
-                    console.error('Error creating offer:', err);
-                    alert('Error creating offer');
-                }
-            });
-            document.getElementById('setOffer').addEventListener('click', async () => {
-                const peerId = document.getElementById('peerId').value;
-                const offerStr = document.getElementById('sdpOffer').value;
-                if (!peerId || !offerStr) return alert('Enter peer ID and offer');
-                try {
-                    const answerJson = await setOfferAndCreateAnswer(peerId, offerStr);
-                    document.getElementById('sdpAnswer').value = answerJson;
-                    console.log('Answer created for ' + peerId);
-                    // Create player placeholder
-                    createOtherPlayer(peerId, '#ffffff', {x:0,y:0,z:0}, 0);
-                } catch (err) {
-                    console.error('Error setting offer:', err);
-                    alert('Error setting offer');
-                }
-            });
-            document.getElementById('setAnswer').addEventListener('click', async () => {
-                const peerId = document.getElementById('peerId').value;
-                const answerStr = document.getElementById('sdpAnswer').value;
-                if (!peerId || !answerStr) return alert('Enter peer ID and answer');
-                try {
-                    await setAnswerForPeer(peerId, answerStr);
-                    console.log('Answer set for ' + peerId);
-                } catch (err) {
-                    console.error('Error setting answer:', err);
-                    alert('Error setting answer');
-                }
-            });
-            // Update nearby count
-            setInterval(() => {
-                let count = 0;
-                otherPlayers.forEach(player => {
-                    const dx = player.group.position.x - playerGroup.position.x;
-                    const dz = player.group.position.z - playerGroup.position.z;
-                    if (Math.sqrt(dx*dx + dz*dz) <= CONFIG.PROXIMITY_RANGE) count++;
-                });
-                document.getElementById('nearbyCount').textContent = count + ' nearby';
-            }, 1000);
+            try {
+                // Show multiplayer UI
+                document.getElementById('colorPickerIcon').classList.add('visible');
+                document.getElementById('playerCount').classList.add('visible');
+                // Start position updates (P2P)
+                startPositionUpdates();
+                // Start cleanup
+                startPlayerCleanup();
+                // Start heartbeat to Firebase
+                startHeartbeat();
+                // Subscribe to players for discovery
+                subscribeToPlayers();
+                // Load existing players
+                loadExistingPlayers();
+                // Periodically manage connections
+                setInterval(manageP2PConnections, 5000);
+            } catch (error) {
+                console.error('Error in initializePlayer:', error);
+            }
         }
-        // Full mesh P2P: Connect to all players
-        function manageP2PConnections() {
-          // Since manual, no auto connect
+        function subscribeToPlayers() {
+          database.ref('players').on('child_added', (snapshot) => {
+            const peerId = snapshot.key;
+            const data = snapshot.val();
+            if (peerId !== myPlayerId) {
+              createOtherPlayer(peerId, data.color || '#ffffff', { x: 0, y: 0, z: 0 }, 0);
+              initiateP2P(peerId);
+              updatePlayerCount();
+            }
+          });
+          database.ref('players').on('child_removed', (snapshot) => {
+            const peerId = snapshot.key;
+            if (peerId !== myPlayerId) {
+              removeOtherPlayer(peerId);
+              const pc = peers.get(peerId);
+              if (pc) pc.close();
+              peers.delete(peerId);
+              dataChannels.delete(peerId);
+              updatePlayerCount();
+            }
+          });
+          database.ref('players').on('child_changed', (snapshot) => {
+            const peerId = snapshot.key;
+            const data = snapshot.val();
+            if (peerId !== myPlayerId) {
+              updateOtherPlayerColor(peerId, data.color);
+            }
+          });
         }
-        // Full P2P position updates
-        function startPositionUpdates() {
-          updateInterval = setInterval(() => {
-            sendP2PPosition();
-          }, CONFIG.POSITION_UPDATE_INTERVAL);
-        }
-        // Full P2P chat
-        async function sendMessage(text) {
-          if (!text || !text.trim()) return;
-          if (!walletConnected) return;
-          sendP2PChat(text);
-          console.log('Message sent via P2P:', text);
-          document.getElementById('chatInput').value = '';
-          toggleChatInput(false);
-        }
-        // Cleanup using P2P and timeout
-        function startPlayerCleanup() {
-          cleanupInterval = setInterval(() => {
-            const now = Date.now();
-            otherPlayers.forEach((player, peerId) => {
-              if (now - player.lastUpdate > 15000) {
-                removeOtherPlayer(peerId);
-                const pc = peers.get(peerId);
-                if (pc) pc.close();
-                peers.delete(peerId);
-                dataChannels.delete(peerId);
+        async function loadExistingPlayers() {
+          const snapshot = await database.ref('players').once('value');
+          const players = snapshot.val();
+          if (players) {
+            Object.keys(players).forEach(peerId => {
+              if (peerId !== myPlayerId) {
+                createOtherPlayer(peerId, players[peerId].color || '#ffffff', { x: 0, y: 0, z: 0 }, 0);
+                answerP2P(peerId); // Listen for offers if initiator
                 updatePlayerCount();
               }
             });
-          }, 5000);
+          }
+        }
+        function startHeartbeat() {
+          heartbeatInterval = setInterval(() => {
+            database.ref(`players/${myPlayerId}`).update({
+              last_seen: firebase.database.ServerValue.TIMESTAMP,
+              color: myColor
+            });
+          }, CONFIG.HEARTBEAT_INTERVAL);
+        }
+        function manageP2PConnections() {
+          database.ref('players').once('value').then(snapshot => {
+            const players = snapshot.val();
+            if (players) {
+              Object.keys(players).forEach(peerId => {
+                if (peerId !== myPlayerId && !peers.has(peerId)) {
+                  initiateP2P(peerId);
+                }
+              });
+            }
+          });
         }
         // Clean up on page unload
         window.addEventListener('beforeunload', () => {
+            database.ref(`players/${myPlayerId}`).remove();
             if (updateInterval) clearInterval(updateInterval);
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
             if (cleanupInterval) clearInterval(cleanupInterval);
-            peers.forEach(pc => pc.close());
         });
         function createOtherPlayer(peerId, color, position, rotation) {
             if (otherPlayers.has(peerId)) return;
@@ -2696,7 +2661,6 @@
                             currentColor.r < 0.3 && currentColor.g > 0.7 && currentColor.b > 0.7) {
                             child.material.color = new THREE.Color(color);
                             child.material.emissive = new THREE.Color(color);
-                            child.material.emissiveIntensity = 0.3;
                         }
                     }
                 });
@@ -2724,7 +2688,7 @@
             }
             updatePlayerCount();
         }
-        // Chat handled via P2P
+        // Chat handled via P2P, no Supabase
         // Set up chat UI listeners
         document.getElementById('sendBtn').addEventListener('click', () => {
             const text = document.getElementById('chatInput').value;
@@ -2740,29 +2704,21 @@
             document.getElementById('playerCount').textContent = `Players: ${otherPlayers.size + 1}`;
         }
         // Color picker functionality
-        colorInput.addEventListener('change', (e) => {
+        colorInput.addEventListener('change', async (e) => {
             const color = e.target.value;
             myColor = color;
-            // Update own player color
+            // Update player body color if it exists
             if (playerBody) {
                 playerBody.traverse((child) => {
                     if (child.isMesh) {
-                        const currentColor = child.material.color;
-                        if (currentColor.r > 0.5 && currentColor.g < 0.5 ||
-                            currentColor.r < 0.3 && currentColor.g > 0.7 && currentColor.b > 0.7) {
-                            child.material.color = new THREE.Color(color);
-                            child.material.emissive = new THREE.Color(color);
-                        }
+                        child.material.color.setStyle(color);
+                        child.material.emissive.setStyle(color);
                     }
                 });
             }
-            // Send color to all peers
-            dataChannels.forEach((channel) => {
-                if (channel.readyState === 'open') {
-                    channel.send(JSON.stringify({ type: 'color', color: color }));
-                }
-            });
-            // Close popup
+            // Update in Firebase
+            database.ref(`players/${myPlayerId}/color`).set(color);
+            // Close popup after selecting
             colorPickerOpen = false;
             colorPickerPopup.classList.remove('visible');
         });
@@ -2813,7 +2769,7 @@
             if (isMoving) {
                 const newX = playerGroup.position.x + playerVelocity.x;
                 const newZ = playerGroup.position.z + playerVelocity.z;
-                if (!checkCollision(newX, newZ)) {
+                if (!checkCollision(newX, newZ) ) {
                     playerGroup.position.x = newX;
                     playerGroup.position.z = newZ;
                     // Smooth rotation towards movement direction
