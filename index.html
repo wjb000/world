@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -11,7 +10,6 @@
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             overflow: hidden;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -20,19 +18,16 @@
             opacity: 0;
             animation: fadeIn 0.3s forwards;
         }
-
         @keyframes fadeIn {
             to {
                 opacity: 1;
             }
         }
-
         canvas {
             display: block;
             width: 100%;
             height: 100vh;
         }
-
         #loading {
             position: absolute;
             top: 0;
@@ -47,12 +42,10 @@
             z-index: 1000;
             transition: opacity 0.5s;
         }
-
         #loading.hidden {
             opacity: 0;
             pointer-events: none;
         }
-
         .loader {
             width: 60px;
             height: 60px;
@@ -61,20 +54,17 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-
         @keyframes spin {
             to {
                 transform: rotate(360deg);
             }
         }
-
         .loading-text {
             color: white;
             margin-top: 20px;
             font-size: 18px;
             letter-spacing: 2px;
         }
-
         #instructions {
             position: absolute;
             top: 20px;
@@ -92,7 +82,6 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-
         #siteTitle {
             position: absolute;
             top: 20px;
@@ -107,7 +96,6 @@
             box-shadow: 0 0 30px rgba(0, 204, 255, 0.6), 0 0 60px rgba(0, 204, 255, 0.3);
             backdrop-filter: blur(10px);
         }
-
         #siteTitle h1 {
             margin: 0;
             font-size: 36px;
@@ -119,7 +107,6 @@
                 0 0 30px rgba(0, 204, 255, 0.4);
             animation: titleGlow 2s ease-in-out infinite;
         }
-
         #siteTitle p {
             margin: 5px 0 0 0;
             font-size: 14px;
@@ -128,9 +115,7 @@
                 0 0 5px rgba(0, 204, 255, 0.5),
                 0 0 10px rgba(0, 204, 255, 0.3);
         }
-
         @keyframes titleGlow {
-
             0%,
             100% {
                 text-shadow:
@@ -138,7 +123,6 @@
                     0 0 20px rgba(0, 204, 255, 0.6),
                     0 0 30px rgba(0, 204, 255, 0.4);
             }
-
             50% {
                 text-shadow:
                     0 0 20px rgba(0, 204, 255, 1),
@@ -146,7 +130,6 @@
                     0 0 40px rgba(0, 204, 255, 0.6);
             }
         }
-
         #joystick {
             position: absolute;
             bottom: 80px;
@@ -161,7 +144,6 @@
             z-index: 100;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
-
         #joystick-knob {
             position: absolute;
             width: 60px;
@@ -175,42 +157,33 @@
             pointer-events: none;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
         }
-
         .desktop-only {
             display: inline;
         }
-
         .mobile-only {
             display: none;
         }
-
         @media (max-width: 768px) {
             #joystick {
                 display: block;
             }
-
             #instructions {
                 font-size: 12px;
                 padding: 10px 15px;
                 top: 10px;
             }
-
             .desktop-only {
                 display: none;
             }
-
             .mobile-only {
                 display: inline;
             }
-
             #loading {
                 padding: 10px;
             }
-
             .loading-text {
                 font-size: 14px;
             }
-
             #siteTitle {
                 padding: 6px 8px;
                 top: 10px;
@@ -218,16 +191,13 @@
                 border-width: 2px;
                 max-width: 120px;
             }
-
             #siteTitle h1 {
                 font-size: 16px;
             }
-
             #siteTitle p {
                 font-size: 8px;
             }
         }
-
         @media (max-width: 480px) {
             #joystick {
                 bottom: 60px;
@@ -235,28 +205,23 @@
                 width: 120px;
                 height: 120px;
             }
-
             #instructions {
                 font-size: 11px;
                 padding: 8px 12px;
             }
-
             #siteTitle {
                 padding: 5px 6px;
                 top: 8px;
                 left: 2px;
                 max-width: 110px;
             }
-
             #siteTitle h1 {
                 font-size: 14px;
             }
-
             #siteTitle p {
                 font-size: 7px;
             }
         }
-
         /* Loot item popup - shared styles */
         .lootPopup {
             position: fixed;
@@ -272,81 +237,68 @@
             min-width: 300px;
             pointer-events: none;
         }
-
         .lootPopup.visible {
             display: block;
             animation: popupBounce 0.5s ease;
         }
-
         .lootPopup button {
             pointer-events: all;
         }
-
         /* Gold/legendary popup for iPhone */
         #lootPopup {
             background: linear-gradient(135deg, rgba(255, 215, 0, 0.95), rgba(255, 170, 0, 0.95));
             border-color: #ffd700;
             box-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 215, 0, 0.4);
         }
-
         /* Purple/epic popup for Apple Watch */
         #lootPopup2 {
             background: linear-gradient(135deg, rgba(138, 43, 226, 0.95), rgba(75, 0, 130, 0.95));
             border-color: #9370db;
             box-shadow: 0 0 30px rgba(138, 43, 226, 0.8), 0 0 60px rgba(138, 43, 226, 0.4);
         }
-
         /* Green/emerald popup for Resume */
         #lootPopup3 {
             background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95));
             border-color: #10b981;
             box-shadow: 0 0 30px rgba(16, 185, 129, 0.8), 0 0 60px rgba(16, 185, 129, 0.4);
         }
-
         /* Orange popup for GitHub */
         #lootPopup4 {
             background: linear-gradient(135deg, rgba(249, 115, 22, 0.95), rgba(234, 88, 12, 0.95));
             border-color: #f97316;
             box-shadow: 0 0 30px rgba(249, 115, 22, 0.8), 0 0 60px rgba(249, 115, 22, 0.4);
         }
-
         /* Blue/cyan popup for BOB Robot Project */
         #lootPopupBobProject {
             background: linear-gradient(135deg, rgba(6, 182, 212, 0.95), rgba(8, 145, 178, 0.95));
             border-color: #06b6d4;
             box-shadow: 0 0 30px rgba(6, 182, 212, 0.8), 0 0 60px rgba(6, 182, 212, 0.4);
         }
-
         /* Coral/orange popup for AGV Project */
         #agvPopup {
             background: linear-gradient(135deg, rgba(255, 107, 53, 0.95), rgba(255, 69, 0, 0.95));
             border-color: #ff6b35;
             box-shadow: 0 0 30px rgba(255, 107, 53, 0.8), 0 0 60px rgba(255, 107, 53, 0.4);
         }
-
         /* Pink/magenta popup for Cover Letter */
         #coverLetterPopup {
             background: linear-gradient(135deg, rgba(233, 30, 99, 0.95), rgba(194, 24, 91, 0.95));
             border-color: #e91e63;
             box-shadow: 0 0 30px rgba(233, 30, 99, 0.8), 0 0 60px rgba(233, 30, 99, 0.4);
         }
-
         @keyframes popupBounce {
             0% {
                 transform: translateX(-50%) scale(0.8);
                 opacity: 0;
             }
-
             50% {
                 transform: translateX(-50%) scale(1.05);
             }
-
             100% {
                 transform: translateX(-50%) scale(1);
                 opacity: 1;
             }
         }
-
         .lootPopup h3 {
             margin: 0 0 10px 0;
             color: #fff;
@@ -354,7 +306,6 @@
             text-transform: uppercase;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
-
         .lootPopup p {
             margin: 0 0 15px 0;
             color: #fff;
@@ -362,7 +313,6 @@
             font-weight: bold;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
-
         .lootPopup button {
             background: linear-gradient(135deg, #fff, #ffe);
             color: #000;
@@ -376,37 +326,29 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
             transition: all 0.2s;
         }
-
         #lootPopup button {
             border-color: #ffd700;
         }
-
         #lootPopup2 button {
             border-color: #9370db;
         }
-
         #lootPopup3 button {
             border-color: #10b981;
         }
-
         #lootPopup4 button {
             border-color: #f97316;
         }
-
         #lootPopupBobProject button {
             border-color: #06b6d4;
         }
-
         .lootPopup button:hover {
             transform: scale(1.05);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
             background: linear-gradient(135deg, #ffffaa, #ffff88);
         }
-
         .lootPopup button:active {
             transform: scale(0.95);
         }
-
         /* Password screen */
         #passwordScreen {
             position: fixed;
@@ -421,11 +363,9 @@
             align-items: center;
             z-index: 10000;
         }
-
         #passwordScreen.hidden {
             display: none;
         }
-
         .password-container {
             background: rgba(255, 255, 255, 0.1);
             padding: 40px;
@@ -436,20 +376,17 @@
             text-align: center;
             max-width: 400px;
         }
-
         .password-container h2 {
             color: #fff;
             margin-bottom: 10px;
             font-size: 28px;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
-
         .password-container p {
             color: rgba(255, 255, 255, 0.8);
             margin-bottom: 25px;
             font-size: 14px;
         }
-
         #passwordInput {
             width: 100%;
             padding: 15px;
@@ -462,17 +399,14 @@
             margin-bottom: 15px;
             box-sizing: border-box;
         }
-
         #passwordInput::placeholder {
             color: rgba(255, 255, 255, 0.5);
         }
-
         #passwordInput:focus {
             outline: none;
             border-color: #00ffff;
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
         }
-
         #submitPassword {
             width: 100%;
             padding: 15px;
@@ -486,27 +420,22 @@
             transition: all 0.3s;
             text-transform: uppercase;
         }
-
         #submitPassword:hover {
             transform: scale(1.05);
             box-shadow: 0 4px 20px rgba(0, 255, 255, 0.5);
         }
-
         #submitPassword:active {
             transform: scale(0.95);
         }
-
         .password-error {
             color: #ff6b6b;
             margin-top: 10px;
             font-size: 14px;
             display: none;
         }
-
         .password-error.show {
             display: block;
         }
-
         /* Multiplayer Color Picker - Hidden until 2+ players */
         #colorPickerIcon {
             position: fixed;
@@ -526,18 +455,15 @@
             z-index: 10000;
             opacity: 0;
         }
-
         #colorPickerIcon.visible {
             display: flex;
             opacity: 1;
         }
-
         #colorPickerIcon:hover {
             transform: scale(1.1);
             border-color: #fff;
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
         }
-
         #colorPickerPopup {
             position: fixed;
             bottom: 130px;
@@ -550,11 +476,9 @@
             z-index: 10001;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
         }
-
         #colorPickerPopup.visible {
             display: block;
         }
-
         #playerCount {
             position: fixed;
             top: 20px;
@@ -570,7 +494,6 @@
             opacity: 0;
             transition: opacity 0.3s;
         }
-
         #playerCount.visible {
             display: block;
             opacity: 1;
@@ -592,38 +515,32 @@
             z-index: 10000;
             transition: opacity 0.3s;
         }
-
         #walletScreen.hidden {
             opacity: 0;
             pointer-events: none;
         }
-
         .wallet-container {
             text-align: center;
             color: white;
             max-width: 500px;
             padding: 40px;
         }
-
         .wallet-container h1 {
             font-size: 48px;
             margin-bottom: 20px;
             text-shadow: 0 0 20px #00ff41;
         }
-
         .wallet-container p {
             font-size: 18px;
             color: #aaa;
             margin-bottom: 40px;
         }
-
         .wallet-options {
             display: flex;
             gap: 20px;
             justify-content: center;
             flex-wrap: wrap;
         }
-
         .wallet-btn {
             background: rgba(255,255,255,0.05);
             border: 2px solid #00ff41;
@@ -635,31 +552,26 @@
             font-size: 20px;
             min-width: 180px;
         }
-
         .wallet-btn:hover {
             background: rgba(0,255,65,0.1);
             transform: translateY(-5px);
             box-shadow: 0 10px 30px rgba(0,255,65,0.3);
         }
-
         .wallet-btn div:first-child {
             font-size: 48px;
             margin-bottom: 10px;
         }
     </style>
 </head>
-
 <body>
     <!-- Player Count Display -->
     <div id="playerCount">Players: 1</div>
-
     <!-- Color Picker -->
     <!-- Minimal Color Picker -->
     <div id="colorPickerIcon">🎨</div>
     <div id="colorPickerPopup">
         <input type="color" id="colorInput" value="#00ccff" style="width: 150px; height: 150px; border: none; cursor: pointer; background: transparent;">
     </div>
-
     <script>
         // Color picker collapse/expand toggle
         // Minimal color picker controls
@@ -667,7 +579,6 @@
         const colorPickerPopup = document.getElementById('colorPickerPopup');
         const colorInput = document.getElementById('colorInput');
         let colorPickerOpen = false;
-
         colorPickerIcon.addEventListener('click', () => {
             colorPickerOpen = !colorPickerOpen;
             if (colorPickerOpen) {
@@ -676,7 +587,6 @@
                 colorPickerPopup.classList.remove('visible');
             }
         });
-
         // Close popup when clicking outside
         document.addEventListener('click', (e) => {
             if (!colorPickerIcon.contains(e.target) && !colorPickerPopup.contains(e.target)) {
@@ -685,7 +595,6 @@
             }
         });
     </script>
-
     <!-- Wallet Connection Screen -->
     <div id="walletScreen">
         <div class="wallet-container">
@@ -701,7 +610,6 @@
             <p style="font-size: 12px; color: #666;">Your wallet is your identity in the metaverse</p>
         </div>
     </div>
-
     <!-- HUD Overlay -->
     <div id="hud" style="display: none; position: fixed; top: 20px; left: 20px; color: white; font-family: monospace; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 10px; z-index: 100;">
         <div id="hudWallet" style="margin-bottom: 5px;">Wallet: Loading...</div>
@@ -712,24 +620,19 @@
         <div class="loader"></div>
         <div class="loading-text">LOADING WORLD...</div>
     </div>
-
     <div id="instructions">
         <span class="desktop-only"><strong>WASD</strong> to Move | <strong>SHIFT</strong> to Sprint</span>
         <span class="mobile-only"><strong>Joystick</strong> to Move</span>
     </div>
-
     <!-- Site title removed -->
-
     <div id="joystick">
         <div id="joystick-knob"></div>
     </div>
-
     <!-- Proximity Chat UI - Collapsible -->
     <!-- Minecraft-style Chat Container -->
     <div id="chatContainer" style="display: none; position: fixed; bottom: 10px; left: 10px; width: 400px; max-width: 90vw; z-index: 100;">
         <!-- Messages Display (Always visible) -->
         <div id="chatMessages" style="max-height: 250px; overflow-y: auto; padding: 5px; display: flex; flex-direction: column; gap: 2px;"></div>
-
         <!-- Chat Input Bar (Hidden by default) -->
         <div id="chatInputBar" style="display: none; margin-top: 5px; background: rgba(0, 0, 0, 0.5); padding: 8px; border-radius: 3px;">
             <div style="display: flex; gap: 5px;">
@@ -738,18 +641,15 @@
             </div>
             <div style="margin-top: 4px; color: rgba(255, 255, 255, 0.5); font-size: 10px; font-family: monospace;">Within 50 units · <span id="nearbyCount">0 nearby</span></div>
         </div>
-
         <!-- Open Chat Button -->
         <button id="openChatBtn" style="margin-top: 5px; padding: 6px 12px; background: rgba(0, 0, 0, 0.5); color: white; border: 1px solid rgba(255, 255, 255, 0.3); cursor: pointer; font-size: 12px; font-family: monospace; border-radius: 3px;">Press T to chat</button>
     </div>
-
     <script>
         // Minecraft-style chat controls
         const chatInputBar = document.getElementById('chatInputBar');
         const chatInput = document.getElementById('chatInput');
         const openChatBtn = document.getElementById('openChatBtn');
         let chatOpen = false;
-
         // Toggle chat input
         function toggleChatInput(open) {
             chatOpen = open;
@@ -763,10 +663,8 @@
                 chatInput.value = '';
             }
         }
-
         // Open chat button click
         openChatBtn.addEventListener('click', () => toggleChatInput(true));
-
         // T key to open chat
         document.addEventListener('keydown', (e) => {
             if (e.key === 't' || e.key === 'T') {
@@ -780,7 +678,6 @@
                 toggleChatInput(false);
             }
         });
-
         // Enter key to send message (handled in sendMessage function)
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -788,53 +685,43 @@
             }
         });
     </script>
-
     <!-- Simplified loot popups - all say HELLO WORLD -->
     <div id="lootPopup" class="lootPopup" style="background: rgba(0,0,0,0.95);">
         <h3 style="color: white;">HELLO WORLD</h3>
         <p style="color: white;">Interactive Sign</p>
     </div>
-
     <div id="lootPopup2" class="lootPopup" style="background: rgba(0,0,0,0.95);">
         <h3 style="color: white;">HELLO WORLD</h3>
         <p style="color: white;">Interactive Sign</p>
     </div>
-
     <div id="lootPopup3" class="lootPopup" style="background: rgba(0,0,0,0.95);">
         <h3 style="color: white;">HELLO WORLD</h3>
         <p style="color: white;">Interactive Sign</p>
     </div>
-
     <div id="agvPopup" class="lootPopup agvPopup" style="background: rgba(0,0,0,0.95);">
         <h3 style="color: white;">HELLO WORLD</h3>
         <p style="color: white;">Interactive Sign</p>
     </div>
-
     <div id="lootPopup4" class="lootPopup" style="background: rgba(0,0,0,0.95);">
         <h3 style="color: white;">HELLO WORLD</h3>
         <p style="color: white;">Interactive Sign</p>
     </div>
-
     <div id="coverLetterPopup" class="lootPopup" style="background: rgba(0,0,0,0.95);">
         <h3 style="color: white;">HELLO WORLD</h3>
         <p style="color: white;">Interactive Sign</p>
     </div>
-
     <div id="lootPopupBobProject" class="lootPopup" style="background: rgba(0,0,0,0.95);">
         <h3 style="color: white;">HELLO WORLD</h3>
         <p style="color: white;">Interactive Sign</p>
     </div>
-
     <!-- BOB Robot Project Modal -->
     <div id="bobProjectModal" class="lootPopup"
         style="width: 90vw; max-width: 1400px; height: 90vh; overflow-y: auto; padding: 40px; background: linear-gradient(135deg, #0a0e14, #1a2332); z-index: 10000;">
         <button id="closeBobProject"
             style="position: absolute; top: 20px; right: 20px; font-size: 32px; background: rgba(239,68,68,0.8); border: none; color: white; padding: 15px 25px; cursor: pointer; border-radius: 10px; z-index: 10001;">✕</button>
-
         <h2
             style="font-size: 48px; text-align: center; margin-bottom: 30px; color: #fff; text-shadow: 0 0 20px rgba(6,182,212,0.8);">
             🤖 ROBOT PROJECT</h2>
-
         <!-- Video Demo -->
         <div
             style="position: relative; margin-bottom: 40px; border-radius: 16px; overflow: hidden; background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(8,145,178,0.1)); padding: 4px; box-shadow: 0 0 40px rgba(6,182,212,0.6), inset 0 0 20px rgba(6,182,212,0.1);">
@@ -863,7 +750,6 @@
             </div>
         </div>
         <script src="https://player.vimeo.com/api/player.js"></script>
-
         <!-- Project Description -->
         <div style="background: rgba(0,0,0,0.5); padding: 30px; border-radius: 12px; margin-bottom: 30px;">
             <h3 style="font-size: 32px; color: #a855f7; margin-bottom: 20px;">About BOB</h3>
@@ -875,7 +761,6 @@
                 The project combines web technologies (Three.js, Flask, Socket.io) with embedded systems programming
                 to create a professional robot control interface accessible from any browser.
             </p>
-
             <h4 style="font-size: 24px; color: #06b6d4; margin-top: 30px; margin-bottom: 15px;">Technical Stack</h4>
             <ul style="font-size: 16px; line-height: 2; color: #e0e6ed; list-style: none;">
                 <li>🎮 <strong>Frontend:</strong> HTML5, CSS3, JavaScript</li>
@@ -886,7 +771,6 @@
                 <li>💡 <strong>Features:</strong> LED control, emergency stop, real-time telemetry</li>
             </ul>
         </div>
-
         <!-- Photo Gallery -->
         <div style="margin-bottom: 30px;">
             <h3 style="font-size: 32px; color: #a855f7; margin-bottom: 20px;">Hardware Photos</h3>
@@ -903,7 +787,6 @@
                 -->
             </div>
         </div>
-
         <!-- Source Code Links -->
         <div style="background: rgba(0,0,0,0.5); padding: 30px; border-radius: 12px;">
             <h3 style="font-size: 32px; color: #10b981; margin-bottom: 20px;">📂 Source Code & Documentation</h3>
@@ -931,24 +814,30 @@
             </a>
         </div>
     </div>
-
     <script>
         // BOB Project Modal Controls
         const bobProjectModal = document.getElementById('bobProjectModal');
         const closeBobProject = document.getElementById('closeBobProject');
-
         closeBobProject.addEventListener('click', () => {
             bobProjectModal.classList.remove('visible');
         });
     </script>
-
     <!-- Single BOB Robot Project Popup -->
     <div id="lootPopupBobProject" class="lootPopup" style="z-index: 9999;">
         <h3>🤖 Robot Project</h3>
         <p>BOB Control System</p>
         <button id="openButtonBobProject">VIEW PROJECT</button>
     </div>
-
+    <!-- P2P Connection UI -->
+    <div id="p2pConnect" style="display: none; position: fixed; top: 60px; right: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; color: white; z-index: 100; width: 300px;">
+        <h3>P2P Connection</h3>
+        <input id="peerId" type="text" placeholder="Peer Wallet ID" style="width: 100%; margin-bottom: 10px;">
+        <button id="createOffer">Create Offer (Host)</button>
+        <button id="setOffer">Set Offer and Generate Answer (Client)</button>
+        <textarea id="sdpOffer" placeholder="Offer JSON" style="width: 100%; height: 100px; margin-top: 10px;"></textarea>
+        <textarea id="sdpAnswer" placeholder="Answer JSON" style="width: 100%; height: 100px; margin-top: 10px;"></textarea>
+        <button id="setAnswer">Set Answer (Host)</button>
+    </div>
     <script type="importmap">
     {
         "imports": {
@@ -957,11 +846,9 @@
         }
     }
     </script>
-
     <script type="module">
         // Password protection
         // Password screen removed - now using wallet authentication
-
         import * as THREE from 'three';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -971,14 +858,11 @@
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
         import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
         import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-
         // Loading screen with progress
         const loadingScreen = document.getElementById('loading');
         const loadingText = document.querySelector('.loading-text');
-
         let loadedAssets = 0;
         const totalAssets = 2; // Character and initial setup
-
         function updateLoadingProgress() {
             loadedAssets++;
             loadingText.textContent = `LOADING... ${Math.round((loadedAssets / totalAssets) * 100)}%`;
@@ -988,18 +872,14 @@
                 }, 500);
             }
         }
-
         // Scene setup - Black room with neon lighting
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x000000);
         scene.fog = new THREE.Fog(0x000000, 0, 80);
-
         // Side walls removed - open black void with particles
-
         // Camera
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.set(0, 10, 15);
-
         // Renderer with enhanced settings
         const renderer = new THREE.WebGLRenderer({
             antialias: true,
@@ -1013,12 +893,10 @@
         renderer.toneMappingExposure = 1.2;
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         document.body.appendChild(renderer.domElement);
-
         // Post-processing
         const composer = new EffectComposer(renderer);
         const renderPass = new RenderPass(scene, camera);
         composer.addPass(renderPass);
-
         // Enhanced bloom for better visuals
         const bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
@@ -1027,21 +905,17 @@
             0.85 // Threshold
         );
         composer.addPass(bloomPass);
-
         // Add FXAA anti-aliasing for smoother edges
         const fxaaPass = new ShaderPass(FXAAShader);
         const pixelRatio = renderer.getPixelRatio();
         fxaaPass.material.uniforms['resolution'].value.x = 1 / (window.innerWidth * pixelRatio);
         fxaaPass.material.uniforms['resolution'].value.y = 1 / (window.innerHeight * pixelRatio);
         composer.addPass(fxaaPass);
-
         // Enhanced lighting for black room
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
         scene.add(ambientLight);
-
         const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
         scene.add(hemisphereLight);
-
         // Main directional light - fixed overhead position
         const mainLight = new THREE.DirectionalLight(0xffffff, 1.5);
         mainLight.position.set(0, 80, 10);
@@ -1054,33 +928,26 @@
         mainLight.shadow.mapSize.height = 2048;
         mainLight.shadow.bias = -0.0001;
         scene.add(mainLight);
-
         // Corner accent lights
         const neonLight1 = new THREE.PointLight(0xff00ff, 3, 60);
         neonLight1.position.set(40, 10, 40);
         scene.add(neonLight1);
-
         const neonLight2 = new THREE.PointLight(0x00ffff, 3, 60);
         neonLight2.position.set(-40, 10, -40);
         scene.add(neonLight2);
-
         const neonLight3 = new THREE.PointLight(0xff3366, 3, 60);
         neonLight3.position.set(-40, 10, 40);
         scene.add(neonLight3);
-
         const neonLight4 = new THREE.PointLight(0x00ff88, 3, 60);
         neonLight4.position.set(40, 10, -40);
         scene.add(neonLight4);
-
         // Create circular platform with cyberpunk texture
         const platformRadius = 37.5;
-
         // Create super cool spaceship floor texture
         const textureCanvas = document.createElement('canvas');
         textureCanvas.width = 2048;
         textureCanvas.height = 2048;
         const texCtx = textureCanvas.getContext('2d');
-
         // Sleek dark base with blue glow
         const bgGradient = texCtx.createRadialGradient(1024, 1024, 0, 1024, 1024, 1024);
         bgGradient.addColorStop(0, '#1a2a3a');
@@ -1088,23 +955,19 @@
         bgGradient.addColorStop(1, '#050a10');
         texCtx.fillStyle = bgGradient;
         texCtx.fillRect(0, 0, 2048, 2048);
-
         // Draw futuristic hexagonal tiles
         const hexSize = 60;
         const hexHeight = hexSize * Math.sqrt(3);
-
         for (let row = -2; row < 32; row++) {
             for (let col = -2; col < 32; col++) {
                 const x = col * hexSize * 1.5;
                 const y = row * hexHeight + (col % 2) * (hexHeight / 2);
-
                 // Draw hexagon
                 texCtx.strokeStyle = '#00d9ff';
                 texCtx.lineWidth = 2;
                 texCtx.globalAlpha = 0.6;
                 texCtx.shadowBlur = 10;
                 texCtx.shadowColor = '#00d9ff';
-
                 texCtx.beginPath();
                 for (let i = 0; i < 6; i++) {
                     const angle = (Math.PI / 3) * i;
@@ -1115,7 +978,6 @@
                 }
                 texCtx.closePath();
                 texCtx.stroke();
-
                 // Add glowing center
                 const centerGlow = texCtx.createRadialGradient(x, y, 0, x, y, hexSize * 0.4);
                 centerGlow.addColorStop(0, 'rgba(0, 217, 255, 0.3)');
@@ -1124,23 +986,19 @@
                 texCtx.fill();
             }
         }
-
         texCtx.shadowBlur = 0;
-
         // Draw energy conduits (glowing lines)
         texCtx.strokeStyle = '#00ffaa';
         texCtx.lineWidth = 4;
         texCtx.globalAlpha = 0.8;
         texCtx.shadowBlur = 20;
         texCtx.shadowColor = '#00ffaa';
-
         // Horizontal energy lines
         for (let y = 200; y < 2048; y += 400) {
             texCtx.beginPath();
             texCtx.moveTo(0, y);
             texCtx.lineTo(2048, y);
             texCtx.stroke();
-
             // Add energy pulses
             for (let x = 0; x < 2048; x += 150) {
                 texCtx.fillStyle = '#00ffaa';
@@ -1150,7 +1008,6 @@
                 texCtx.fill();
             }
         }
-
         // Vertical energy lines
         for (let x = 200; x < 2048; x += 400) {
             texCtx.globalAlpha = 0.8;
@@ -1158,7 +1015,6 @@
             texCtx.moveTo(x, 0);
             texCtx.lineTo(x, 2048);
             texCtx.stroke();
-
             // Add energy pulses
             for (let y = 0; y < 2048; y += 150) {
                 texCtx.fillStyle = '#00ffaa';
@@ -1167,9 +1023,7 @@
                 texCtx.fill();
             }
         }
-
         texCtx.shadowBlur = 0;
-
         // Add scanning lines (tech readout effect)
         texCtx.strokeStyle = '#0099ff';
         texCtx.lineWidth = 1;
@@ -1183,7 +1037,6 @@
             texCtx.lineTo(1024 + Math.cos(angle) * 900, 1024 + Math.sin(angle) * 900);
             texCtx.stroke();
         }
-
         // Add tech indicators/lights
         const colors = ['#00ffff', '#ff00ff', '#00ff00', '#ffff00'];
         for (let i = 0; i < 50; i++) {
@@ -1192,7 +1045,6 @@
             const x = 1024 + Math.cos(angle) * dist;
             const y = 1024 + Math.sin(angle) * dist;
             const color = colors[Math.floor(Math.random() * colors.length)];
-
             texCtx.fillStyle = color;
             texCtx.globalAlpha = 0.8;
             texCtx.shadowBlur = 15;
@@ -1200,7 +1052,6 @@
             texCtx.beginPath();
             texCtx.arc(x, y, 4, 0, Math.PI * 2);
             texCtx.fill();
-
             // Small circle around each light
             texCtx.strokeStyle = color;
             texCtx.lineWidth = 1;
@@ -1209,7 +1060,6 @@
             texCtx.arc(x, y, 10, 0, Math.PI * 2);
             texCtx.stroke();
         }
-
         // Add data stream lines
         texCtx.strokeStyle = '#00ccff';
         texCtx.lineWidth = 2;
@@ -1218,7 +1068,6 @@
             const y = Math.random() * 2048;
             const length = Math.random() * 100 + 50;
             const angle = Math.random() * Math.PI * 2;
-
             texCtx.globalAlpha = 0.4;
             texCtx.shadowBlur = 8;
             texCtx.shadowColor = '#00ccff';
@@ -1227,12 +1076,9 @@
             texCtx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
             texCtx.stroke();
         }
-
         texCtx.shadowBlur = 0;
-
         const floorTexture = new THREE.CanvasTexture(textureCanvas);
         floorTexture.needsUpdate = true;
-
         // Create flat circular platform with cyberpunk texture
         const platformGeometry = new THREE.CircleGeometry(platformRadius, 64);
         const platformMaterial = new THREE.MeshStandardMaterial({
@@ -1243,13 +1089,11 @@
             emissiveMap: floorTexture,
             emissiveIntensity: 0.5
         });
-
         const platform = new THREE.Mesh(platformGeometry, platformMaterial);
         platform.rotation.x = -Math.PI / 2;
         platform.position.y = 0;
         platform.receiveShadow = true;
         scene.add(platform);
-
         // Glowing blue ring around the edge
         const ringGeometry = new THREE.RingGeometry(platformRadius - 0.5, platformRadius + 0.5, 64);
         const ringMaterial = new THREE.MeshStandardMaterial({
@@ -1260,28 +1104,23 @@
             opacity: 0.8,
             side: THREE.DoubleSide
         });
-
         const ring = new THREE.Mesh(ringGeometry, ringMaterial);
         ring.rotation.x = -Math.PI / 2;
         ring.position.y = 0.1;
         scene.add(ring);
-
         // Add point lights around the ring for glow effect
         const ringLightCount = 16;
         for (let i = 0; i < ringLightCount; i++) {
             const angle = (i / ringLightCount) * Math.PI * 2;
             const x = Math.cos(angle) * platformRadius;
             const z = Math.sin(angle) * platformRadius;
-
             const light = new THREE.PointLight(0x00ccff, 0.5, 10);
             light.position.set(x, 0.5, z);
             scene.add(light);
         }
-
         // Hovering YouTube thumbnail at edge of platform (loot item style)
         const textureLoader = new THREE.TextureLoader();
         const videoThumbnailGroup = new THREE.Group();
-
         // Create black texture with HELLO WORLD text
         const canvas1 = document.createElement('canvas');
         canvas1.width = 512;
@@ -1303,7 +1142,6 @@
         const thumbnailMesh = new THREE.Mesh(thumbnailGeometry, thumbnailMaterial);
         thumbnailMesh.rotation.x = -Math.PI / 2; // Lay flat on ground
         videoThumbnailGroup.add(thumbnailMesh);
-
         // Add epic glowing border (gold/legendary style)
         const borderGeometry = new THREE.PlaneGeometry(4.4, 2.65);
         const borderMaterial = new THREE.MeshBasicMaterial({
@@ -1317,7 +1155,6 @@
         borderMesh.rotation.x = -Math.PI / 2;
         borderMesh.position.y = -0.05;
         videoThumbnailGroup.add(borderMesh);
-
         // Larger outer glow
         const outerGlowGeometry = new THREE.PlaneGeometry(5.5, 3.5);
         const outerGlowMaterial = new THREE.MeshBasicMaterial({
@@ -1331,22 +1168,18 @@
         outerGlowMesh.rotation.x = -Math.PI / 2;
         outerGlowMesh.position.y = -0.1;
         videoThumbnailGroup.add(outerGlowMesh);
-
         // Label above thumbnail
         const labelCanvas = document.createElement('canvas');
         labelCanvas.width = 512;
         labelCanvas.height = 256;
         const labelCtx = labelCanvas.getContext('2d');
-
         // Background
         labelCtx.fillStyle = 'rgba(0, 0, 0, 0.8)';
         labelCtx.fillRect(0, 0, 512, 256);
-
         // Glowing border
         labelCtx.strokeStyle = '#ffd700';
         labelCtx.lineWidth = 8;
         labelCtx.strokeRect(4, 4, 504, 248);
-
         // Text with glow
         labelCtx.textAlign = 'center';
         labelCtx.textBaseline = 'middle';
@@ -1356,7 +1189,6 @@
         labelCtx.font = 'bold 40px Arial';
         labelCtx.fillText('HELLO', 256, 110);
         labelCtx.fillText('WORLD', 256, 160);
-
         const labelTexture = new THREE.CanvasTexture(labelCanvas);
         const labelMesh = new THREE.Mesh(
             new THREE.PlaneGeometry(4, 2),
@@ -1368,31 +1200,24 @@
         );
         labelMesh.position.y = 3;
         videoThumbnailGroup.add(labelMesh);
-
         // Position at edge of platform
         videoThumbnailGroup.position.set(0, 0.5, -28);
         scene.add(videoThumbnailGroup);
-
         // Add point light for epic glow effect
         const thumbnailLight = new THREE.PointLight(0xffd700, 2, 10);
         thumbnailLight.position.set(0, 1, -28);
         scene.add(thumbnailLight);
-
         const videoUrl = 'https://www.youtube.com/watch?v=sZDZNAuZfM8';
         const thumbnailPosition = { x: 0, z: -28, radius: 4 };
-
         // Popup management
         const lootPopup = document.getElementById('lootPopup');
         const openButton = document.getElementById('openButton');
-
         // Loot box buttons removed - no longer needed
         // openButton.addEventListener('click', () => {
-        //     window.open(videoUrl, '_blank');
+        // window.open(videoUrl, '_blank');
         // });
-
         // SECOND LOOT ITEM - Apple Watch SE Teardown (PURPLE/EPIC THEME)
         const videoThumbnailGroup2 = new THREE.Group();
-
         // Create black texture with HELLO WORLD text
         const canvas2 = document.createElement('canvas');
         canvas2.width = 512;
@@ -1412,7 +1237,6 @@
         }));
         thumbnailMesh2.rotation.x = -Math.PI / 2;
         videoThumbnailGroup2.add(thumbnailMesh2);
-
         // Add purple epic glowing border
         const borderMesh2 = new THREE.Mesh(borderGeometry.clone(), new THREE.MeshBasicMaterial({
             color: 0x9370db,
@@ -1424,7 +1248,6 @@
         borderMesh2.rotation.x = -Math.PI / 2;
         borderMesh2.position.y = -0.05;
         videoThumbnailGroup2.add(borderMesh2);
-
         // Purple outer glow
         const outerGlowMesh2 = new THREE.Mesh(outerGlowGeometry.clone(), new THREE.MeshBasicMaterial({
             color: 0x8a2be2,
@@ -1436,13 +1259,11 @@
         outerGlowMesh2.rotation.x = -Math.PI / 2;
         outerGlowMesh2.position.y = -0.1;
         videoThumbnailGroup2.add(outerGlowMesh2);
-
         // Label for Apple Watch
         const labelCanvas2 = document.createElement('canvas');
         labelCanvas2.width = 512;
         labelCanvas2.height = 256;
         const labelCtx2 = labelCanvas2.getContext('2d');
-
         labelCtx2.fillStyle = 'rgba(0, 0, 0, 0.8)';
         labelCtx2.fillRect(0, 0, 512, 256);
         labelCtx2.strokeStyle = '#9370db';
@@ -1456,7 +1277,6 @@
         labelCtx2.font = 'bold 38px Arial';
         labelCtx2.fillText('HELLO', 256, 110);
         labelCtx2.fillText('WORLD', 256, 160);
-
         const labelTexture2 = new THREE.CanvasTexture(labelCanvas2);
         const labelMesh2 = new THREE.Mesh(
             new THREE.PlaneGeometry(4, 2),
@@ -1468,47 +1288,37 @@
         );
         labelMesh2.position.y = 3;
         videoThumbnailGroup2.add(labelMesh2);
-
         // Position at different location on edge
         videoThumbnailGroup2.position.set(-24, 0.5, -18);
         scene.add(videoThumbnailGroup2);
-
         const thumbnailLight2 = new THREE.PointLight(0x9370db, 2, 10);
         thumbnailLight2.position.set(-24, 1, -18);
         scene.add(thumbnailLight2);
-
         const videoUrl2 = 'https://www.youtube.com/watch?v=maRxFHxgG7c';
         const thumbnailPosition2 = { x: -24, z: -18, radius: 4 };
-
         // Second popup management
         const lootPopup2 = document.getElementById('lootPopup2');
         const openButton2 = document.getElementById('openButton2');
-
         // openButton2.addEventListener('click', () => {
-        //     window.open(videoUrl2, '_blank');
+        // window.open(videoUrl2, '_blank');
         // });
-
         // AGV LOOT ITEM - Remote Control AGV Project (ORANGE/CORAL THEME)
         const agvGroup = new THREE.Group();
-
         // Create AGV project canvas texture
         const agvCanvas = document.createElement('canvas');
         agvCanvas.width = 1024;
         agvCanvas.height = 576;
         const agvCtx = agvCanvas.getContext('2d');
-
         // Dark background with orange gradient
         const agvGradient = agvCtx.createLinearGradient(0, 0, 1024, 576);
         agvGradient.addColorStop(0, '#1a1a1a');
         agvGradient.addColorStop(1, '#2d1810');
         agvCtx.fillStyle = agvGradient;
         agvCtx.fillRect(0, 0, 1024, 576);
-
         // Orange border
         agvCtx.strokeStyle = '#ff6b35';
         agvCtx.lineWidth = 12;
         agvCtx.strokeRect(6, 6, 1012, 564);
-
         // AGV icon/symbol
         agvCtx.fillStyle = '#ff6b35';
         agvCtx.font = 'bold 180px Arial';
@@ -1517,12 +1327,10 @@
         agvCtx.shadowBlur = 30;
         agvCtx.shadowColor = '#ff6b35';
         agvCtx.fillText('🚗', 512, 220);
-
         // Project title
         agvCtx.font = 'bold 52px Arial';
         agvCtx.fillText('REMOTE CONTROL', 512, 400);
         agvCtx.fillText('HELLO WORLD', 512, 470);
-
         const agvTexture = new THREE.CanvasTexture(agvCanvas);
         const agvMesh = new THREE.Mesh(thumbnailGeometry.clone(), new THREE.MeshBasicMaterial({
             map: agvTexture,
@@ -1531,7 +1339,6 @@
         }));
         agvMesh.rotation.x = -Math.PI / 2;
         agvGroup.add(agvMesh);
-
         // Orange glowing border
         const agvBorderMesh = new THREE.Mesh(borderGeometry.clone(), new THREE.MeshBasicMaterial({
             color: 0xff6b35,
@@ -1543,7 +1350,6 @@
         agvBorderMesh.rotation.x = -Math.PI / 2;
         agvBorderMesh.position.y = -0.05;
         agvGroup.add(agvBorderMesh);
-
         // Orange outer glow
         const agvOuterGlow = new THREE.Mesh(outerGlowGeometry.clone(), new THREE.MeshBasicMaterial({
             color: 0xff4500,
@@ -1555,13 +1361,11 @@
         agvOuterGlow.rotation.x = -Math.PI / 2;
         agvOuterGlow.position.y = -0.1;
         agvGroup.add(agvOuterGlow);
-
         // Floating sign for AGV
         const agvLabelCanvas = document.createElement('canvas');
         agvLabelCanvas.width = 512;
         agvLabelCanvas.height = 256;
         const agvLabelCtx = agvLabelCanvas.getContext('2d');
-
         agvLabelCtx.fillStyle = 'rgba(0, 0, 0, 0.8)';
         agvLabelCtx.fillRect(0, 0, 512, 256);
         agvLabelCtx.strokeStyle = '#ff6b35';
@@ -1575,7 +1379,6 @@
         agvLabelCtx.font = 'bold 32px Arial';
         agvLabelCtx.fillText('REMOTE CONTROL', 256, 90);
         agvLabelCtx.fillText('HELLO WORLD', 256, 140);
-
         const agvLabelTexture = new THREE.CanvasTexture(agvLabelCanvas);
         const agvLabelMesh = new THREE.Mesh(
             new THREE.PlaneGeometry(4, 2),
@@ -1587,38 +1390,29 @@
         );
         agvLabelMesh.position.y = 3;
         agvGroup.add(agvLabelMesh);
-
         // Position between iPhone and Resume
         agvGroup.position.set(12, 0.5, -23);
         scene.add(agvGroup);
-
         const agvLight = new THREE.PointLight(0xff6b35, 2, 10);
         agvLight.position.set(12, 1, -23);
         scene.add(agvLight);
-
         const agvPosition = { x: 12, z: -23, radius: 4 };
-
         // AGV popup management
         const agvPopup = document.getElementById('agvPopup');
         const agvOpenBtn = document.getElementById('agvOpenBtn');
-
         // agvOpenBtn.addEventListener('click', () => {
-        //     window.open('agv-control.html', '_blank');
+        // window.open('agv-control.html', '_blank');
         // });
-
         // THIRD LOOT ITEM - Resume PDF (GREEN/EMERALD THEME)
         const videoThumbnailGroup3 = new THREE.Group();
-
         // Create resume document texture
         const resumeCanvas = document.createElement('canvas');
         resumeCanvas.width = 1024;
         resumeCanvas.height = 576; // 16:9 aspect ratio
         const resumeCtx = resumeCanvas.getContext('2d');
-
         // White paper background
         resumeCtx.fillStyle = '#ffffff';
         resumeCtx.fillRect(0, 0, 1024, 576);
-
         // Add document lines to make it look like a resume
         // Black background with HELLO WORLD
         resumeCtx.fillStyle = '#000000';
@@ -1627,7 +1421,6 @@
         resumeCtx.font = 'bold 72px Arial';
         resumeCtx.textAlign = 'center';
         resumeCtx.fillText('HELLO WORLD', 512, 288);
-
         const resumeTexture = new THREE.CanvasTexture(resumeCanvas);
         const thumbnailMesh3 = new THREE.Mesh(thumbnailGeometry.clone(), new THREE.MeshBasicMaterial({
             map: resumeTexture,
@@ -1636,7 +1429,6 @@
         }));
         thumbnailMesh3.rotation.x = -Math.PI / 2;
         videoThumbnailGroup3.add(thumbnailMesh3);
-
         // Add green emerald glowing border
         const borderMesh3 = new THREE.Mesh(borderGeometry.clone(), new THREE.MeshBasicMaterial({
             color: 0x10b981,
@@ -1648,7 +1440,6 @@
         borderMesh3.rotation.x = -Math.PI / 2;
         borderMesh3.position.y = -0.05;
         videoThumbnailGroup3.add(borderMesh3);
-
         // Green outer glow
         const outerGlowMesh3 = new THREE.Mesh(outerGlowGeometry.clone(), new THREE.MeshBasicMaterial({
             color: 0x059669,
@@ -1660,13 +1451,11 @@
         outerGlowMesh3.rotation.x = -Math.PI / 2;
         outerGlowMesh3.position.y = -0.1;
         videoThumbnailGroup3.add(outerGlowMesh3);
-
         // Label for Resume
         const labelCanvas3 = document.createElement('canvas');
         labelCanvas3.width = 512;
         labelCanvas3.height = 256;
         const labelCtx3 = labelCanvas3.getContext('2d');
-
         labelCtx3.fillStyle = 'rgba(0, 0, 0, 0.8)';
         labelCtx3.fillRect(0, 0, 512, 256);
         labelCtx3.strokeStyle = '#10b981';
@@ -1680,7 +1469,6 @@
         labelCtx3.font = 'bold 38px Arial';
         labelCtx3.fillText('HELLO', 256, 110);
         labelCtx3.fillText('WORLD', 256, 160);
-
         const labelTexture3 = new THREE.CanvasTexture(labelCanvas3);
         const labelMesh3 = new THREE.Mesh(
             new THREE.PlaneGeometry(4, 2),
@@ -1692,93 +1480,75 @@
         );
         labelMesh3.position.y = 3;
         videoThumbnailGroup3.add(labelMesh3);
-
         // Position at different location on edge
         videoThumbnailGroup3.position.set(24, 0.5, -18);
         scene.add(videoThumbnailGroup3);
-
         const thumbnailLight3 = new THREE.PointLight(0x10b981, 2, 10);
         thumbnailLight3.position.set(24, 1, -18);
         scene.add(thumbnailLight3);
-
         const resumeUrl = 'RESUME2026.pdf';
         const thumbnailPosition3 = { x: 24, z: -18, radius: 4 };
-
         // Third popup management
         const lootPopup3 = document.getElementById('lootPopup3');
         const openButton3 = document.getElementById('openButton3');
-
         // openButton3.addEventListener('click', () => {
-        //     window.open(resumeUrl, '_blank');
+        // window.open(resumeUrl, '_blank');
         // });
-
         // FOURTH LOOT ITEM - GitHub Profile (ORANGE THEME)
         const videoThumbnailGroup4 = new THREE.Group();
-
         // Create GitHub profile texture
         const githubCanvas = document.createElement('canvas');
         githubCanvas.width = 1024;
         githubCanvas.height = 576; // 16:9 aspect ratio
         const githubCtx = githubCanvas.getContext('2d');
-
         // Dark GitHub background
         githubCtx.fillStyle = '#0d1117';
         githubCtx.fillRect(0, 0, 1024, 576);
-
         // GitHub header bar
         githubCtx.fillStyle = '#161b22';
         githubCtx.fillRect(0, 0, 1024, 80);
-
         // Profile avatar circle
         githubCtx.fillStyle = '#30363d';
         githubCtx.beginPath();
         githubCtx.arc(150, 200, 60, 0, Math.PI * 2);
         githubCtx.fill();
-
         // Octocat silhouette in avatar
         githubCtx.fillStyle = '#f97316';
         githubCtx.font = 'bold 60px Arial';
         githubCtx.textAlign = 'center';
         githubCtx.textBaseline = 'middle';
         githubCtx.fillText('🐙', 150, 200);
-
         // Username
         githubCtx.fillStyle = '#c9d1d9';
         githubCtx.font = 'bold 42px Arial';
         githubCtx.textAlign = 'left';
         githubCtx.fillText('wjb000', 240, 180);
-
         // Bio lines
         githubCtx.fillStyle = '#8b949e';
         githubCtx.font = '24px Arial';
         githubCtx.fillText('Software Developer', 240, 220);
-
         // Contribution graph bars
         githubCtx.fillStyle = '#f97316';
         for (let i = 0; i < 20; i++) {
             const height = Math.random() * 40 + 10;
             githubCtx.fillRect(50 + i * 45, 330 - height, 35, height);
         }
-
         // Stats boxes
         githubCtx.fillStyle = '#21262d';
         githubCtx.fillRect(50, 380, 280, 150);
         githubCtx.fillRect(360, 380, 280, 150);
         githubCtx.fillRect(670, 380, 280, 150);
-
         githubCtx.fillStyle = '#f97316';
         githubCtx.font = 'bold 36px Arial';
         githubCtx.textAlign = 'center';
         githubCtx.fillText('Repos', 190, 430);
         githubCtx.fillText('Stars', 500, 430);
         githubCtx.fillText('Projects', 810, 430);
-
         // GitHub logo/text
         githubCtx.fillStyle = '#f97316';
         githubCtx.font = 'bold 48px Arial';
         githubCtx.textAlign = 'center';
         githubCtx.fillText('GITHUB', 512, 50);
-
         const githubTexture = new THREE.CanvasTexture(githubCanvas);
         const thumbnailMesh4 = new THREE.Mesh(thumbnailGeometry.clone(), new THREE.MeshBasicMaterial({
             map: githubTexture,
@@ -1787,7 +1557,6 @@
         }));
         thumbnailMesh4.rotation.x = -Math.PI / 2;
         videoThumbnailGroup4.add(thumbnailMesh4);
-
         // Add orange glowing border
         const borderMesh4 = new THREE.Mesh(borderGeometry.clone(), new THREE.MeshBasicMaterial({
             color: 0xf97316,
@@ -1799,7 +1568,6 @@
         borderMesh4.rotation.x = -Math.PI / 2;
         borderMesh4.position.y = -0.05;
         videoThumbnailGroup4.add(borderMesh4);
-
         // Orange outer glow
         const outerGlowMesh4 = new THREE.Mesh(outerGlowGeometry.clone(), new THREE.MeshBasicMaterial({
             color: 0xea580c,
@@ -1811,13 +1579,11 @@
         outerGlowMesh4.rotation.x = -Math.PI / 2;
         outerGlowMesh4.position.y = -0.1;
         videoThumbnailGroup4.add(outerGlowMesh4);
-
         // Label for GitHub
         const labelCanvas4 = document.createElement('canvas');
         labelCanvas4.width = 512;
         labelCanvas4.height = 256;
         const labelCtx4 = labelCanvas4.getContext('2d');
-
         labelCtx4.fillStyle = 'rgba(0, 0, 0, 0.8)';
         labelCtx4.fillRect(0, 0, 512, 256);
         labelCtx4.strokeStyle = '#f97316';
@@ -1831,7 +1597,6 @@
         labelCtx4.font = 'bold 38px Arial';
         labelCtx4.fillText('HELLO', 256, 110);
         labelCtx4.fillText('WORLD', 256, 160);
-
         const labelTexture4 = new THREE.CanvasTexture(labelCanvas4);
         const labelMesh4 = new THREE.Mesh(
             new THREE.PlaneGeometry(4, 2),
@@ -1843,42 +1608,32 @@
         );
         labelMesh4.position.y = 3;
         videoThumbnailGroup4.add(labelMesh4);
-
         // Position at different location on edge (to the right of resume)
         videoThumbnailGroup4.position.set(28, 0.5, -8);
         scene.add(videoThumbnailGroup4);
-
         const thumbnailLight4 = new THREE.PointLight(0xf97316, 2, 10);
         thumbnailLight4.position.set(28, 1, -8);
         scene.add(thumbnailLight4);
-
         const githubUrl = 'https://github.com/wjb000';
         const thumbnailPosition4 = { x: 28, z: -8, radius: 4 };
-
         // Fourth popup management
         const lootPopup4 = document.getElementById('lootPopup4');
         const openButton4 = document.getElementById('openButton4');
-
         // openButton4.addEventListener('click', () => {
-        //     window.open(githubUrl, '_blank');
+        // window.open(githubUrl, '_blank');
         // });
-
         // ========== BOB ROBOT PROJECT LOOT BOX (BLUE) ==========
-
         const bobProjectGroup = new THREE.Group();
-
         const bobProjectCanvas = document.createElement('canvas');
         bobProjectCanvas.width = 1024;
         bobProjectCanvas.height = 576;
         const bobProjectCtx = bobProjectCanvas.getContext('2d');
-
         // Blue gradient background
         const bobGradient = bobProjectCtx.createLinearGradient(0, 0, 1024, 576);
         bobGradient.addColorStop(0, '#0a1929');
         bobGradient.addColorStop(1, '#0c2340');
         bobProjectCtx.fillStyle = bobGradient;
         bobProjectCtx.fillRect(0, 0, 1024, 576);
-
         bobProjectCtx.fillStyle = '#06b6d4';
         bobProjectCtx.font = 'bold 72px Arial';
         bobProjectCtx.textAlign = 'center';
@@ -1891,7 +1646,6 @@
         bobProjectCtx.font = '32px Arial';
         bobProjectCtx.fillStyle = '#67e8f9';
         bobProjectCtx.fillText('VIEW PROJECT', 512, 480);
-
         const bobProjectTexture = new THREE.CanvasTexture(bobProjectCanvas);
         const bobProjectMesh = new THREE.Mesh(thumbnailGeometry.clone(), new THREE.MeshBasicMaterial({
             map: bobProjectTexture,
@@ -1899,7 +1653,6 @@
         }));
         bobProjectMesh.rotation.x = -Math.PI / 2;
         bobProjectGroup.add(bobProjectMesh);
-
         const bobProjectBorder = new THREE.Mesh(borderGeometry.clone(), new THREE.MeshBasicMaterial({
             color: 0x06b6d4,
             side: THREE.DoubleSide,
@@ -1910,7 +1663,6 @@
         bobProjectBorder.rotation.x = -Math.PI / 2;
         bobProjectBorder.position.y = -0.05;
         bobProjectGroup.add(bobProjectBorder);
-
         const bobProjectGlow = new THREE.Mesh(outerGlowGeometry.clone(), new THREE.MeshBasicMaterial({
             color: 0x0891b2,
             side: THREE.DoubleSide,
@@ -1921,20 +1673,16 @@
         bobProjectGlow.rotation.x = -Math.PI / 2;
         bobProjectGlow.position.y = -0.1;
         bobProjectGroup.add(bobProjectGlow);
-
         // Label above BOB project
         const bobLabelCanvas = document.createElement('canvas');
         bobLabelCanvas.width = 512;
         bobLabelCanvas.height = 256;
         const bobLabelCtx = bobLabelCanvas.getContext('2d');
-
         bobLabelCtx.fillStyle = 'rgba(0, 0, 0, 0.8)';
         bobLabelCtx.fillRect(0, 0, 512, 256);
-
         bobLabelCtx.strokeStyle = '#06b6d4';
         bobLabelCtx.lineWidth = 8;
         bobLabelCtx.strokeRect(4, 4, 504, 248);
-
         bobLabelCtx.textAlign = 'center';
         bobLabelCtx.textBaseline = 'middle';
         bobLabelCtx.shadowBlur = 20;
@@ -1943,7 +1691,6 @@
         bobLabelCtx.font = 'bold 50px Arial';
         bobLabelCtx.fillText('HELLO WORLD', 256, 128);
         bobLabelCtx.fillText('PROJECT', 256, 168);
-
         const bobLabelTexture = new THREE.CanvasTexture(bobLabelCanvas);
         const bobLabelMesh = new THREE.Mesh(
             new THREE.PlaneGeometry(4, 2),
@@ -1956,43 +1703,34 @@
         bobLabelMesh.position.y = 3.5;
         bobLabelMesh.rotation.y = 0;
         bobProjectGroup.add(bobLabelMesh);
-
         bobProjectGroup.position.set(-12, 0.5, -23);
         scene.add(bobProjectGroup);
-
         const bobProjectLight = new THREE.PointLight(0x06b6d4, 2, 10);
         bobProjectLight.position.set(-12, 1, -23);
         scene.add(bobProjectLight);
-
         const bobProjectPosition = { x: -12, z: -23, radius: 4 };
         const lootPopupBobProject = document.getElementById('lootPopupBobProject');
         const openButtonBobProject = document.getElementById('openButtonBobProject');
-
         // openButtonBobProject.addEventListener('click', () => {
-        //     window.open('robot-project.html', '_blank');
+        // window.open('robot-project.html', '_blank');
         // });
-
         // COVER LETTER LOOT ITEM (PINK/MAGENTA THEME)
         const coverLetterGroup = new THREE.Group();
-
         // Create cover letter document canvas
         const coverLetterCanvas = document.createElement('canvas');
         coverLetterCanvas.width = 1024;
         coverLetterCanvas.height = 576;
         const coverLetterCtx = coverLetterCanvas.getContext('2d');
-
         // Pink gradient background
         const coverGradient = coverLetterCtx.createLinearGradient(0, 0, 1024, 576);
         coverGradient.addColorStop(0, '#1a1a1a');
         coverGradient.addColorStop(1, '#2d1828');
         coverLetterCtx.fillStyle = coverGradient;
         coverLetterCtx.fillRect(0, 0, 1024, 576);
-
         // Pink border
         coverLetterCtx.strokeStyle = '#e91e63';
         coverLetterCtx.lineWidth = 12;
         coverLetterCtx.strokeRect(6, 6, 1012, 564);
-
         // Document icon
         coverLetterCtx.fillStyle = '#e91e63';
         coverLetterCtx.font = 'bold 180px Arial';
@@ -2001,12 +1739,10 @@
         coverLetterCtx.shadowBlur = 30;
         coverLetterCtx.shadowColor = '#e91e63';
         coverLetterCtx.fillText('📄', 512, 220);
-
         // Title
         coverLetterCtx.font = 'bold 56px Arial';
         coverLetterCtx.fillText('HELLO WORLD', 512, 390);
         coverLetterCtx.fillText('LETTER', 512, 460);
-
         const coverLetterTexture = new THREE.CanvasTexture(coverLetterCanvas);
         const coverLetterMesh = new THREE.Mesh(thumbnailGeometry.clone(), new THREE.MeshBasicMaterial({
             map: coverLetterTexture,
@@ -2014,7 +1750,6 @@
         }));
         coverLetterMesh.rotation.x = -Math.PI / 2;
         coverLetterGroup.add(coverLetterMesh);
-
         // Pink glowing border
         const coverBorderMesh = new THREE.Mesh(borderGeometry.clone(), new THREE.MeshBasicMaterial({
             color: 0xe91e63,
@@ -2026,7 +1761,6 @@
         coverBorderMesh.rotation.x = -Math.PI / 2;
         coverBorderMesh.position.y = -0.05;
         coverLetterGroup.add(coverBorderMesh);
-
         // Pink outer glow
         const coverOuterGlow = new THREE.Mesh(outerGlowGeometry.clone(), new THREE.MeshBasicMaterial({
             color: 0xc2185b,
@@ -2038,13 +1772,11 @@
         coverOuterGlow.rotation.x = -Math.PI / 2;
         coverOuterGlow.position.y = -0.1;
         coverLetterGroup.add(coverOuterGlow);
-
         // Floating sign for Cover Letter
         const coverLabelCanvas = document.createElement('canvas');
         coverLabelCanvas.width = 512;
         coverLabelCanvas.height = 256;
         const coverLabelCtx = coverLabelCanvas.getContext('2d');
-
         coverLabelCtx.fillStyle = 'rgba(0, 0, 0, 0.8)';
         coverLabelCtx.fillRect(0, 0, 512, 256);
         coverLabelCtx.strokeStyle = '#e91e63';
@@ -2058,7 +1790,6 @@
         coverLabelCtx.font = 'bold 48px Arial';
         coverLabelCtx.fillText('HELLO WORLD', 256, 128);
         coverLabelCtx.fillText('LETTER', 256, 165);
-
         const coverLabelTexture = new THREE.CanvasTexture(coverLabelCanvas);
         const coverLabelMesh = new THREE.Mesh(
             new THREE.PlaneGeometry(4, 2),
@@ -2070,25 +1801,19 @@
         );
         coverLabelMesh.position.y = 3;
         coverLetterGroup.add(coverLabelMesh);
-
         // Position to the left of Apple Watch
         coverLetterGroup.position.set(-30, 0.5, -12);
         scene.add(coverLetterGroup);
-
         const coverLetterLight = new THREE.PointLight(0xe91e63, 2, 10);
         coverLetterLight.position.set(-30, 1, -12);
         scene.add(coverLetterLight);
-
         const coverLetterPosition = { x: -30, z: -12, radius: 4 };
-
         // Cover Letter popup management
         const coverLetterPopup = document.getElementById('coverLetterPopup');
         const openButtonCoverLetter = document.getElementById('openButtonCoverLetter');
-
         // openButtonCoverLetter.addEventListener('click', () => {
-        //     window.open('Cover Letter.pdf', '_blank');
+        // window.open('Cover Letter.pdf', '_blank');
         // });
-
         // Player character container
         const playerGroup = new THREE.Group();
         let playerModel = null;
@@ -2099,17 +1824,14 @@
         let playerBody = null;
         let currentCharacter = 'robot';
         scene.add(playerGroup);
-
         // Robot model URL
         const robotModel = {
             url: 'https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb',
             scale: 0.75,
             rotation: 0
         };
-
         // Initialize GLTF loader
         const loader = new GLTFLoader();
-
         // Load robot character
         loader.load(
             robotModel.url,
@@ -2117,13 +1839,11 @@
                 playerModel = gltf.scene;
                 playerModel.scale.set(robotModel.scale, robotModel.scale, robotModel.scale);
                 playerModel.rotation.y = robotModel.rotation;
-
                 // Enable shadows and apply blue accents
                 playerModel.traverse((child) => {
                     if (child.isMesh) {
                         child.castShadow = true;
                         child.receiveShadow = true;
-
                         if (child.material) {
                             // Change orange/red accents to cyan blue (#00ccff)
                             if (child.material.color) {
@@ -2138,34 +1858,26 @@
                         }
                     }
                 });
-
                 playerGroup.add(playerModel);
                 playerBody = playerModel;
-
                 // Setup animations with full configuration
                 if (gltf.animations && gltf.animations.length) {
                     playerMixer = new THREE.AnimationMixer(playerModel);
-
                     walkAction = null;
                     idleAction = null;
                     runAction = null;
-
                     console.log('Available animations:', gltf.animations.map(a => a.name));
-
                     // Find and configure all animations
                     gltf.animations.forEach((clip) => {
                         const name = clip.name.toLowerCase();
                         const action = playerMixer.clipAction(clip);
-
                         // Critical: Set loop mode to repeat
                         action.setLoop(THREE.LoopRepeat);
                         action.clampWhenFinished = false;
                         action.enable = true;
-
                         // Set timing
                         action.timeScale = 1;
                         action.time = 0;
-
                         if (name.includes('walk')) {
                             walkAction = action;
                             console.log('Found walk animation:', clip.name);
@@ -2177,21 +1889,18 @@
                             console.log('Found run animation:', clip.name);
                         }
                     });
-
                     // Start with idle animation looping
                     if (idleAction) {
                         idleAction.reset();
                         idleAction.setEffectiveWeight(1);
                         idleAction.play();
                     }
-
                     console.log('Animation setup complete:', {
                         walk: !!walkAction,
                         idle: !!idleAction,
                         run: !!runAction
                     });
                 }
-
                 updateLoadingProgress();
                 console.log('Robot loaded!');
             },
@@ -2216,13 +1925,10 @@
                 updateLoadingProgress();
             }
         );
-
         playerGroup.position.set(0, 0, 0);
-
         // Collision objects array
         const collisionObjects = [];
         const buildingModels = [];
-
         // Load sci-fi city buildings
         function loadBuilding(x, z, scale, rotation = 0) {
             loader.load(
@@ -2232,17 +1938,14 @@
                     building.scale.set(scale * 0.01, scale * 0.01, scale * 0.01);
                     building.position.set(x, 0, z);
                     building.rotation.y = rotation;
-
                     building.traverse((child) => {
                         if (child.isMesh) {
                             child.castShadow = true;
                             child.receiveShadow = true;
                         }
                     });
-
                     scene.add(building);
                     buildingModels.push(building);
-
                     // Add collision
                     collisionObjects.push({ x, z, radius: scale * 5 });
                 },
@@ -2253,7 +1956,6 @@
                 }
             );
         }
-
         // Add sci-fi city buildings in a circle
         const buildingPositions = [
             { x: 30, z: 30, scale: 3, rotation: 0 },
@@ -2265,36 +1967,28 @@
             { x: 0, z: 50, scale: 4, rotation: Math.PI / 4 },
             { x: 0, z: -50, scale: 4, rotation: -Math.PI / 4 }
         ];
-
         buildingPositions.forEach(pos => {
             loadBuilding(pos.x, pos.z, pos.scale, pos.rotation);
         });
-
         // Floating platforms removed - were covering characters
-
         // Glowing cubes removed per user request
         const crystals = [];
-
         // Add atmospheric particle system
         const particleCount = 500;
         const particleGeometry = new THREE.BufferGeometry();
         const particlePositions = new Float32Array(particleCount * 3);
         const particleVelocities = [];
-
         for (let i = 0; i < particleCount; i++) {
             particlePositions[i * 3] = (Math.random() - 0.5) * 80;
             particlePositions[i * 3 + 1] = Math.random() * 50;
             particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 80;
-
             particleVelocities.push({
                 x: (Math.random() - 0.5) * 0.02,
                 y: (Math.random() - 0.5) * 0.02,
                 z: (Math.random() - 0.5) * 0.02
             });
         }
-
         particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-
         const particleMaterial = new THREE.PointsMaterial({
             color: 0xffffff,
             size: 0.1,
@@ -2302,26 +1996,21 @@
             opacity: 0.6,
             blending: THREE.AdditiveBlending
         });
-
         const particleSystem = new THREE.Points(particleGeometry, particleMaterial);
         scene.add(particleSystem);
-
         // Environment loaded (buildings load asynchronously)
         updateLoadingProgress();
-
         // Normal movement system with sprint
         const keys = { w: false, a: false, s: false, d: false, shift: false, space: false };
         const moveSpeed = 0.15;
         const sprintMultiplier = 2;
         const playerVelocity = new THREE.Vector3();
-
         // Jump system
         let isJumping = false;
         let verticalVelocity = 0;
         const jumpStrength = 0.35;
         const gravity = 0.015;
         const groundLevel = 0;
-
         // Position player on platform
         // Check spawn position based on which room player is returning from
         const spawnPosition = sessionStorage.getItem('spawnPosition');
@@ -2343,7 +2032,6 @@
             // Normal spawn in center
             playerGroup.position.set(0, 0, 0);
         }
-
         document.addEventListener('keydown', (e) => {
             const key = e.key.toLowerCase();
             if (keys.hasOwnProperty(key)) {
@@ -2356,7 +2044,6 @@
                 verticalVelocity = jumpStrength;
             }
         });
-
         document.addEventListener('keyup', (e) => {
             const key = e.key.toLowerCase();
             if (keys.hasOwnProperty(key)) {
@@ -2365,13 +2052,11 @@
             if (e.key === 'Shift') keys.shift = false;
             if (e.key === ' ') keys.space = false;
         });
-
         // Mobile joystick with improved handling
         const joystick = document.getElementById('joystick');
         const joystickKnob = document.getElementById('joystick-knob');
         let joystickActive = false;
         let joystickVector = { x: 0, y: 0 };
-
         function handleTouch(e) {
             e.preventDefault();
             if (e.type === 'touchstart' || e.type === 'touchmove') {
@@ -2380,20 +2065,15 @@
                 const rect = joystick.getBoundingClientRect();
                 const centerX = rect.left + rect.width / 2;
                 const centerY = rect.top + rect.height / 2;
-
                 let deltaX = touch.clientX - centerX;
                 let deltaY = touch.clientY - centerY;
-
                 const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
                 const maxDistance = rect.width / 3;
-
                 if (distance > maxDistance) {
                     deltaX = (deltaX / distance) * maxDistance;
                     deltaY = (deltaY / distance) * maxDistance;
                 }
-
                 joystickKnob.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
-
                 joystickVector.x = deltaX / maxDistance;
                 joystickVector.y = deltaY / maxDistance;
             } else if (e.type === 'touchend' || e.type === 'touchcancel') {
@@ -2403,12 +2083,10 @@
                 joystickVector.y = 0;
             }
         }
-
         joystick.addEventListener('touchstart', handleTouch, { passive: false });
         joystick.addEventListener('touchmove', handleTouch, { passive: false });
         joystick.addEventListener('touchend', handleTouch, { passive: false });
         joystick.addEventListener('touchcancel', handleTouch, { passive: false });
-
         // Collision detection
         function checkCollision(newX, newZ) {
             for (const obj of collisionObjects) {
@@ -2421,218 +2099,220 @@
             }
             return false;
         }
-
         // Performance tracking
         let lastTime = performance.now();
         let frames = 0;
         let fps = 60;
         const clock = new THREE.Clock();
-
         // Configuration
         const CONFIG = {
-            // Supabase Backend
-            SUPABASE_URL: 'https://qrbayufbmcxqjesbmpad.supabase.co',
-            SUPABASE_ANON_KEY: 'sb_publishable_we4uqlRpjzLHsvAx802Nkg_-oeQzNTe',
-
-            // Solana RPC Configuration (Helius - 100k requests/day)
-            SOLANA_RPC_PRIMARY: 'https://mainnet.helius-rpc.com/?api-key=d2c933e5-1960-4638-9646-5f86aa75006c',
-            SOLANA_RPC_FALLBACK: 'https://api.mainnet-beta.solana.com',
-
             // Proximity Settings
             PROXIMITY_RANGE: 50,
             POSITION_UPDATE_INTERVAL: 50,
-            HEARTBEAT_INTERVAL: 5000,
             CHAT_UPDATE_INTERVAL: 3000
         };
-
-        // Initialize Supabase Client
-        
-async function supabaseRetry(operation, maxRetries = 3, delay = 2000) {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      return await operation();
-    } catch (error) {
-      console.error(`Supabase operation failed (attempt ${attempt}):`, error);
-      if (attempt === maxRetries) {
-        showError('Connection error: ' + error.message);
-        throw error;
-      }
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-}
-
-// Function to show error UI
-function showError(msg) {
-  const errorDiv = document.getElementById('errorMessage');
-  if (!errorDiv) {
-    const newDiv = document.createElement('div');
-    newDiv.id = 'errorMessage';
-    newDiv.style.position = 'fixed';
-    newDiv.style.top = '10px';
-    newDiv.style.left = '50%';
-    newDiv.style.transform = 'translateX(-50%)';
-    newDiv.style.background = 'rgba(255, 0, 0, 0.8)';
-    newDiv.style.color = 'white';
-    newDiv.style.padding = '10px 20px';
-    newDiv.style.borderRadius = '5px';
-    newDiv.style.zIndex = '1000';
-    newDiv.style.display = 'none';
-    document.body.appendChild(newDiv);
-  }
-  errorDiv.textContent = msg;
-  errorDiv.style.display = 'block';
-  setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
-}
-
-// P2P (WebRTC) Setup
-const peers = new Map(); // peerId -> RTCPeerConnection
-const dataChannels = new Map(); // peerId -> RTCDataChannel
-
-async function initiateP2P(peerId) {
-  if (peers.has(peerId)) return;
-
-  const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-  peers.set(peerId, pc);
-
-  const channel = pc.createDataChannel('gameData');
-  channel.onopen = () => console.log(`P2P open with ${peerId}`);
-  channel.onmessage = (e) => handleP2PData(peerId, JSON.parse(e.data));
-  dataChannels.set(peerId, channel);
-
-  pc.onicecandidate = (e) => {
-    if (e.candidate) {
-      signalingServer.send(JSON.stringify({ from: myPlayerId, to: peerId, type: 'candidate', data: e.candidate }));
-    }
-  };
-
-  const offer = await pc.createOffer();
-  await pc.setLocalDescription(offer);
-  signalingServer.send(JSON.stringify({ from: myPlayerId, to: peerId, type: 'offer', data: offer }));
-
-  // Handle incoming answer/candidate (via subscription)
-}
-
-function handleP2PData(peerId, msg) {
-  if (msg.type === 'position') {
-    updateOtherPlayer(peerId, msg.position, msg.rotation);
-    const player = otherPlayers.get(peerId);
-    if (player) player.lastUpdate = Date.now();
-  } else if (msg.type === 'chat') {
-    const dx = msg.pos_x - playerGroup.position.x;
-    const dz = msg.pos_z - playerGroup.position.z;
-    if (Math.sqrt(dx*dx + dz*dz) <= CONFIG.PROXIMITY_RANGE) {
-      const chatMessages = document.getElementById('chatMessages');
-      const msgDiv = document.createElement('div');
-      msgDiv.innerHTML = `<span style="color: #55FF55;">${msg.username}</span>: ${msg.message}`;
-      chatMessages.appendChild(msgDiv);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-  } else if (msg.type === 'requestPosition') {
-    dataChannels.get(peerId).send(JSON.stringify({
-      type: 'position',
-      position: { x: playerGroup.position.x, y: playerGroup.position.y, z: playerGroup.position.z },
-      rotation: playerGroup.rotation.y
-    }));
-  }
-}
-
-function sendP2PPosition() {
-  dataChannels.forEach((channel, peerId) => {
-    if (channel.readyState === 'open') {
-      channel.send(JSON.stringify({
-        type: 'position',
-        position: { x: playerGroup.position.x, y: playerGroup.position.y, z: playerGroup.position.z },
-        rotation: playerGroup.rotation.y
-      }));
-    }
-  });
-}
-
-function sendP2PChat(text) {
-  dataChannels.forEach((channel, peerId) => {
-    if (channel.readyState === 'open') {
-      channel.send(JSON.stringify({
-        type: 'chat',
-        username: walletAddress.slice(0,6) + '...' + walletAddress.slice(-4),
-        message: text,
-        pos_x: playerGroup.position.x,
-        pos_z: playerGroup.position.z
-      }));
-    }
-  });
-}
-
-// Subscribe to signals for P2P signaling
-function subscribeToSignals() {
-  supabaseClient.channel('signals').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals' }, async (payload) => {
-    const signal = payload.new;
-    if (signal.to !== myPlayerId) return;
-
-    let pc = peers.get(signal.from);
-    if (!pc) {
-      pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-      peers.set(signal.from, pc);
-      pc.ondatachannel = (e) => {
-        const channel = e.channel;
-        channel.onmessage = (ev) => handleP2PData(signal.from, JSON.parse(ev.data));
-        dataChannels.set(signal.from, channel);
-      };
-    }
-
-    if (signal.type === 'offer') {
-      await pc.setRemoteDescription(signal.data);
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-          } else if (signal.type === 'answer') {
-      await pc.setRemoteDescription(signal.data);
-    } else if (signal.type === 'candidate') {
-      await pc.addIceCandidate(signal.data);
-    }
-  }).subscribe();
-}
-
-
+        // Function to show error UI
+        function showError(msg) {
+          const errorDiv = document.getElementById('errorMessage');
+          if (!errorDiv) {
+            const newDiv = document.createElement('div');
+            newDiv.id = 'errorMessage';
+            newDiv.style.position = 'fixed';
+            newDiv.style.top = '10px';
+            newDiv.style.left = '50%';
+            newDiv.style.transform = 'translateX(-50%)';
+            newDiv.style.background = 'rgba(255, 0, 0, 0.8)';
+            newDiv.style.color = 'white';
+            newDiv.style.padding = '10px 20px';
+            newDiv.style.borderRadius = '5px';
+            newDiv.style.zIndex = '1000';
+            newDiv.style.display = 'none';
+            document.body.appendChild(newDiv);
+          }
+          errorDiv.textContent = msg;
+          errorDiv.style.display = 'block';
+          setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
+        }
+        // P2P (WebRTC) Setup
+        const peers = new Map(); // peerId -> RTCPeerConnection
+        const dataChannels = new Map(); // peerId -> RTCDataChannel
+        async function createOfferForPeer(peerId) {
+          if (peers.has(peerId)) return;
+          const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+          peers.set(peerId, pc);
+          const channel = pc.createDataChannel('gameData');
+          channel.onopen = () => {
+            console.log(`P2P open with ${peerId}`);
+            channel.send(JSON.stringify({
+              type: 'position',
+              position: { x: playerGroup.position.x, y: playerGroup.position.y, z: playerGroup.position.z },
+              rotation: playerGroup.rotation.y
+            }));
+            channel.send(JSON.stringify({
+              type: 'color',
+              color: myColor
+            }));
+          };
+          channel.onmessage = (e) => handleP2PData(peerId, JSON.parse(e.data));
+          dataChannels.set(peerId, channel);
+          pc.ondatachannel = (e) => {
+            const channel = e.channel;
+            channel.onmessage = (ev) => handleP2PData(peerId, JSON.parse(ev.data));
+            dataChannels.set(peerId, channel);
+          };
+          pc.onconnectionstatechange = () => {
+            if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+              removeOtherPlayer(peerId);
+              peers.delete(peerId);
+              dataChannels.delete(peerId);
+              updatePlayerCount();
+            }
+          };
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          // Wait for ICE gathering to complete
+          await new Promise((resolve) => {
+            if (pc.iceGatheringState === 'complete') {
+              resolve();
+            } else {
+              const checkState = () => {
+                if (pc.iceGatheringState === 'complete') {
+                  pc.removeEventListener('icegatheringstatechange', checkState);
+                  resolve();
+                }
+              };
+              pc.addEventListener('icegatheringstatechange', checkState);
+            }
+          });
+          const fullOffer = pc.localDescription;
+          return JSON.stringify(fullOffer);
+        }
+        async function setOfferAndCreateAnswer(peerId, offerStr) {
+          let pc = peers.get(peerId);
+          if (!pc) {
+            pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+            peers.set(peerId, pc);
+            pc.ondatachannel = (e) => {
+              const channel = e.channel;
+              channel.onmessage = (ev) => handleP2PData(peerId, JSON.parse(ev.data));
+              dataChannels.set(peerId, channel);
+            };
+            pc.onconnectionstatechange = () => {
+              if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+                removeOtherPlayer(peerId);
+                peers.delete(peerId);
+                dataChannels.delete(peerId);
+                updatePlayerCount();
+              }
+            };
+          }
+          const offer = JSON.parse(offerStr);
+          await pc.setRemoteDescription(offer);
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          // Wait for ICE gathering to complete
+          await new Promise((resolve) => {
+            if (pc.iceGatheringState === 'complete') {
+              resolve();
+            } else {
+              const checkState = () => {
+                if (pc.iceGatheringState === 'complete') {
+                  pc.removeEventListener('icegatheringstatechange', checkState);
+                  resolve();
+                }
+              };
+              pc.addEventListener('icegatheringstatechange', checkState);
+            }
+          });
+          const fullAnswer = pc.localDescription;
+          return JSON.stringify(fullAnswer);
+        }
+        async function setAnswerForPeer(peerId, answerStr) {
+          const pc = peers.get(peerId);
+          if (!pc) return console.error('No pc for peer');
+          const answer = JSON.parse(answerStr);
+          await pc.setRemoteDescription(answer);
+        }
+        function handleP2PData(peerId, msg) {
+          if (msg.type === 'position') {
+            updateOtherPlayer(peerId, msg.position, msg.rotation);
+            const player = otherPlayers.get(peerId);
+            if (player) player.lastUpdate = Date.now();
+          } else if (msg.type === 'chat') {
+            const dx = msg.pos_x - playerGroup.position.x;
+            const dz = msg.pos_z - playerGroup.position.z;
+            if (Math.sqrt(dx*dx + dz*dz) <= CONFIG.PROXIMITY_RANGE) {
+              const chatMessages = document.getElementById('chatMessages');
+              const msgDiv = document.createElement('div');
+              msgDiv.innerHTML = `<span style="color: #55FF55;">${msg.username}</span>: ${msg.message}`;
+              chatMessages.appendChild(msgDiv);
+              chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+          } else if (msg.type === 'requestPosition') {
+            dataChannels.get(peerId).send(JSON.stringify({
+              type: 'position',
+              position: { x: playerGroup.position.x, y: playerGroup.position.y, z: playerGroup.position.z },
+              rotation: playerGroup.rotation.y
+            }));
+          } else if (msg.type === 'color') {
+            updateOtherPlayerColor(peerId, msg.color);
+          }
+        }
+        function sendP2PPosition() {
+          dataChannels.forEach((channel, peerId) => {
+            if (channel && channel.readyState === 'open') {
+              channel.send(JSON.stringify({
+                type: 'position',
+                position: { x: playerGroup.position.x, y: playerGroup.position.y, z: playerGroup.position.z },
+                rotation: playerGroup.rotation.y
+              }));
+            }
+          });
+        }
+        function sendP2PChat(text) {
+          dataChannels.forEach((channel, peerId) => {
+            if (channel && channel.readyState === 'open') {
+              channel.send(JSON.stringify({
+                type: 'chat',
+                username: walletAddress.slice(0,6) + '...' + walletAddress.slice(-4),
+                message: text,
+                pos_x: playerGroup.position.x,
+                pos_z: playerGroup.position.z
+              }));
+            }
+          });
+        }
         // Wallet State
         let walletConnected = false;
         let walletAddress = null;
         let walletType = null;
         let walletBalance = 0;
-
         // Multiplayer System
         const otherPlayers = new Map();
         let myPlayerId = null;
         let myColor = '#00ff41'; // Default color
         let updateInterval = null;
-        let heartbeatInterval = null;
-        let chatUpdateInterval = null;
-
+        let cleanupInterval = null;
         // Wallet Connection Functions
         async function connectPhantom() {
             try {
                 const { solana } = window;
-
                 if (!solana?.isPhantom) {
                     alert('Please install Phantom wallet!\n\nVisit: https://phantom.app/');
                     window.open('https://phantom.app/', '_blank');
                     return;
                 }
-
                 const response = await solana.connect();
                 if (!response?.publicKey) {
                     throw new Error('Failed to get public key from Phantom');
                 }
-
                 walletAddress = response.publicKey.toString();
                 walletType = 'phantom';
                 walletConnected = true;
-
                 console.log('Phantom connected:', walletAddress);
-
                 // Try to fetch balance with fallback RPC
                 let balance = 0;
-                const rpcEndpoints = [CONFIG.SOLANA_RPC_PRIMARY, CONFIG.SOLANA_RPC_FALLBACK];
-
+                const rpcEndpoints = ['https://mainnet.helius-rpc.com/?api-key=d2c933e5-1960-4638-9646-5f86aa75006c', 'https://api.mainnet-beta.solana.com'];
                 for (const endpoint of rpcEndpoints) {
                     try {
                         console.log(`Fetching balance from: ${endpoint}`);
@@ -2648,94 +2328,72 @@ function subscribeToSignals() {
                         }
                     }
                 }
-
                 onWalletConnected();
-
             } catch (error) {
                 console.error('Phantom connection failed:', error);
                 alert('Failed to connect Phantom wallet. Please try again.');
             }
         }
-
-
         function onWalletConnected() {
             // Save wallet info to localStorage for persistent login
             localStorage.setItem('walletType', walletType);
             localStorage.setItem('walletAddress', walletAddress);
             localStorage.setItem('walletBalance', walletBalance);
             localStorage.setItem('lastLogin', Date.now().toString());
-
             // Hide wallet screen
             document.getElementById('walletScreen').classList.add('hidden');
             setTimeout(() => {
                 document.getElementById('walletScreen').style.display = 'none';
             }, 300);
-
             // Update HUD
             document.getElementById('hud').style.display = 'block';
             document.getElementById('hudWallet').textContent = `Wallet: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
             document.getElementById('hudBalance').textContent = `Balance: ${walletBalance} ${walletType === 'phantom' ? 'SOL' : 'ETH'}`;
-
             // Show switch wallet button
             document.getElementById('disconnectBtn').textContent = 'Switch Wallet';
-
             // Show chat
             document.getElementById('chatContainer').style.display = 'flex';
-
             // Generate player ID from wallet
             myPlayerId = walletAddress;
             console.log('Player ID set to wallet:', myPlayerId);
-
             // Initialize player after wallet connection
             setTimeout(() => {
                 initializePlayer();
             }, 1000);
         }
-
         function disconnectWallet() {
             walletConnected = false;
             walletAddress = null;
             walletType = null;
             walletBalance = 0;
-
             // Clear localStorage
             localStorage.removeItem('walletType');
             localStorage.removeItem('walletAddress');
             localStorage.removeItem('walletBalance');
             localStorage.removeItem('lastLogin');
-
-            // Clean up player from database
-            if (myPlayerId) {
-                supabaseClient
-                    .from('players')
-                    .delete()
-                    .eq('id', myPlayerId)
-                    .then(() => console.log('Player cleaned up'))
-                    .catch(err => console.error('Cleanup error:', err));
-            }
-
             // Clear intervals
             if (updateInterval) clearInterval(updateInterval);
-            if (heartbeatInterval) clearInterval(heartbeatInterval);
-            if (chatUpdateInterval) clearInterval(chatUpdateInterval);
-
+            if (cleanupInterval) clearInterval(cleanupInterval);
+            // Close all peers
+            peers.forEach(pc => pc.close());
+            peers.clear();
+            dataChannels.clear();
+            // Remove all other players
+            otherPlayers.forEach(player => scene.remove(player.group));
+            otherPlayers.clear();
             // Reload page to show wallet selection
             window.location.reload();
         }
-
         // Auto-reconnect wallet on page load
         window.addEventListener('DOMContentLoaded', async () => {
             const savedWalletType = localStorage.getItem('walletType');
             const savedWalletAddress = localStorage.getItem('walletAddress');
             const lastLogin = localStorage.getItem('lastLogin');
-
             // Auto-reconnect if logged in within last 24 hours
             if (savedWalletType && savedWalletAddress && lastLogin) {
                 const hoursSinceLogin = (Date.now() - parseInt(lastLogin)) / (1000 * 60 * 60);
-
                 if (hoursSinceLogin < 24) {
                     console.log('Auto-reconnecting wallet:', savedWalletAddress);
-
                     try {
                         if (savedWalletType === 'phantom') {
                             const { solana } = window;
@@ -2745,16 +2403,14 @@ function subscribeToSignals() {
                                     walletAddress = response.publicKey.toString();
                                     walletType = 'phantom';
                                     walletConnected = true;
-
                                     // Fetch balance
                                     try {
-                                        const connection = new solanaWeb3.Connection(CONFIG.SOLANA_RPC_PRIMARY, 'confirmed');
+                                        const connection = new solanaWeb3.Connection('https://mainnet.helius-rpc.com/?api-key=d2c933e5-1960-4638-9646-5f86aa75006c', 'confirmed');
                                         const balance = await connection.getBalance(response.publicKey);
                                         walletBalance = (balance / solanaWeb3.LAMPORTS_PER_SOL).toFixed(4);
                                     } catch (err) {
                                         walletBalance = 0;
                                     }
-
                                     onWalletConnected();
                                 }
                             }
@@ -2768,246 +2424,119 @@ function subscribeToSignals() {
                 }
             }
         });
-
         // Set up wallet button listeners
         document.getElementById('connectPhantom').addEventListener('click', connectPhantom);
         document.getElementById('disconnectBtn').addEventListener('click', disconnectWallet);
-
-        // Initialize player in Supabase
-        async function initializePlayer() {
-            try {
-                // Insert player into database (minimal for discovery)
-                const username = walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : 'Player';
-                const { data, error } = await supabaseRetry(() => supabaseClient
-                    .from('players')
-                    .insert([{
-                        id: myPlayerId,
-                        username: username,
-                        wallet_address: walletAddress,
-                        wallet_type: walletType,
-                        color: myColor,
-                        last_seen: new Date().toISOString()
-                    }])
-                    .select());
-
-                if (error) {
-                    console.error('Error initializing player:', error);
-                    return;
-                }
-
-                console.log('Player initialized in Supabase:', data);
-
-                // Show multiplayer UI
-                document.getElementById('colorPickerIcon').classList.add('visible');
-                document.getElementById('playerCount').classList.add('visible');
-
-                // Start P2P signaling
-                subscribeToSignals();
-
-                // Start position updates (P2P hybrid)
-                startPositionUpdates();
-
-                // Start heartbeat
-                startHeartbeat();
-
-                // Start player cleanup (reduced reliance on Supabase)
-                startPlayerCleanup();
-
-                // Subscribe to player changes for discovery
-                subscribeToPlayers();
-
-                // Load existing players and initiate P2P for all
-                loadExistingPlayers();
-
-                // No Supabase messages subscription or loading - all via P2P
-
-                // Periodically manage P2P connections
-                setInterval(manageP2PConnections, 5000);
-
-            } catch (error) {
-                console.error('Error in initializePlayer:', error);
-            }
-        }
-
-// Full mesh P2P: Connect to all players
-function manageP2PConnections() {
-  otherPlayers.forEach((player, peerId) => {
-    if (!peers.has(peerId)) {
-      initiateP2P(peerId);
-    }
-  });
-}
-
-// Full P2P position updates
-function startPositionUpdates() {
-  updateInterval = setInterval(() => {
-    sendP2PPosition();
-  }, CONFIG.POSITION_UPDATE_INTERVAL);
-}
-
-// Full P2P chat
-async function sendMessage(text) {
-  if (!text || !text.trim()) return;
-  if (!walletConnected) return;
-
-  sendP2PChat(text);
-  console.log('Message sent via P2P:', text);
-  document.getElementById('chatInput').value = '';
-  toggleChatInput(false);
-}
-
-        // Subscribe to player changes for discovery only (no positions)
-function subscribeToPlayers() {
-  supabaseClient
-    .channel('players-channel')
-    .on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'players'
-    }, (payload) => {
-      if (payload.new.id !== myPlayerId) {
-        createOtherPlayer(payload.new.id, payload.new.color, { x: 0, y: 0, z: 0 }, 0); // Initial position dummy
-        initiateP2P(payload.new.id); // Connect P2P
-        updatePlayerCount();
-      }
-    })
-    .on('postgres_changes', {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'players'
-    }, (payload) => {
-      if (payload.new.id !== myPlayerId && payload.new.color !== payload.old?.color) {
-        updateOtherPlayerColor(payload.new.id, payload.new.color);
-      }
-    })
-    .on('postgres_changes', {
-      event: 'DELETE',
-      schema: 'public',
-      table: 'players'
-    }, (payload) => {
-      if (payload.old.id !== myPlayerId) {
-        removeOtherPlayer(payload.old.id);
-        const pc = peers.get(payload.old.id);
-        if (pc) pc.close();
-        peers.delete(payload.old.id);
-        dataChannels.delete(payload.old.id);
-        updatePlayerCount();
-      }
-    })
-    .subscribe();
-}
-
-// Add disconnect detection for P2P
-peers.forEach((pc, peerId) => {
-  pc.onconnectionstatechange = () => {
-    if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-      removeOtherPlayer(peerId);
-      peers.delete(peerId);
-      dataChannels.delete(peerId);
-    }
-  };
-});
-
-
-        // Load existing players for P2P connection
-async function loadExistingPlayers() {
-  try {
-    const { data: players, error } = await supabaseRetry(() => supabaseClient
-      .from('players')
-      .select('id, color')
-      .neq('id', myPlayerId));
-
-    if (error) {
-      console.error('Error loading players:', error);
-      return;
-    }
-
-    console.log('Loaded existing players:', players);
-
-    players.forEach(player => {
-      createOtherPlayer(player.id, player.color, { x: 0, y: 0, z: 0 }, 0);
-      initiateP2P(player.id);
-    });
-
-    updatePlayerCount();
-  } catch (error) {
-    console.error('Error in loadExistingPlayers:', error);
-  }
-}
-
-        // Start heartbeat for presence
-function startHeartbeat() {
-  heartbeatInterval = setInterval(async () => {
-    try {
-      await supabaseRetry(() => supabaseClient
-        .from('players')
-        .update({ last_seen: new Date().toISOString() })
-        .eq('id', myPlayerId));
-    } catch (error) {
-      console.error('Error sending heartbeat:', error);
-    }
-  }, CONFIG.HEARTBEAT_INTERVAL);
-}
-
-// Cleanup using P2P and timeout
-let cleanupInterval = null;
-function startPlayerCleanup() {
-  cleanupInterval = setInterval(() => {
-    const now = Date.now();
-    otherPlayers.forEach((player, peerId) => {
-      if (now - player.lastUpdate > 15000) {
-        removeOtherPlayer(peerId);
-        const pc = peers.get(peerId);
-        if (pc) pc.close();
-        peers.delete(peerId);
-        dataChannels.delete(peerId);
-        updatePlayerCount();
-      }
-    });
-  }, 5000);
-
-  // P2P disconnect handling
-  peers.forEach((pc, peerId) => {
-    pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
-        removeOtherPlayer(peerId);
-        peers.delete(peerId);
-        dataChannels.delete(peerId);
-        updatePlayerCount();
-      }
-    };
-  });
-}
-
-        // Clean up on page unload
-        window.addEventListener('beforeunload', async () => {
-            if (myPlayerId) {
+        // Initialize player
+        function initializePlayer() {
+            // Show multiplayer UI
+            document.getElementById('colorPickerIcon').classList.add('visible');
+            document.getElementById('playerCount').classList.add('visible');
+            document.getElementById('p2pConnect').style.display = 'block';
+            // Start position updates
+            startPositionUpdates();
+            // Start player cleanup
+            startPlayerCleanup();
+            // Set up P2P UI listeners
+            document.getElementById('createOffer').addEventListener('click', async () => {
+                const peerId = document.getElementById('peerId').value;
+                if (!peerId) return alert('Enter peer ID');
                 try {
-                    await supabaseClient
-                        .from('players')
-                        .delete()
-                        .eq('id', myPlayerId);
-                } catch (error) {
-                    console.error('Error cleaning up player:', error);
+                    const offerJson = await createOfferForPeer(peerId);
+                    document.getElementById('sdpOffer').value = offerJson;
+                    console.log('Offer created for ' + peerId);
+                    // Create player placeholder
+                    createOtherPlayer(peerId, '#ffffff', {x:0,y:0,z:0}, 0);
+                } catch (err) {
+                    console.error('Error creating offer:', err);
+                    alert('Error creating offer');
                 }
-            }
-
+            });
+            document.getElementById('setOffer').addEventListener('click', async () => {
+                const peerId = document.getElementById('peerId').value;
+                const offerStr = document.getElementById('sdpOffer').value;
+                if (!peerId || !offerStr) return alert('Enter peer ID and offer');
+                try {
+                    const answerJson = await setOfferAndCreateAnswer(peerId, offerStr);
+                    document.getElementById('sdpAnswer').value = answerJson;
+                    console.log('Answer created for ' + peerId);
+                    // Create player placeholder
+                    createOtherPlayer(peerId, '#ffffff', {x:0,y:0,z:0}, 0);
+                } catch (err) {
+                    console.error('Error setting offer:', err);
+                    alert('Error setting offer');
+                }
+            });
+            document.getElementById('setAnswer').addEventListener('click', async () => {
+                const peerId = document.getElementById('peerId').value;
+                const answerStr = document.getElementById('sdpAnswer').value;
+                if (!peerId || !answerStr) return alert('Enter peer ID and answer');
+                try {
+                    await setAnswerForPeer(peerId, answerStr);
+                    console.log('Answer set for ' + peerId);
+                } catch (err) {
+                    console.error('Error setting answer:', err);
+                    alert('Error setting answer');
+                }
+            });
+            // Update nearby count
+            setInterval(() => {
+                let count = 0;
+                otherPlayers.forEach(player => {
+                    const dx = player.group.position.x - playerGroup.position.x;
+                    const dz = player.group.position.z - playerGroup.position.z;
+                    if (Math.sqrt(dx*dx + dz*dz) <= CONFIG.PROXIMITY_RANGE) count++;
+                });
+                document.getElementById('nearbyCount').textContent = count + ' nearby';
+            }, 1000);
+        }
+        // Full mesh P2P: Connect to all players
+        function manageP2PConnections() {
+          // Since manual, no auto connect
+        }
+        // Full P2P position updates
+        function startPositionUpdates() {
+          updateInterval = setInterval(() => {
+            sendP2PPosition();
+          }, CONFIG.POSITION_UPDATE_INTERVAL);
+        }
+        // Full P2P chat
+        async function sendMessage(text) {
+          if (!text || !text.trim()) return;
+          if (!walletConnected) return;
+          sendP2PChat(text);
+          console.log('Message sent via P2P:', text);
+          document.getElementById('chatInput').value = '';
+          toggleChatInput(false);
+        }
+        // Cleanup using P2P and timeout
+        function startPlayerCleanup() {
+          cleanupInterval = setInterval(() => {
+            const now = Date.now();
+            otherPlayers.forEach((player, peerId) => {
+              if (now - player.lastUpdate > 15000) {
+                removeOtherPlayer(peerId);
+                const pc = peers.get(peerId);
+                if (pc) pc.close();
+                peers.delete(peerId);
+                dataChannels.delete(peerId);
+                updatePlayerCount();
+              }
+            });
+          }, 5000);
+        }
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
             if (updateInterval) clearInterval(updateInterval);
-            if (heartbeatInterval) clearInterval(heartbeatInterval);
             if (cleanupInterval) clearInterval(cleanupInterval);
+            peers.forEach(pc => pc.close());
         });
-
-        // Player initialization now happens after wallet connection in onWalletConnected()
-
         function createOtherPlayer(peerId, color, position, rotation) {
             if (otherPlayers.has(peerId)) return;
-
             console.log('Creating player:', peerId, 'with color:', color);
-
             const otherPlayer = new THREE.Group();
             otherPlayer.position.set(position.x, position.y, position.z);
             otherPlayer.rotation.y = rotation;
-
             // Parse color properly
             let playerColor = color;
             if (typeof color === 'string') {
@@ -3015,25 +2544,21 @@ function startPlayerCleanup() {
                     playerColor = '#' + color.replace('0x', '');
                 }
             }
-
             let playerMesh = null;
             let playerMixer = null;
             let animations = { idle: null, walk: null, run: null };
             let currentAction = null;
-
             // If main player model is loaded, clone it
             if (playerModel) {
                 try {
                     // Clone the player model
                     const clonedModel = playerModel.clone();
                     clonedModel.scale.copy(playerModel.scale);
-
                     // Apply player color to the cloned model
                     clonedModel.traverse((child) => {
                         if (child.isMesh && child.material) {
                             // Clone material to avoid affecting other players
                             child.material = child.material.clone();
-
                             // Apply player's chosen color to accent parts
                             const currentColor = child.material.color;
                             if (currentColor.r > 0.5 && currentColor.g < 0.5 ||
@@ -3044,26 +2569,21 @@ function startPlayerCleanup() {
                             }
                         }
                     });
-
                     otherPlayer.add(clonedModel);
                     playerMesh = clonedModel;
-
                     // Set up animation mixer for this player
                     if (playerMixer && playerMixer.getRoot) {
                         const root = playerMixer.getRoot();
                         if (root.animations) {
                             playerMixer = new THREE.AnimationMixer(clonedModel);
-
                             root.animations.forEach((clip) => {
                                 const name = clip.name.toLowerCase();
                                 const action = playerMixer.clipAction(clip);
                                 action.setLoop(THREE.LoopRepeat);
-
                                 if (name.includes('idle')) animations.idle = action;
                                 else if (name.includes('walk')) animations.walk = action;
                                 else if (name.includes('run')) animations.run = action;
                             });
-
                             // Start with idle
                             if (animations.idle) {
                                 animations.idle.play();
@@ -3076,7 +2596,6 @@ function startPlayerCleanup() {
                     playerMesh = null;
                 }
             }
-
             // Fallback to simple capsule if model not available
             if (!playerMesh) {
                 const fallbackGeo = new THREE.CapsuleGeometry(0.4, 1.2, 8, 16);
@@ -3091,7 +2610,6 @@ function startPlayerCleanup() {
                 playerMesh.position.y = 1;
                 otherPlayer.add(playerMesh);
             }
-
             // Add name tag
             const canvas = document.createElement('canvas');
             canvas.width = 512;
@@ -3106,7 +2624,6 @@ function startPlayerCleanup() {
             ctx.font = 'bold 32px monospace';
             ctx.textAlign = 'center';
             ctx.fillText(peerId.slice(0, 6) + '...' + peerId.slice(-4), 256, 64);
-
             const texture = new THREE.CanvasTexture(canvas);
             const label = new THREE.Mesh(
                 new THREE.PlaneGeometry(3, 0.75),
@@ -3114,7 +2631,6 @@ function startPlayerCleanup() {
             );
             label.position.y = 2.5;
             otherPlayer.add(label);
-
             scene.add(otherPlayer);
             otherPlayers.set(peerId, {
                 group: otherPlayer,
@@ -3124,29 +2640,24 @@ function startPlayerCleanup() {
                 animations: animations,
                 currentAction: currentAction,
                 lastPosition: new THREE.Vector3(position.x, position.y, position.z),
-                velocity: 0
+                velocity: 0,
+                lastUpdate: Date.now()
             });
-
             updatePlayerCount();
             console.log('Player created with animations:', !!playerMixer);
         }
-
         function updateOtherPlayer(peerId, position, rotation) {
             const player = otherPlayers.get(peerId);
             if (!player) return;
-
             const targetPos = new THREE.Vector3(position.x, position.y, position.z);
             const currentPos = player.group.position;
-
             // Calculate velocity for animation
             if (player.lastPosition) {
                 const distance = currentPos.distanceTo(targetPos);
                 player.velocity = distance;
-
                 // Determine animation based on velocity
                 if (player.animations && player.animations.idle) {
                     let targetAction = null;
-
                     if (distance < 0.01) {
                         // Not moving - idle
                         targetAction = player.animations.idle;
@@ -3157,7 +2668,6 @@ function startPlayerCleanup() {
                         // Fast movement - run
                         targetAction = player.animations.run || player.animations.walk || player.animations.idle;
                     }
-
                     // Smoothly transition animations
                     if (targetAction && targetAction !== player.currentAction) {
                         if (player.currentAction) {
@@ -3169,33 +2679,43 @@ function startPlayerCleanup() {
                     }
                 }
             }
-
             // Smooth interpolation (better smoothing)
             player.group.position.lerp(targetPos, 0.15);
-
             // Smooth rotation
             const rotDiff = rotation - player.group.rotation.y;
             player.group.rotation.y += rotDiff * 0.15;
-
             player.lastPosition.copy(targetPos);
         }
-
         function updateOtherPlayerColor(peerId, color) {
             const player = otherPlayers.get(peerId);
-            if (player && player.bodyGroup) {
-                // Update all body parts with new color
-                player.bodyGroup.traverse((child) => {
+            if (player) {
+                player.group.traverse((child) => {
                     if (child.isMesh && child.material) {
-                        child.material.color.setStyle(color);
-                        if (child.material.emissive) {
-                            child.material.emissive.setStyle(color);
+                        const currentColor = child.material.color;
+                        if (currentColor.r > 0.5 && currentColor.g < 0.5 ||
+                            currentColor.r < 0.3 && currentColor.g > 0.7 && currentColor.b > 0.7) {
+                            child.material.color = new THREE.Color(color);
+                            child.material.emissive = new THREE.Color(color);
+                            child.material.emissiveIntensity = 0.3;
                         }
                     }
                 });
+                // Update name tag color
+                const ctx = player.label.material.map.image.getContext('2d');
+                ctx.clearRect(0, 0, 512, 128);
+                ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                ctx.fillRect(0, 0, 512, 128);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 4;
+                ctx.strokeRect(2, 2, 508, 124);
+                ctx.fillStyle = color;
+                ctx.font = 'bold 32px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(peerId.slice(0, 6) + '...' + peerId.slice(-4), 256, 64);
+                player.label.material.map.needsUpdate = true;
                 console.log('Updated player color to:', color);
             }
         }
-
         function removeOtherPlayer(peerId) {
             const player = otherPlayers.get(peerId);
             if (player) {
@@ -3204,89 +2724,58 @@ function startPlayerCleanup() {
             }
             updatePlayerCount();
         }
-
-        // Chat handled via P2P, no Supabase
-
-
+        // Chat handled via P2P
         // Set up chat UI listeners
         document.getElementById('sendBtn').addEventListener('click', () => {
             const text = document.getElementById('chatInput').value;
             sendMessage(text);
         });
-
         document.getElementById('chatInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 const text = document.getElementById('chatInput').value;
                 sendMessage(text);
             }
         });
-
-        async function updatePlayerCount() {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('players')
-                    .select('id', { count: 'exact' });
-
-                if (error) {
-                    console.error('Error counting players:', error);
-                    return;
-                }
-
-                const count = data.length;
-                document.getElementById('playerCount').textContent = `Players: ${count}`;
-            } catch (error) {
-                console.error('Error in updatePlayerCount:', error);
-            }
+        function updatePlayerCount() {
+            document.getElementById('playerCount').textContent = `Players: ${otherPlayers.size + 1}`;
         }
-
-        // Position updates now handled by startPositionUpdates() interval
-
         // Color picker functionality
-        colorInput.addEventListener('change', async (e) => {
+        colorInput.addEventListener('change', (e) => {
             const color = e.target.value;
             myColor = color;
-
-            // Update player body color if it exists
+            // Update own player color
             if (playerBody) {
                 playerBody.traverse((child) => {
                     if (child.isMesh) {
-                        child.material.color.setStyle(color);
-                        child.material.emissive.setStyle(color);
+                        const currentColor = child.material.color;
+                        if (currentColor.r > 0.5 && currentColor.g < 0.5 ||
+                            currentColor.r < 0.3 && currentColor.g > 0.7 && currentColor.b > 0.7) {
+                            child.material.color = new THREE.Color(color);
+                            child.material.emissive = new THREE.Color(color);
+                        }
                     }
                 });
             }
-
-            // Update color in Supabase
-            try {
-                await supabaseClient
-                    .from('players')
-                    .update({ color: color })
-                    .eq('id', myPlayerId);
-                console.log('Color updated to:', color);
-            } catch (error) {
-                console.error('Error updating color:', error);
-            }
-
-            // Close popup after selecting
+            // Send color to all peers
+            dataChannels.forEach((channel) => {
+                if (channel.readyState === 'open') {
+                    channel.send(JSON.stringify({ type: 'color', color: color }));
+                }
+            });
+            // Close popup
             colorPickerOpen = false;
             colorPickerPopup.classList.remove('visible');
         });
-
-        // Position broadcasting handled by Supabase real-time updates
-
         // Animation loop with advanced features
         function animate(currentTime) {
             requestAnimationFrame(animate);
-
             const delta = clock.getDelta();
-
             // Update animations with proper delta time
             if (playerMixer) {
                 // Ensure delta is reasonable to prevent skipping
                 const safeDelta = Math.min(delta, 0.1);
                 playerMixer.update(safeDelta);
             }
-
             // Update other players' animations
             otherPlayers.forEach((player) => {
                 if (player.mixer) {
@@ -3298,7 +2787,6 @@ function startPlayerCleanup() {
                     player.label.lookAt(camera.position);
                 }
             });
-
             // FPS counter
             frames++;
             if (currentTime - lastTime >= 1000) {
@@ -3306,52 +2794,39 @@ function startPlayerCleanup() {
                 frames = 0;
                 lastTime = currentTime;
             }
-
             // Calculate movement with sprint
             playerVelocity.set(0, 0, 0);
-
             // Apply sprint multiplier when shift is held
             const currentSpeed = keys.shift ? moveSpeed * sprintMultiplier : moveSpeed;
-
             // Keyboard input - always use run animation when moving
             if (keys.w) playerVelocity.z -= currentSpeed;
             if (keys.s) playerVelocity.z += currentSpeed;
             if (keys.a) playerVelocity.x -= currentSpeed;
             if (keys.d) playerVelocity.x += currentSpeed;
-
             // Mobile joystick input
             if (joystickActive) {
                 playerVelocity.x += joystickVector.x * currentSpeed * 1.5;
                 playerVelocity.z += joystickVector.y * currentSpeed * 1.5;
             }
-
             // Apply movement
             const isMoving = playerVelocity.length() > 0;
-
             if (isMoving) {
                 const newX = playerGroup.position.x + playerVelocity.x;
                 const newZ = playerGroup.position.z + playerVelocity.z;
-
                 if (!checkCollision(newX, newZ)) {
                     playerGroup.position.x = newX;
                     playerGroup.position.z = newZ;
-
                     // Smooth rotation towards movement direction
                     const targetAngle = Math.atan2(playerVelocity.x, playerVelocity.z);
                     let angleDiff = targetAngle - playerGroup.rotation.y;
-
                     // Normalize angle difference
                     while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
                     while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-
                     playerGroup.rotation.y += angleDiff * 0.15;
-
                     // Always use run animation for movement
                     const targetAction = runAction || walkAction;
-
                     if (targetAction) {
                         const needsSwitch = !targetAction.isRunning() || targetAction.weight === 0;
-
                         if (needsSwitch) {
                             // Stop all other animations
                             if (idleAction) {
@@ -3362,7 +2837,6 @@ function startPlayerCleanup() {
                                 walkAction.stop();
                                 walkAction.weight = 0;
                             }
-
                             // Play run animation
                             targetAction.reset();
                             targetAction.setLoop(THREE.LoopRepeat, Infinity);
@@ -3375,26 +2849,22 @@ function startPlayerCleanup() {
                         }
                     }
                 }
-
                 // Keep player within circular platform bounds
                 const distanceFromCenter = Math.sqrt(
                     playerGroup.position.x * playerGroup.position.x +
                     playerGroup.position.z * playerGroup.position.z
                 );
                 const maxRadius = 33.75;
-
                 if (distanceFromCenter > maxRadius) {
                     const angle = Math.atan2(playerGroup.position.z, playerGroup.position.x);
                     playerGroup.position.x = Math.cos(angle) * maxRadius;
                     playerGroup.position.z = Math.sin(angle) * maxRadius;
                 }
             }
-
             // Apply jump physics
             if (isJumping) {
                 verticalVelocity -= gravity;
                 playerGroup.position.y += verticalVelocity;
-
                 // Check if landed
                 if (playerGroup.position.y <= groundLevel) {
                     playerGroup.position.y = groundLevel;
@@ -3402,12 +2872,10 @@ function startPlayerCleanup() {
                     isJumping = false;
                 }
             }
-
             if (!isMoving) {
                 // Switch to idle animation - fixed playback
                 if (idleAction) {
                     const needsSwitch = !idleAction.isRunning() || idleAction.weight === 0;
-
                     if (needsSwitch) {
                         // Stop movement animations
                         if (walkAction) {
@@ -3418,7 +2886,6 @@ function startPlayerCleanup() {
                             runAction.stop();
                             runAction.weight = 0;
                         }
-
                         // Play idle animation
                         idleAction.reset();
                         idleAction.setLoop(THREE.LoopRepeat, Infinity);
@@ -3428,81 +2895,69 @@ function startPlayerCleanup() {
                         idleAction.enabled = true;
                         idleAction.paused = false;
                         idleAction.play();
-
                         console.log('Playing idle animation');
                     }
                 }
             }
-
             // Animate atmospheric particles
             const positions = particleGeometry.attributes.position.array;
             for (let i = 0; i < particleCount; i++) {
                 positions[i * 3] += particleVelocities[i].x;
                 positions[i * 3 + 1] += particleVelocities[i].y;
                 positions[i * 3 + 2] += particleVelocities[i].z;
-
                 // Wrap around boundaries
                 if (Math.abs(positions[i * 3]) > 40) particleVelocities[i].x *= -1;
                 if (positions[i * 3 + 1] > 50 || positions[i * 3 + 1] < 0) particleVelocities[i].y *= -1;
                 if (Math.abs(positions[i * 3 + 2]) > 40) particleVelocities[i].z *= -1;
             }
             particleGeometry.attributes.position.needsUpdate = true;
-
             // Animate corner neon lights
             neonLight1.intensity = 3 + Math.sin(currentTime * 0.003) * 1.5;
             neonLight2.intensity = 3 + Math.sin(currentTime * 0.002 + 1) * 1.5;
             neonLight3.intensity = 3 + Math.sin(currentTime * 0.004 + 2) * 1.5;
             neonLight4.intensity = 3 + Math.sin(currentTime * 0.0025 + 3) * 1.5;
-
             // Animate first YouTube thumbnail - hover and spin (loot item style)
             videoThumbnailGroup.position.y = 0.5 + Math.sin(currentTime * 0.002) * 0.4;
             videoThumbnailGroup.rotation.y = currentTime * 0.0008;
             borderMesh.material.opacity = 0.7 + Math.sin(currentTime * 0.003) * 0.2;
             outerGlowMesh.material.opacity = 0.2 + Math.sin(currentTime * 0.004) * 0.15;
             thumbnailLight.intensity = 1.5 + Math.sin(currentTime * 0.004) * 0.8;
-
             // Animate second YouTube thumbnail
             videoThumbnailGroup2.position.y = 0.5 + Math.sin(currentTime * 0.002 + 1) * 0.4;
             videoThumbnailGroup2.rotation.y = currentTime * 0.0008;
             borderMesh2.material.opacity = 0.7 + Math.sin(currentTime * 0.003 + 1) * 0.2;
             outerGlowMesh2.material.opacity = 0.2 + Math.sin(currentTime * 0.004 + 1) * 0.15;
             thumbnailLight2.intensity = 1.5 + Math.sin(currentTime * 0.004 + 1) * 0.8;
-
             // Animate third loot item (Resume)
             videoThumbnailGroup3.position.y = 0.5 + Math.sin(currentTime * 0.002 + 2) * 0.4;
             videoThumbnailGroup3.rotation.y = currentTime * 0.0008;
             borderMesh3.material.opacity = 0.7 + Math.sin(currentTime * 0.003 + 2) * 0.2;
             outerGlowMesh3.material.opacity = 0.2 + Math.sin(currentTime * 0.004 + 2) * 0.15;
             thumbnailLight3.intensity = 1.5 + Math.sin(currentTime * 0.004 + 2) * 0.8;
-
             // Animate AGV loot item
             agvGroup.position.y = 0.5 + Math.sin(currentTime * 0.002 + 2.5) * 0.4;
             agvGroup.rotation.y = currentTime * 0.0008;
             agvBorderMesh.material.opacity = 0.7 + Math.sin(currentTime * 0.003 + 2.5) * 0.2;
             agvOuterGlow.material.opacity = 0.2 + Math.sin(currentTime * 0.004 + 2.5) * 0.15;
             agvLight.intensity = 1.5 + Math.sin(currentTime * 0.004 + 2.5) * 0.8;
-
             // Animate fourth loot item (GitHub)
             videoThumbnailGroup4.position.y = 0.5 + Math.sin(currentTime * 0.002 + 3) * 0.4;
             videoThumbnailGroup4.rotation.y = currentTime * 0.0008;
             borderMesh4.material.opacity = 0.7 + Math.sin(currentTime * 0.003 + 3) * 0.2;
             outerGlowMesh4.material.opacity = 0.2 + Math.sin(currentTime * 0.004 + 3) * 0.15;
             thumbnailLight4.intensity = 1.5 + Math.sin(currentTime * 0.004 + 3) * 0.8;
-
             // Animate BOB Robot Project (blue)
             bobProjectGroup.position.y = 0.5 + Math.sin(currentTime * 0.002 + 4) * 0.4;
             bobProjectGroup.rotation.y = currentTime * 0.0008;
             bobProjectBorder.material.opacity = 0.7 + Math.sin(currentTime * 0.003 + 4) * 0.2;
             bobProjectGlow.material.opacity = 0.2 + Math.sin(currentTime * 0.004 + 4) * 0.15;
             bobProjectLight.intensity = 1.5 + Math.sin(currentTime * 0.004 + 4) * 0.8;
-
             // Animate Cover Letter (pink)
             coverLetterGroup.position.y = 0.5 + Math.sin(currentTime * 0.002 + 5) * 0.4;
             coverLetterGroup.rotation.y = currentTime * 0.0008;
             coverBorderMesh.material.opacity = 0.7 + Math.sin(currentTime * 0.003 + 5) * 0.2;
             coverOuterGlow.material.opacity = 0.2 + Math.sin(currentTime * 0.004 + 5) * 0.15;
             coverLetterLight.intensity = 1.5 + Math.sin(currentTime * 0.004 + 5) * 0.8;
-
             // Show/hide popup based on distance to first thumbnail
             const distToThumbnail = Math.sqrt(
                 Math.pow(playerGroup.position.x - thumbnailPosition.x, 2) +
@@ -3513,7 +2968,6 @@ function startPlayerCleanup() {
             } else {
                 lootPopup.classList.remove('visible');
             }
-
             // Show/hide popup based on distance to second thumbnail
             const distToThumbnail2 = Math.sqrt(
                 Math.pow(playerGroup.position.x - thumbnailPosition2.x, 2) +
@@ -3524,7 +2978,6 @@ function startPlayerCleanup() {
             } else {
                 lootPopup2.classList.remove('visible');
             }
-
             // Show/hide popup based on distance to third thumbnail (Resume)
             const distToThumbnail3 = Math.sqrt(
                 Math.pow(playerGroup.position.x - thumbnailPosition3.x, 2) +
@@ -3535,7 +2988,6 @@ function startPlayerCleanup() {
             } else {
                 lootPopup3.classList.remove('visible');
             }
-
             // Show/hide popup based on distance to AGV loot
             const distToAgv = Math.sqrt(
                 Math.pow(playerGroup.position.x - agvPosition.x, 2) +
@@ -3546,7 +2998,6 @@ function startPlayerCleanup() {
             } else {
                 agvPopup.classList.remove('visible');
             }
-
             // Show/hide popup based on distance to fourth thumbnail (GitHub)
             const distToThumbnail4 = Math.sqrt(
                 Math.pow(playerGroup.position.x - thumbnailPosition4.x, 2) +
@@ -3557,7 +3008,6 @@ function startPlayerCleanup() {
             } else {
                 lootPopup4.classList.remove('visible');
             }
-
             // Show/hide BOB Robot Project popup
             const distToBobProject = Math.sqrt(
                 Math.pow(playerGroup.position.x - bobProjectPosition.x, 2) +
@@ -3568,7 +3018,6 @@ function startPlayerCleanup() {
             } else {
                 lootPopupBobProject.classList.remove('visible');
             }
-
             // Show/hide Cover Letter popup
             const distToCoverLetter = Math.sqrt(
                 Math.pow(playerGroup.position.x - coverLetterPosition.x, 2) +
@@ -3579,38 +3028,30 @@ function startPlayerCleanup() {
             } else {
                 coverLetterPopup.classList.remove('visible');
             }
-
             // Simple elevated camera following player from fixed angle
             const cameraOffset = new THREE.Vector3(0, 10, 15);
             const cameraPosition = playerGroup.position.clone().add(cameraOffset);
-
             // Smooth camera movement
             camera.position.lerp(cameraPosition, 0.05);
-
             // Look at player position
             const lookAtTarget = playerGroup.position.clone().add(new THREE.Vector3(0, 2, 0));
             camera.lookAt(lookAtTarget);
-
             // Render with post-processing
             composer.render();
         }
-
         // Handle window resize
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
             composer.setSize(window.innerWidth, window.innerHeight);
-
             // Update FXAA resolution
             const pixelRatio = renderer.getPixelRatio();
             fxaaPass.material.uniforms['resolution'].value.x = 1 / (window.innerWidth * pixelRatio);
             fxaaPass.material.uniforms['resolution'].value.y = 1 / (window.innerHeight * pixelRatio);
         });
-
         // Start animation immediately
         animate(performance.now());
     </script>
 </body>
-
 </html>
